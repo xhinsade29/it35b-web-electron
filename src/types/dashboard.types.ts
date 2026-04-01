@@ -146,7 +146,7 @@ export interface SimulationResponse {
 export interface MonitorState {
   running: boolean;
   mode: 'normal' | 'flood' | 'pollution' | 'drought';
-  device_id: number;
+  device_id: string;
   interval: number;
   started_at?: string;
   started_by?: string;

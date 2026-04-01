@@ -121,12 +121,12 @@ export function useSimulationEngine(deviceIds: string[]) {
     });
   }, []);
 
-  // Generate next value for a sensor
-  const getNextValue = useCallback((deviceId: string, sensorType: keyof ModeConfig): number | null => {
+  // Generate next value for a sensor - always returns number
+  const getNextValue = useCallback((deviceId: string, sensorType: keyof ModeConfig): number => {
     const mode = deviceModesRef.current[deviceId] || 'normal';
     const config = MODE_CONFIGS[mode][sensorType];
     
-    if (!config) return null;
+    if (!config) return 0;
     
     if (!deviceStatesRef.current[deviceId]) {
       initDeviceState(deviceId, mode);
@@ -175,7 +175,7 @@ export function useSimulationEngine(deviceIds: string[]) {
     const promises = deviceIds.map(async (deviceId) => {
       const mode = deviceModesRef.current[deviceId] || 'normal';
       
-      const readings = {
+      const readings: Record<string, number> = {
         temperature: getNextValue(deviceId, 'temperature'),
         ph_level: getNextValue(deviceId, 'ph_level'),
         turbidity: getNextValue(deviceId, 'turbidity'),

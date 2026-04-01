@@ -1,10 +1,9 @@
 import { supabase } from '../lib/supabase';
 import type { 
   DashboardSyncData, 
-  SimulationResponse, 
+  SimulationResponse,
   MonitorState,
-  Alert,
-  DeviceInfo 
+  Alert
 } from '../types/dashboard.types';
 
 // =====================================================
