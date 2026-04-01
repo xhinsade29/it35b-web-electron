@@ -131,7 +131,7 @@ export async function updateDevice(
   originalDevice?: Device
 ): Promise<Device> {
   // Check for duplicate name
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from('devices')
     .select('device_id')
     .eq('device_name', formData.device_name)
@@ -177,7 +177,7 @@ export async function updateDevice(
 
   if (error) {
     console.error('Error updating device:', error);
-    throw new Error('Failed to update device');
+    throw new Error(`Failed to update device: ${error.message || error.details || 'Unknown error'}`);
   }
 
   // Build change log
@@ -273,7 +273,7 @@ async function createOrGetLocation(
   locationName?: string
 ): Promise<string | null> {
   // Try to find existing location with similar coordinates
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from('locations')
     .select('location_id')
     .gte('latitude', latitude - 0.001)
@@ -290,7 +290,7 @@ async function createOrGetLocation(
   const riverSection = detectRiverSection(longitude);
   const name = locationName || `${riverSection.charAt(0).toUpperCase() + riverSection.slice(1)} Section`;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('locations')
     .insert({
       location_name: name,
@@ -455,6 +455,7 @@ function transformDeviceFromDB(data: any): Device {
   return {
     device_id: data.device_id,
     device_name: data.device_name,
+    device_type: data.device_type || 'sensor',
     status: data.status,
     device_condition: data.device_condition || 'normal',
     location_id: data.location_id,
