@@ -10,6 +10,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Device, DeviceFormData, DeviceStatus } from '../types/device.types';
 import { useDeviceHistory } from '../hooks/useDevices';
+import { checkDistanceToRiver, detectRiverSection } from '../utils/riverUtils';
 import styles from './DeviceForm.module.css';
 
 // Fix Leaflet default icon using inline SVG data URLs
