@@ -11,6 +11,7 @@ import { TrendCharts } from '../components/TrendCharts';
 import { WaterConditions } from '../components/WaterConditions';
 import { LeafletMap } from '../components/LeafletMap';
 import { ActivityLogs } from '../components/ActivityLogs';
+import { ThresholdCharts } from '../components/ThresholdCharts';
 
 export function DashboardPage() {
   const [{ data, loading, error, lastSync }] = useDashboardSync(10000);
@@ -256,7 +257,12 @@ export function DashboardPage() {
           />
         </div>
 
-        {/* Alerts & Trends Row */}
+        {/* Threshold Charts Row */}
+        <div style={{ marginBottom: '16px' }}>
+          <ThresholdCharts sectionConditions={dashboardData.section_conditions} />
+        </div>
+
+        {/* Alerts & Trends Row - Moved below */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
           <AlertsPanel alerts={dashboardData.alerts} alertCount={dashboardData.alert_count} />
           <TrendCharts chartData={dashboardData.chart_data} />

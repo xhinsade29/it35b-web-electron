@@ -34,40 +34,43 @@ export function AlertsPanel({ alerts, alertCount }: AlertsPanelProps) {
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
-        <div className={styles.cardTitle}>
+        <div className={styles.cardTitle} style={{ fontSize: '11px' }}>
           🚨 Active Alerts
           <span
             className={`${styles.tag} ${
               alertCount > 0 ? styles.tagCrit : styles.tagGood
             }`}
-            style={{ marginLeft: '8px' }}
+            style={{ marginLeft: '4px', fontSize: '9px', padding: '2px 4px' }}
           >
-            {alertCount} Active
+            {alertCount}
           </span>
         </div>
       </div>
-      <div className={styles.cardBody}>
+      <div className={styles.cardBody} style={{ padding: '8px' }}>
         {alerts.length === 0 ? (
-          <div className={styles.empty}>
-            <div className={styles.emptyIcon}>✓</div>
-            <p>No active alerts — all sensors nominal.</p>
+          <div className={styles.empty} style={{ padding: '12px' }}>
+            <div className={styles.emptyIcon} style={{ fontSize: '20px', marginBottom: '4px' }}>✓</div>
+            <p style={{ fontSize: '11px', margin: 0 }}>No active alerts</p>
           </div>
         ) : (
-          alerts.map((alert) => (
-            <div key={alert.alert_id} className={styles.alertItem}>
-              <div
-                className={`${styles.alertIc} ${getSeverityClass(alert.alert_type)}`}
-              >
-                {getSeverityIcon(alert.alert_type)}
-              </div>
-              <div>
-                <div className={styles.alertMsg}>{alert.message}</div>
-                <div className={styles.alertMeta}>
-                  {alert.device_name} · {alert.location_name} · {formatTime(alert.created_at)}
+          <div style={{ maxHeight: '140px', overflowY: 'auto' }}>
+            {alerts.slice(0, 5).map((alert) => (
+              <div key={alert.alert_id} className={styles.alertItem} style={{ padding: '6px', marginBottom: '4px' }}>
+                <div
+                  className={`${styles.alertIc} ${getSeverityClass(alert.alert_type)}`}
+                  style={{ width: '24px', height: '24px', fontSize: '12px' }}
+                >
+                  {getSeverityIcon(alert.alert_type)}
+                </div>
+                <div>
+                  <div className={styles.alertMsg} style={{ fontSize: '11px' }}>{alert.message}</div>
+                  <div className={styles.alertMeta} style={{ fontSize: '9px' }}>
+                    {alert.device_name} · {formatTime(alert.created_at)}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
     </div>

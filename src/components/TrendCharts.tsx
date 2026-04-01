@@ -86,28 +86,31 @@ export function TrendCharts({ chartData }: TrendChartsProps) {
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
-        <div className={styles.cardTitle}>📊 24-Hour Trends</div>
+        <div className={styles.cardTitle} style={{ fontSize: '13px' }}>📊 24-Hour Trends</div>
       </div>
-      <div className={styles.cardBody}>
-        <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+      <div className={styles.cardBody} style={{ padding: '12px' }}>
+        <ResponsiveContainer width="100%" height={180}>
+          <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(13, 17, 23, 0.07)" />
             <XAxis
               dataKey="hour"
-              tick={{ fontSize: 11, fill: '#8897aa' }}
+              tick={{ fontSize: 9, fill: '#8897aa' }}
               axisLine={{ stroke: 'rgba(13, 17, 23, 0.12)' }}
               tickLine={false}
               interval={3}
+              height={20}
             />
             <YAxis
-              tick={{ fontSize: 11, fill: '#8897aa' }}
+              tick={{ fontSize: 9, fill: '#8897aa' }}
               axisLine={false}
               tickLine={false}
+              width={30}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend
-              wrapperStyle={{ fontSize: 11, paddingTop: 10 }}
-              iconType="line"
+              wrapperStyle={{ fontSize: 9, paddingTop: '4px' }}
+              iconSize={8}
+              height={20}
             />
             {SENSOR_CONFIG.map((sensor) => (
               <Line
@@ -115,7 +118,7 @@ export function TrendCharts({ chartData }: TrendChartsProps) {
                 type="monotone"
                 dataKey={sensor.key}
                 stroke={sensor.color}
-                strokeWidth={2}
+                strokeWidth={1.5}
                 dot={false}
                 connectNulls
                 isAnimationActive={false}
