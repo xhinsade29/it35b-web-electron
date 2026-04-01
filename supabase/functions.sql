@@ -138,21 +138,44 @@ BEGIN
         ), '[]'::jsonb)
     ) INTO chart_data;
 
-    -- Get device-specific chart data
-    SELECT jsonb_object_agg(
-        d.device_id::text,
-        jsonb_build_object(
-            'temperature', COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('temperature', d.device_id)), '[]'::jsonb),
-            'pH', COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('ph_level', d.device_id)), '[]'::jsonb),
-            'turbidity', COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('turbidity', d.device_id)), '[]'::jsonb),
-            'dissolved_oxygen', COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('dissolved_oxygen', d.device_id)), '[]'::jsonb),
-            'water_level', COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('water_level', d.device_id)), '[]'::jsonb),
-            'sediments', COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('sediments', d.device_id)), '[]'::jsonb)
-        )
+    -- Get device-specific chart data (avoid nested aggregates by using CTEs)
+    WITH device_trends AS (
+        SELECT 
+            d.device_id,
+            'temperature' as sensor_type,
+            COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('temperature', d.device_id)), '[]'::jsonb) as trend_data
+        FROM devices d WHERE d.status = 'active'
+        UNION ALL
+        SELECT d.device_id, 'pH',
+            COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('ph_level', d.device_id)), '[]'::jsonb)
+        FROM devices d WHERE d.status = 'active'
+        UNION ALL
+        SELECT d.device_id, 'turbidity',
+            COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('turbidity', d.device_id)), '[]'::jsonb)
+        FROM devices d WHERE d.status = 'active'
+        UNION ALL
+        SELECT d.device_id, 'dissolved_oxygen',
+            COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('dissolved_oxygen', d.device_id)), '[]'::jsonb)
+        FROM devices d WHERE d.status = 'active'
+        UNION ALL
+        SELECT d.device_id, 'water_level',
+            COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('water_level', d.device_id)), '[]'::jsonb)
+        FROM devices d WHERE d.status = 'active'
+        UNION ALL
+        SELECT d.device_id, 'sediments',
+            COALESCE((SELECT jsonb_agg(jsonb_build_object('hour', hr, 'avg_val', avg_val)) FROM dashboard_trend24_device('sediments', d.device_id)), '[]'::jsonb)
+        FROM devices d WHERE d.status = 'active'
+    ),
+    device_trends_pivoted AS (
+        SELECT 
+            device_id,
+            jsonb_object_agg(sensor_type, trend_data) as device_data
+        FROM device_trends
+        GROUP BY device_id
     )
+    SELECT jsonb_object_agg(device_id::text, device_data)
     INTO device_chart_data
-    FROM devices d
-    WHERE d.status = 'active';
+    FROM device_trends_pivoted;
 
     -- Get recent logs
     SELECT jsonb_agg(jsonb_build_object(

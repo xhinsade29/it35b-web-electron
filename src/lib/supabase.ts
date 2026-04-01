@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY || ''
 
 // Validate URL format
 const isValidUrl = (url: string) => {
@@ -14,8 +14,8 @@ const isValidUrl = (url: string) => {
 }
 
 // Create client only if credentials are valid, otherwise create mock
-export const supabase = isValidUrl(supabaseUrl) && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = isValidUrl(supabaseUrl) && supabaseKey
+  ? createClient(supabaseUrl, supabaseKey)
   : createMockClient()
 
 // Mock client for development without Supabase credentials
