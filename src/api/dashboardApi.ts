@@ -16,42 +16,150 @@ import type {
  * Replaces: av_overview_api_fetch() in PHP
  */
 export async function fetchDashboard(): Promise<DashboardSyncData> {
-  const { data, error } = await supabase
-    .rpc('dashboard_fetch');
-
-  if (error) {
-    console.error('Dashboard fetch error:', error);
-    throw new Error(`Failed to fetch dashboard: ${error.message}`);
-  }
-
-  if (!data || !data.ok) {
-    throw new Error('Invalid dashboard response');
-  }
-
-  // Transform the RPC response to match DashboardSyncData type
-  return {
-    ok: data.ok,
-    ts: data.ts,
-    river_status: data.river_status,
-    banner_color: data.banner_color,
-    banner_emoji: data.banner_emoji,
-    warn_count: data.warn_count,
-    alert_count: data.alert_count,
-    dev_counts: data.dev_counts,
-    devices: data.devices || [],
-    device_readings: data.device_readings || {},
-    alerts: data.alerts || [],
-    logs: data.logs || [],
-    map_locations: data.map_locations || [],
-    chart_data: transformChartData(data.chart_data),
-    device_chart_data: data.device_chart_data || {},
-    maintenance: data.maintenance || [],
-    section_conditions: data.section_conditions || {
-      upstream: {},
-      midstream: {},
-      downstream: {}
+  try {
+    // Fetch all devices first (without joins to avoid syntax issues)
+    const { data: devicesData, error: devicesError } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('status', 'active')
+      .order('device_name');
+    
+    console.log('Devices fetch result:', { devicesData, devicesError, count: devicesData?.length });
+    
+    if (devicesError) {
+      console.error('Devices fetch error:', devicesError);
+      throw devicesError;
     }
-  };
+
+    // Fetch locations separately
+    const { data: locationsData, error: locationsError } = await supabase
+      .from('locations')
+      .select('*');
+    
+    console.log('Locations fetch result:', { locationsData, locationsError });
+    
+    if (locationsError) {
+      console.error('Locations fetch error:', locationsError);
+    }
+
+    // Create location lookup
+    const locationMap = new Map<string, { location_name?: string; river_section?: string }>();
+    locationsData?.forEach((loc: { location_id: string; location_name?: string; river_section?: string }) => {
+      locationMap.set(loc.location_id, loc);
+    });
+
+    // Transform devices with location data
+    const transformedDevices = (devicesData || []).map((d: { 
+      device_id: string; 
+      device_name: string; 
+      location_id?: string;
+      status: string;
+      last_active?: string;
+    }) => {
+      const location = d.location_id ? locationMap.get(d.location_id) : null;
+      return {
+        device_id: d.device_id,
+        device_name: d.device_name,
+        location_name: location?.location_name || 'Unknown',
+        river_section: location?.river_section || 'upstream',
+        status: d.status,
+        last_active: d.last_active,
+      };
+    });
+
+    // Fetch active alerts
+    const { data: alertsData, error: alertsError } = await supabase
+      .from('alerts')
+      .select('*')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(10);
+    
+    if (alertsError) {
+      console.error('Alerts fetch error:', alertsError);
+    }
+
+    // Get device counts
+    const { data: deviceCounts, error: countError } = await supabase
+      .from('devices')
+      .select('status');
+    
+    if (countError) {
+      console.error('Device counts error:', countError);
+    }
+
+    // Calculate counts
+    const devCounts = {
+      total: deviceCounts?.length || 0,
+      active: deviceCounts?.filter((d: { status: string }) => d.status === 'active').length || 0,
+      offline: deviceCounts?.filter((d: { status: string }) => d.status === 'inactive').length || 0,
+      maint: deviceCounts?.filter((d: { status: string }) => d.status === 'maintenance').length || 0,
+    };
+
+    const alert_count = alertsData?.length || 0;
+
+    // Transform alerts (simplified without nested joins)
+    const transformedAlerts = (alertsData || []).map((a: { 
+      alert_id: string; 
+      alert_type: string; 
+      message: string; 
+      created_at: string;
+    }) => ({
+      alert_id: a.alert_id,
+      alert_type: a.alert_type,
+      message: a.message,
+      created_at: a.created_at,
+      device_name: 'Unknown',
+      location_name: 'Unknown',
+      sensor_type: 'unknown',
+    }));
+
+    // Fetch recent sensor readings for charts, sections, and logs
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: readingsData, error: readingsError } = await supabase
+      .from('sensor_readings')
+      .select(`
+        value, 
+        recorded_at, 
+        sensors!inner(sensor_type, device_id, devices!inner(device_name, location_id, locations!inner(location_name, river_section)))
+      `)
+      .gte('recorded_at', twentyFourHoursAgo)
+      .order('recorded_at', { ascending: false })
+      .limit(1000);
+    
+    if (readingsError) {
+      console.error('Readings fetch error:', readingsError);
+    }
+
+    // Process the readings data
+    const processedReadings = readingsData || [];
+    const chartData = processChartData(processedReadings);
+    const sectionConditions = processSectionConditions(processedReadings);
+    const logs = processActivityLogs(processedReadings);
+
+    return {
+      ok: true,
+      ts: new Date().toISOString(),
+      river_status: alert_count > 0 ? 'Critical' : 'Normal',
+      banner_color: alert_count > 0 ? '#d97706' : '#16a34a',
+      banner_emoji: alert_count > 0 ? '⚠️' : '✅',
+      warn_count: alert_count,
+      alert_count: alert_count,
+      dev_counts: devCounts,
+      devices: transformedDevices,
+      device_readings: {},
+      alerts: transformedAlerts,
+      logs: logs,
+      map_locations: [],
+      chart_data: chartData,
+      device_chart_data: {},
+      maintenance: [],
+      section_conditions: sectionConditions,
+    };
+  } catch (err) {
+    console.error('Dashboard fetch error:', err);
+    throw new Error(`Failed to fetch dashboard: ${err instanceof Error ? err.message : 'Unknown error'}`);
+  }
 }
 
 /**
@@ -230,57 +338,125 @@ export async function resolveAlert(alertId: string, userId: string): Promise<{ o
 // Helper Functions
 // =====================================================
 
-/**
- * Transform chart data from RPC format to array format (24 hours)
- */
-function transformChartData(rawData: Record<string, Array<{ hour: number; avg_val: number }>> | null): {
-  temperature: (number | null)[];
-  pH: (number | null)[];
-  turbidity: (number | null)[];
-  dissolved_oxygen: (number | null)[];
-  water_level: (number | null)[];
-  sediments: (number | null)[];
-} {
-  const defaultArray = Array(24).fill(null);
-  
-  if (!rawData) {
-    return {
-      temperature: [...defaultArray],
-      pH: [...defaultArray],
-      turbidity: [...defaultArray],
-      dissolved_oxygen: [...defaultArray],
-      water_level: [...defaultArray],
-      sediments: [...defaultArray]
+interface SensorReading {
+  value: number;
+  recorded_at: string;
+  sensors: {
+    sensor_type: string;
+    device_id: string;
+    devices: {
+      device_name: string;
+      location_id: string;
+      locations: {
+        location_name: string;
+        river_section: string;
+      };
     };
-  }
-
-  return {
-    temperature: fillHourlyData(rawData.temperature),
-    pH: fillHourlyData(rawData.pH),
-    turbidity: fillHourlyData(rawData.turbidity),
-    dissolved_oxygen: fillHourlyData(rawData.dissolved_oxygen),
-    water_level: fillHourlyData(rawData.water_level),
-    sediments: fillHourlyData(rawData.sediments)
   };
 }
 
-/**
- * Fill hourly data array from sparse database results
- */
-function fillHourlyData(hourlyData: Array<{ hour: number; avg_val: number }> | null): (number | null)[] {
-  const result = Array(24).fill(null);
-  
-  if (!hourlyData || !Array.isArray(hourlyData)) {
-    return result;
-  }
+function processChartData(readings: SensorReading[]) {
+  const defaultArray = Array(24).fill(null);
+  const chartData = {
+    temperature: [...defaultArray],
+    pH: [...defaultArray],
+    turbidity: [...defaultArray],
+    dissolved_oxygen: [...defaultArray],
+    water_level: [...defaultArray],
+    sediments: [...defaultArray],
+  };
 
-  hourlyData.forEach(item => {
-    if (item.hour >= 0 && item.hour < 24 && item.avg_val !== null) {
-      result[item.hour] = item.avg_val;
+  // Group by hour and calculate average
+  const hourlyData: Record<string, Record<number, number[]>> = {
+    temperature: {},
+    ph_level: {},
+    turbidity: {},
+    dissolved_oxygen: {},
+    water_level: {},
+    sediments: {},
+  };
+
+  readings.forEach((r) => {
+    const hour = new Date(r.recorded_at).getHours();
+    const sensorType = r.sensors?.sensor_type;
+    if (sensorType && hourlyData[sensorType]) {
+      if (!hourlyData[sensorType][hour]) hourlyData[sensorType][hour] = [];
+      hourlyData[sensorType][hour].push(r.value);
     }
   });
 
-  return result;
+  // Calculate averages
+  Object.entries(hourlyData).forEach(([sensorType, hours]) => {
+    const key = sensorType === 'ph_level' ? 'pH' : sensorType;
+    if (key in chartData) {
+      Object.entries(hours).forEach(([hour, values]) => {
+        const avg = values.reduce((a, b) => a + b, 0) / values.length;
+        chartData[key as keyof typeof chartData][parseInt(hour)] = parseFloat(avg.toFixed(2));
+      });
+    }
+  });
+
+  return chartData;
+}
+
+function processSectionConditions(readings: SensorReading[]) {
+  const sections = {
+    upstream: {} as Record<string, number>,
+    midstream: {} as Record<string, number>,
+    downstream: {} as Record<string, number>,
+  };
+
+  // Get latest reading per sensor per section
+  const latestReadings: Record<string, Record<string, { value: number; time: number }>> = {
+    upstream: {},
+    midstream: {},
+    downstream: {},
+  };
+
+  readings.forEach((r) => {
+    const section = r.sensors?.devices?.locations?.river_section || 'upstream';
+    const sensorType = r.sensors?.sensor_type;
+    if (sensorType && latestReadings[section as keyof typeof latestReadings]) {
+      const time = new Date(r.recorded_at).getTime();
+      const existing = latestReadings[section as keyof typeof latestReadings][sensorType];
+      if (!existing || time > existing.time) {
+        latestReadings[section as keyof typeof latestReadings][sensorType] = {
+          value: r.value,
+          time,
+        };
+      }
+    }
+  });
+
+  // Extract values
+  Object.entries(latestReadings).forEach(([section, sensors]) => {
+    Object.entries(sensors).forEach(([sensorType, data]) => {
+      sections[section as keyof typeof sections][sensorType] = data.value;
+    });
+  });
+
+  return sections;
+}
+
+function processActivityLogs(readings: SensorReading[]) {
+  const unitMap: Record<string, string> = {
+    temperature: '°C',
+    ph_level: 'pH',
+    turbidity: 'NTU',
+    dissolved_oxygen: 'mg/L',
+    water_level: 'm',
+    sediments: 'mg/L',
+  };
+
+  // Return last 50 readings formatted for ActivityLogs component
+  return readings.slice(0, 50).map((r) => ({
+    sensor_type: r.sensors?.sensor_type || 'unknown',
+    value: r.value,
+    unit: unitMap[r.sensors?.sensor_type] || '',
+    recorded_at: r.recorded_at,
+    device_name: r.sensors?.devices?.device_name || 'Unknown',
+    location_name: r.sensors?.devices?.locations?.location_name || 'Unknown',
+  }));
 }
 
 // =====================================================

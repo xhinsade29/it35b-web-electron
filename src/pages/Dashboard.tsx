@@ -16,8 +16,8 @@ export function DashboardPage() {
   const [{ data, loading, error, lastSync }] = useDashboardSync(10000);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   
-  // Get device IDs for simulation
-  const deviceIds = data?.devices?.map(d => d.device_id) || [];
+  // Get device IDs for simulation - ensure devices is always an array
+  const deviceIds = Array.isArray(data?.devices) ? data.devices.map(d => d.device_id) : [];
   
   // Simulation interval state - declare BEFORE useSimulationEngine
   const [simInterval, setSimInterval] = useState(10000);
