@@ -1,17 +1,9 @@
+/* App layout - minimal to not interfere with dashboard */
 .app {
-  text-align: center;
-  padding: 2rem;
+  display: flex;
+  min-height: 100vh;
 }
 
-.app-header {
-  margin-bottom: 2rem;
-}
-
-.app-header h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-.app-header p {
-  color: #666;
+main {
+  flex: 1;
 }

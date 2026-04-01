@@ -42,9 +42,9 @@ export function useDashboardSync(interval: number = 10000) {
       // Calculate counts
       const devCounts = {
         total: deviceCounts?.length || 0,
-        active: deviceCounts?.filter(d => d.status === 'active').length || 0,
-        offline: deviceCounts?.filter(d => d.status === 'inactive').length || 0,
-        maint: deviceCounts?.filter(d => d.status === 'maintenance').length || 0,
+        active: deviceCounts?.filter((d: { status: string }) => d.status === 'active').length || 0,
+        offline: deviceCounts?.filter((d: { status: string }) => d.status === 'inactive').length || 0,
+        maint: deviceCounts?.filter((d: { status: string }) => d.status === 'maintenance').length || 0,
       };
 
       // Fetch map locations
@@ -65,7 +65,7 @@ export function useDashboardSync(interval: number = 10000) {
         alert_count: alerts?.length || 0,
         dev_counts: devCounts,
         device_readings: {},
-        devices: (devices || []).map(d => ({
+        devices: (devices || []).map((d: { device_id: string; device_name: string; locations?: { location_name?: string; river_section?: string }; status: string; last_active?: string }) => ({
           device_id: d.device_id,
           device_name: d.device_name,
           location_name: d.locations?.location_name || '',
@@ -73,7 +73,7 @@ export function useDashboardSync(interval: number = 10000) {
           status: d.status,
           last_active: d.last_active,
         })),
-        alerts: (alerts || []).map(a => ({
+        alerts: (alerts || []).map((a: { alert_id: string; alert_type: string; message: string; created_at: string; sensors?: { sensor_type?: string; devices?: { device_name?: string; locations?: { location_name?: string } } } }) => ({
           alert_id: a.alert_id,
           alert_type: a.alert_type,
           message: a.message,
@@ -83,7 +83,7 @@ export function useDashboardSync(interval: number = 10000) {
           sensor_type: a.sensors?.sensor_type || 'unknown',
         })),
         logs: [],
-        map_locations: (mapLocations || []).map(l => ({
+        map_locations: (mapLocations || []).map((l: { location_id: string; location_name: string; river_section: string; latitude: number; longitude: number }) => ({
           location_id: l.location_id,
           location_name: l.location_name,
           river_section: l.river_section,
@@ -167,7 +167,7 @@ export function useSensorReadings(deviceId?: string, limit: number = 50) {
         
         if (error) throw error;
 
-        const mapped = (data || []).map(r => ({
+        const mapped = (data || []).map((r: { sensors?: { sensor_type?: string; unit?: string; min_threshold?: number; max_threshold?: number }; value: number; recorded_at: string }) => ({
           sensor_type: r.sensors?.sensor_type || 'unknown',
           value: r.value,
           unit: r.sensors?.unit || '',

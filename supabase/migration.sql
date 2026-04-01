@@ -230,3 +230,170 @@ INSERT INTO system_settings (setting_key, setting_value, setting_type, descripti
 ('simulation_enabled', 'true', 'boolean', 'Enable data simulation for testing'),
 ('refresh_interval', '30', 'number', 'Dashboard refresh interval in seconds')
 ON CONFLICT DO NOTHING;
+
+-- =====================================================
+-- SAMPLE DATA INSERTS (Converted from MySQL)
+-- =====================================================
+
+-- Insert devices (assign to locations by name lookup)
+INSERT INTO devices (device_name, device_type, location_id, status, installation_date)
+SELECT 'WQ-Upstream-Start', 'water_quality_station', location_id, 'active', '2026-03-01'::DATE
+FROM locations WHERE location_name = 'Upstream Start';
+
+INSERT INTO devices (device_name, device_type, location_id, status, installation_date)
+SELECT 'WQ-Upstream-End', 'water_quality_station', location_id, 'active', '2026-03-02'::DATE
+FROM locations WHERE location_name = 'Upstream End';
+
+INSERT INTO devices (device_name, device_type, location_id, status, installation_date)
+SELECT 'WQ-Midstream-Start', 'water_quality_station', location_id, 'active', '2026-03-03'::DATE
+FROM locations WHERE location_name = 'Midstream Start';
+
+INSERT INTO devices (device_name, device_type, location_id, status, installation_date)
+SELECT 'WQ-Midstream-End', 'water_quality_station', location_id, 'active', '2026-03-04'::DATE
+FROM locations WHERE location_name = 'Midstream End';
+
+INSERT INTO devices (device_name, device_type, location_id, status, installation_date)
+SELECT 'WQ-Downstream-Start', 'water_quality_station', location_id, 'active', '2026-03-05'::DATE
+FROM locations WHERE location_name = 'Downstream Start';
+
+INSERT INTO devices (device_name, device_type, location_id, status, installation_date)
+SELECT 'WQ-Downstream-End', 'water_quality_station', location_id, 'active', '2026-03-06'::DATE
+FROM locations WHERE location_name = 'Downstream End';
+
+INSERT INTO devices (device_name, device_type, location_id, status, installation_date)
+SELECT 'Weather-Central', 'weather_station', location_id, 'active', '2026-03-10'::DATE
+FROM locations WHERE location_name = 'Midstream Start';
+
+INSERT INTO devices (device_name, device_type, location_id, status, installation_date)
+SELECT 'Flow-Meter-Mid', 'flow_meter', location_id, 'active', '2026-03-12'::DATE
+FROM locations WHERE location_name = 'Midstream End';
+
+-- Insert sensors for water quality stations (6 sensors per station)
+INSERT INTO sensors (device_id, sensor_type, unit, min_threshold, max_threshold)
+SELECT device_id, 'temperature', '°C', 20, 35 FROM devices WHERE device_name LIKE 'WQ-%';
+
+INSERT INTO sensors (device_id, sensor_type, unit, min_threshold, max_threshold)
+SELECT device_id, 'ph_level', 'pH', 6.5, 8.5 FROM devices WHERE device_name LIKE 'WQ-%';
+
+INSERT INTO sensors (device_id, sensor_type, unit, min_threshold, max_threshold)
+SELECT device_id, 'turbidity', 'NTU', 0, 50 FROM devices WHERE device_name LIKE 'WQ-%';
+
+INSERT INTO sensors (device_id, sensor_type, unit, min_threshold, max_threshold)
+SELECT device_id, 'dissolved_oxygen', 'mg/L', 5, 14 FROM devices WHERE device_name LIKE 'WQ-%';
+
+INSERT INTO sensors (device_id, sensor_type, unit, min_threshold, max_threshold)
+SELECT device_id, 'water_level', 'm', 0.5, 3.0 FROM devices WHERE device_name LIKE 'WQ-%';
+
+INSERT INTO sensors (device_id, sensor_type, unit, min_threshold, max_threshold)
+SELECT device_id, 'sediments', 'mg/L', 0, 500 FROM devices WHERE device_name LIKE 'WQ-%';
+
+-- Insert sensors for weather station
+INSERT INTO sensors (device_id, sensor_type, unit, min_threshold, max_threshold)
+SELECT device_id, 'temperature', '°C', 15, 40 FROM devices WHERE device_name = 'Weather-Central';
+
+INSERT INTO sensors (device_id, sensor_type, unit, min_threshold, max_threshold)
+SELECT device_id, 'humidity', '%', 30, 90 FROM devices WHERE device_name = 'Weather-Central';
+
+INSERT INTO sensors (device_id, sensor_type, unit, min_threshold, max_threshold)
+SELECT device_id, 'pressure', 'hPa', 980, 1040 FROM devices WHERE device_name = 'Weather-Central';
+
+-- Insert sensors for flow meter
+INSERT INTO sensors (device_id, sensor_type, unit, min_threshold, max_threshold)
+SELECT device_id, 'flow_rate', 'm³/s', 0, 100 FROM devices WHERE device_name = 'Flow-Meter-Mid';
+
+INSERT INTO sensors (device_id, sensor_type, unit, min_threshold, max_threshold)
+SELECT device_id, 'water_level', 'm', 0.5, 3.0 FROM devices WHERE device_name = 'Flow-Meter-Mid';
+
+-- Insert sample sensor readings (last 24 hours)
+INSERT INTO sensor_readings (sensor_id, value, recorded_at)
+SELECT sensor_id, 25.5, NOW() - INTERVAL '23 hours' FROM sensors WHERE sensor_type = 'temperature' LIMIT 1;
+
+INSERT INTO sensor_readings (sensor_id, value, recorded_at)
+SELECT sensor_id, 26.2, NOW() - INTERVAL '22 hours' FROM sensors WHERE sensor_type = 'temperature' LIMIT 1;
+
+INSERT INTO sensor_readings (sensor_id, value, recorded_at)
+SELECT sensor_id, 7.2, NOW() - INTERVAL '13 hours' FROM sensors WHERE sensor_type = 'ph_level' LIMIT 1;
+
+INSERT INTO sensor_readings (sensor_id, value, recorded_at)
+SELECT sensor_id, 12.5, NOW() - INTERVAL '8 hours' FROM sensors WHERE sensor_type = 'turbidity' LIMIT 1;
+
+INSERT INTO sensor_readings (sensor_id, value, recorded_at)
+SELECT sensor_id, 8.5, NOW() - INTERVAL '4 hours' FROM sensors WHERE sensor_type = 'dissolved_oxygen' LIMIT 1;
+
+INSERT INTO sensor_readings (sensor_id, value, recorded_at)
+SELECT sensor_id, 1.5, NOW() - INTERVAL '1 hours' FROM sensors WHERE sensor_type = 'water_level' LIMIT 1;
+
+INSERT INTO sensor_readings (sensor_id, value, recorded_at)
+SELECT sensor_id, 45.2, NOW() - INTERVAL '23 hours' FROM sensors WHERE sensor_type = 'sediments' LIMIT 1;
+
+-- Insert sample maintenance logs
+INSERT INTO maintenance_logs (device_id, performed_by, maintenance_type, notes, performed_at)
+SELECT d.device_id, u.user_id, 'calibration', 'Monthly calibration of all sensors', NOW() - INTERVAL '7 days'
+FROM devices d, users u WHERE d.device_name = 'WQ-Upstream-Start' AND u.username = 'admin';
+
+INSERT INTO maintenance_logs (device_id, performed_by, maintenance_type, notes, performed_at)
+SELECT d.device_id, u.user_id, 'cleaning', 'Cleaned turbidity sensor housing', NOW() - INTERVAL '5 days'
+FROM devices d, users u WHERE d.device_name = 'WQ-Upstream-End' AND u.username = 'admin';
+
+INSERT INTO maintenance_logs (device_id, performed_by, maintenance_type, notes, performed_at)
+SELECT d.device_id, u.user_id, 'inspection', 'Routine inspection of device components', NOW() - INTERVAL '3 days'
+FROM devices d, users u WHERE d.device_name = 'WQ-Midstream-Start' AND u.username = 'admin';
+
+-- Insert sample system logs
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'login', 'Admin logged in successfully', '192.168.1.100', NOW() - INTERVAL '22 hours'
+FROM users WHERE username = 'admin';
+
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'login', 'Operator logged in successfully', '192.168.1.101', NOW() - INTERVAL '20 hours'
+FROM users WHERE username = 'operator';
+
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'alert_acknowledged', 'Acknowledged temperature alert on WQ-Upstream-Start', '192.168.1.101', NOW() - INTERVAL '18 hours'
+FROM users WHERE username = 'operator';
+
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'maintenance_logged', 'Logged calibration maintenance for device WQ-Upstream-Start', '192.168.1.101', NOW() - INTERVAL '16 hours'
+FROM users WHERE username = 'operator';
+
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'device_status_update', 'Changed device WQ-Midstream-Start status to active', '192.168.1.100', NOW() - INTERVAL '14 hours'
+FROM users WHERE username = 'admin';
+
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'alert_resolved', 'Resolved pH level alert on WQ-Upstream-End', '192.168.1.101', NOW() - INTERVAL '12 hours'
+FROM users WHERE username = 'operator';
+
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'login', 'Researcher logged in successfully', '192.168.1.102', NOW() - INTERVAL '10 hours'
+FROM users WHERE username = 'researcher';
+
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'maintenance_logged', 'Logged cleaning maintenance for device WQ-Upstream-End', '192.168.1.101', NOW() - INTERVAL '8 hours'
+FROM users WHERE username = 'operator';
+
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'settings_updated', 'Updated alert email settings', '192.168.1.100', NOW() - INTERVAL '6 hours'
+FROM users WHERE username = 'admin';
+
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'device_status_update', 'Changed device WQ-Downstream-Start status to maintenance', '192.168.1.101', NOW() - INTERVAL '4 hours'
+FROM users WHERE username = 'operator';
+
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'alert_acknowledged', 'Acknowledged turbidity alert on WQ-Midstream-End', '192.168.1.101', NOW() - INTERVAL '2 hours'
+FROM users WHERE username = 'operator';
+
+INSERT INTO system_logs (user_id, action, details, ip_address, created_at)
+SELECT user_id, 'logout', 'Admin logged out', '192.168.1.100', NOW() - INTERVAL '1 hours'
+FROM users WHERE username = 'admin';
+
+-- Verify setup
+SELECT 'Aqua-Vision Database Setup Complete!' AS status,
+       (SELECT COUNT(*) FROM locations) AS locations,
+       (SELECT COUNT(*) FROM devices) AS devices,
+       (SELECT COUNT(*) FROM sensors) AS sensors,
+       (SELECT COUNT(*) FROM users) AS users,
+       (SELECT COUNT(*) FROM sensor_readings) AS readings,
+       (SELECT COUNT(*) FROM maintenance_logs) AS maintenance_logs,
+       (SELECT COUNT(*) FROM system_logs) AS system_logs;

@@ -9,12 +9,15 @@ export interface SensorReading {
   recorded_at: string;
   min_threshold?: number;
   max_threshold?: number;
+  device_name?: string;
+  location_name?: string;
 }
 
 // Device Info
 export interface DeviceInfo {
   device_id: string;
   device_name: string;
+  location_id?: string;
   location_name: string;
   river_section: 'upstream' | 'midstream' | 'downstream';
   status: 'active' | 'inactive' | 'maintenance' | 'offline' | 'unassigned';

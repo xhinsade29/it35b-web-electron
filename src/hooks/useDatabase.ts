@@ -236,8 +236,8 @@ export function useSensorReadings(sensorId: string, limit: number = 100) {
           table: 'sensor_readings',
           filter: `sensor_id=eq.${sensorId}`,
         },
-        (payload) => {
-          setReadings((prev) => [payload.new as SensorReading, ...prev].slice(0, limit))
+        (payload: { new: Record<string, unknown>; old: Record<string, unknown>; eventType: string }) => {
+          setReadings((prev) => [(payload.new as unknown) as SensorReading, ...prev].slice(0, limit))
         }
       )
       .subscribe()
