@@ -8,7 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { Device, DeviceFormData, DeviceStatus, DeviceCondition } from '../types/device.types';
+import type { Device, DeviceFormData, DeviceStatus } from '../types/device.types';
 import { checkDistanceToRiver, detectRiverSection } from '../utils/riverUtils';
 import styles from './DeviceForm.module.css';
 
@@ -63,12 +63,6 @@ const STATUS_OPTIONS: { value: DeviceStatus; label: string }[] = [
   { value: 'unassigned', label: 'Unassigned' },
 ];
 
-const CONDITION_OPTIONS: { value: DeviceCondition; label: string }[] = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'displaced', label: 'Displaced (Out of Position)' },
-  { value: 'damaged', label: 'Damaged' },
-  { value: 'malfunctioning', label: 'Malfunctioning' },
-];
 
 // Map click handler component
 function MapClickHandler({ onClick }: { onClick: (lat: number, lng: number) => void }) {
@@ -104,7 +98,6 @@ export function DeviceForm({
   const [formData, setFormData] = useState<DeviceFormData>({
     device_name: '',
     status: 'active',
-    device_condition: 'normal',
     latitude: undefined,
     longitude: undefined,
     location_name: '',
@@ -120,7 +113,6 @@ export function DeviceForm({
       setFormData({
         device_name: device.device_name,
         status: device.status,
-        device_condition: device.device_condition,
         latitude: device.latitude || undefined,
         longitude: device.longitude || undefined,
         location_name: device.location_name || '',
@@ -160,6 +152,7 @@ export function DeviceForm({
       latitude: lat,
       longitude: lng,
       location_name: locationName,
+      device_condition: isNearRiver ? 'normal' : 'displaced',
     }));
 
     if (!isNearRiver) {
@@ -179,7 +172,13 @@ export function DeviceForm({
   // Handle submit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    const submitData: DeviceFormData = {
+      ...formData,
+      device_condition: formData.latitude && formData.longitude 
+        ? (checkDistanceToRiver(formData.latitude, formData.longitude, RIVER_COORDS) ? 'normal' : 'displaced')
+        : 'normal',
+    };
+    onSave(submitData);
   };
 
   // Get status color
@@ -216,11 +215,15 @@ export function DeviceForm({
           {showMap ? (
             <>
               <MapContainer
-                key={markerPosition ? `${markerPosition[0]}-${markerPosition[1]}` : 'no-marker'}
-                center={markerPosition || DEFAULT_CENTER}
+                center={DEFAULT_CENTER}
                 zoom={13}
                 className={styles.map}
-                scrollWheelZoom={false}
+                scrollWheelZoom={true}
+                doubleClickZoom={false}
+                touchZoom={true}
+                boxZoom={false}
+                keyboard={true}
+                dragging={true}
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -334,28 +337,6 @@ export function DeviceForm({
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Device Condition</label>
-            <select
-              className={styles.select}
-              value={formData.device_condition}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  device_condition: e.target.value as DeviceCondition,
-                }))
-              }
-              disabled={isSubmitting}
-            >
-              {CONDITION_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <small className={styles.hint}>Physical state of the device</small>
           </div>
 
           {showMap && (

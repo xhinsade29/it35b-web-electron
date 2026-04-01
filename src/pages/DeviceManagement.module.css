@@ -58,7 +58,58 @@
   gap: var(--space-4);
 }
 
-/* Top Grid: (Map+Legend) + Details in 2 columns */
+/* Large Map Section - Full Width (like DeviceForm) */
+.largeMapSection {
+  background: var(--color-bg);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.mapHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mapTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.mapLegend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.largeMap {
+  height: 480px;
+  width: 100%;
+}
+
+/* Bottom Grid: List + Details */
+.bottomGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-4);
+}
+
+/* Old sections - keeping for compatibility */
 .topGrid {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -122,12 +173,29 @@
 }
 
 .formContainer {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* Responsive */
 @media (max-width: 1024px) {
+  .bottomGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .detailsSection {
+    order: -1;
+  }
+
+  .mapHeader {
+    flex-direction: column;
+    gap: var(--space-3);
+    align-items: flex-start;
+  }
+
+  .largeMap {
+    height: 300px;
+  }
+
   .topGrid {
     grid-template-columns: 1fr;
   }

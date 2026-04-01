@@ -66,7 +66,7 @@ export interface DeviceMapData {
 export interface DeviceFormData {
   device_name: string;
   status: DeviceStatus;
-  device_condition: DeviceCondition;
+  device_condition?: DeviceCondition;
   latitude?: number;
   longitude?: number;
   location_name?: string;
@@ -80,8 +80,8 @@ export interface MapSyncResponse {
 }
 
 export interface DeviceFilterOptions {
-  status?: DeviceStatus | 'all';
-  condition?: DeviceCondition | 'all';
-  section?: RiverSection | 'all';
-  search?: string;
+  status: DeviceStatus | 'all';
+  condition: DeviceCondition | 'all';
+  section: RiverSection | 'all';
+  search: string;
 }

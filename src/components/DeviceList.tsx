@@ -13,7 +13,6 @@ interface DeviceListProps {
   loading: boolean;
   onEdit: (device: Device) => void;
   onDelete: (device: Device) => void;
-  onAdd: () => void;
   filters: {
     status: DeviceStatus | 'all';
     condition: DeviceCondition | 'all';
@@ -57,7 +56,6 @@ export function DeviceList({
   loading,
   onEdit,
   onDelete,
-  onAdd,
   filters,
   onFilterChange,
 }: DeviceListProps) {
@@ -115,15 +113,7 @@ export function DeviceList({
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <h2 className={styles.title}>Device Management</h2>
-        <button className={styles.btnPrimary} onClick={onAdd}>
-          <span>+</span> Add Device
-        </button>
-      </div>
-
-      {/* Filters */}
+      {/* Filters Row */}
       <div className={styles.filters}>
         <div className={styles.filterGroup}>
           <input

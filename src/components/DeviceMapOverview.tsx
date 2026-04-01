@@ -4,9 +4,9 @@
  * Migrated from PHP device.php
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, useMap } from 'react-leaflet';
-import type { Device, DeviceMapData } from '../types/device.types';
+import type { Device } from '../types/device.types';
 import { getDeviceStatusColor } from '../services/deviceService';
 import styles from './DeviceMapOverview.module.css';
 
