@@ -4,7 +4,7 @@
  * Migrated from PHP device.php
  */
 
-import { useDeviceReadings, useDeviceHistory } from '../hooks/useDevices';
+import { useDeviceReadings } from '../hooks/useDevices';
 import type { Device } from '../types/device.types';
 import styles from './DeviceDetails.module.css';
 
@@ -24,7 +24,6 @@ const SENSOR_CONFIG = [
 
 export function DeviceDetails({ device, onEdit }: DeviceDetailsProps) {
   const { readings, loading: readingsLoading } = useDeviceReadings(device.device_id);
-  const { history, loading: historyLoading } = useDeviceHistory(device.device_id);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never';
@@ -54,20 +53,6 @@ export function DeviceDetails({ device, onEdit }: DeviceDetailsProps) {
       unassigned: '#9ca3af',
     };
     return colors[status] || '#9ca3af';
-  };
-
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case 'active':
-        return styles.statusActive;
-      case 'maintenance':
-        return styles.statusMaintenance;
-      case 'inactive':
-      case 'offline':
-        return styles.statusInactive;
-      default:
-        return styles.statusDefault;
-    }
   };
 
   return (
@@ -152,54 +137,6 @@ export function DeviceDetails({ device, onEdit }: DeviceDetailsProps) {
                         ? sensor.format(value) + sensor.unit
                         : '--' + sensor.unit}
                     </span>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Activity History */}
-        <div className={styles.section}>
-          <h4 className={styles.sectionTitle}>Activity History</h4>
-          <div className={styles.historyList}>
-            {historyLoading ? (
-              <div className={styles.loading}>Loading history...</div>
-            ) : history.length === 0 ? (
-              <div className={styles.empty}>No history available</div>
-            ) : (
-              history.map((entry) => {
-                const date = new Date(entry.created_at);
-                const dateStr = date.toLocaleDateString('en-PH', {
-                  month: 'short',
-                  day: 'numeric',
-                });
-                const timeStr = date.toLocaleTimeString('en-PH', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                });
-
-                const getActionIcon = (action: string) => {
-                  if (action.includes('CREATE')) return '➕';
-                  if (action.includes('UPDATE')) return '✏️';
-                  if (action.includes('DELETE')) return '🗑️';
-                  return '📝';
-                };
-
-                return (
-                  <div key={entry.log_id} className={styles.historyItem}>
-                    <div className={styles.historyHeader}>
-                      <span className={styles.historyAction}>
-                        {getActionIcon(entry.action)} {entry.action}
-                      </span>
-                      <span className={styles.historyDate}>
-                        {dateStr}, {timeStr}
-                      </span>
-                    </div>
-                    <div className={styles.historyDetails}>{entry.details}</div>
-                    {entry.user_name && (
-                      <div className={styles.historyUser}>by {entry.user_name}</div>
-                    )}
                   </div>
                 );
               })

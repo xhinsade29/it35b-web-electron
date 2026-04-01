@@ -58,6 +58,79 @@
   gap: var(--space-4);
 }
 
+/* Main Content: Map + Details side by side */
+.mainContent {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-4);
+}
+
+.mapSectionWithDetails {
+  background: var(--color-bg);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.embeddedMap {
+  height: 500px;
+  width: 100%;
+}
+
+/* Device Info Panel */
+.deviceInfoPanel {
+  background: var(--color-bg);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.deviceSelector {
+  padding: var(--space-4);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.selectorLabel {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.deviceDropdown {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background: var(--color-bg);
+  cursor: pointer;
+}
+
+.deviceDropdown:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.noDeviceSelected {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--color-text-muted);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.noDeviceSelected p {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
 /* Large Map Section - Full Width (like DeviceForm) */
 .largeMapSection {
   background: var(--color-bg);
@@ -178,6 +251,18 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
+  .mainContent {
+    grid-template-columns: 1fr;
+  }
+
+  .deviceInfoPanel {
+    order: -1;
+  }
+
+  .embeddedMap {
+    height: 300px;
+  }
+
   .bottomGrid {
     grid-template-columns: 1fr;
   }

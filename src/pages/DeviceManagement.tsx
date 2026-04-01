@@ -173,72 +173,104 @@ export function DeviceManagement() {
       <div className={styles.content}>
         {viewMode === 'list' ? (
           <>
-            {/* Large Map Section - Full Width */}
-            <div className={styles.largeMapSection}>
-              <div className={styles.mapHeader}>
-                <h3 className={styles.mapTitle}>📍 Device Locations</h3>
-                <div className={styles.mapLegend}>
-                  <span className={styles.legendDot} style={{ background: '#059669' }}></span> Active
-                  <span className={styles.legendDot} style={{ background: '#3b82f6', marginLeft: '12px' }}></span> Maintenance
-                  <span className={styles.legendDot} style={{ background: '#7c3aed', marginLeft: '12px' }}></span> Displaced
-                  <span className={styles.legendDot} style={{ background: '#1f2937', marginLeft: '12px' }}></span> Damaged
-                  <span className={styles.legendDot} style={{ background: '#d97706', marginLeft: '12px' }}></span> Malfunctioning
+            {/* Main Content: Map + Details side by side */}
+            <div className={styles.mainContent}>
+              {/* Map Section */}
+              <div className={styles.mapSectionWithDetails}>
+                <div className={styles.mapHeader}>
+                  <h3 className={styles.mapTitle}>📍 Device Locations</h3>
+                  <div className={styles.mapLegend}>
+                    <span className={styles.legendDot} style={{ background: '#059669' }}></span> Active
+                    <span className={styles.legendDot} style={{ background: '#3b82f6', marginLeft: '12px' }}></span> Maintenance
+                    <span className={styles.legendDot} style={{ background: '#7c3aed', marginLeft: '12px' }}></span> Displaced
+                    <span className={styles.legendDot} style={{ background: '#1f2937', marginLeft: '12px' }}></span> Damaged
+                    <span className={styles.legendDot} style={{ background: '#d97706', marginLeft: '12px' }}></span> Malfunctioning
+                  </div>
                 </div>
-              </div>
-              <MapContainer
-                center={DEFAULT_CENTER}
-                zoom={13}
-                className={styles.largeMap}
-                scrollWheelZoom={true}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                />
-                <Polyline
-                  positions={RIVER_COORDS}
-                  color="#3b82f6"
-                  weight={4}
-                  opacity={0.85}
-                />
-                {devices.filter(d => d.latitude && d.longitude).map((device) => {
-                  const isSelected = device.device_id === selectedDeviceId;
-                  const color = getDeviceStatusColor(device.status, device.device_condition);
-                  return (
-                    <CircleMarker
-                      key={device.device_id}
-                      center={[device.latitude!, device.longitude!]}
-                      radius={isSelected ? 14 : 10}
-                      fillColor={color}
-                      color="#fff"
-                      weight={isSelected ? 3 : 2}
-                      fillOpacity={isSelected ? 1.0 : 0.9}
-                      eventHandlers={{
-                        click: () => handleSelectDevice(device.device_id),
-                      }}
-                    >
-                      <Popup>
-                        <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', minWidth: '150px' }}>
-                          <strong style={{ fontSize: 'var(--text-sm)', display: 'block', marginBottom: '4px' }}>{device.device_name}</strong>
-                          <div>Status: <span style={{ color }}>{device.status}</span></div>
-                          {device.device_condition !== 'normal' && (
-                            <div style={{ color: '#d97706' }}>⚠️ {device.device_condition}</div>
-                          )}
-                          {device.location_name && <div>Location: {device.location_name}</div>}
-                          <div style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-                            {device.latitude?.toFixed(5)}°N, {device.longitude?.toFixed(5)}°E
+                <MapContainer
+                  center={DEFAULT_CENTER}
+                  zoom={13}
+                  className={styles.embeddedMap}
+                  scrollWheelZoom={true}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                  />
+                  <Polyline
+                    positions={RIVER_COORDS}
+                    color="#3b82f6"
+                    weight={4}
+                    opacity={0.85}
+                  />
+                  {devices.filter(d => d.latitude && d.longitude).map((device) => {
+                    const isSelected = device.device_id === selectedDeviceId;
+                    const color = getDeviceStatusColor(device.status, device.device_condition);
+                    return (
+                      <CircleMarker
+                        key={device.device_id}
+                        center={[device.latitude!, device.longitude!]}
+                        radius={isSelected ? 14 : 10}
+                        fillColor={color}
+                        color="#fff"
+                        weight={isSelected ? 3 : 2}
+                        fillOpacity={isSelected ? 1.0 : 0.9}
+                        eventHandlers={{
+                          click: () => handleSelectDevice(device.device_id),
+                        }}
+                      >
+                        <Popup>
+                          <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', minWidth: '150px' }}>
+                            <strong style={{ fontSize: 'var(--text-sm)', display: 'block', marginBottom: '4px' }}>{device.device_name}</strong>
+                            <div>Status: <span style={{ color }}>{device.status}</span></div>
+                            {device.device_condition !== 'normal' && (
+                              <div style={{ color: '#d97706' }}>⚠️ {device.device_condition}</div>
+                            )}
+                            {device.location_name && <div>Location: {device.location_name}</div>}
+                            <div style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                              {device.latitude?.toFixed(5)}°N, {device.longitude?.toFixed(5)}°E
+                            </div>
                           </div>
-                        </div>
-                      </Popup>
-                    </CircleMarker>
-                  );
-                })}
-                <MapBounds devices={devices} />
-              </MapContainer>
+                        </Popup>
+                      </CircleMarker>
+                    );
+                  })}
+                  <MapBounds devices={devices} />
+                </MapContainer>
+              </div>
+
+              {/* Device Details Panel with Dropdown */}
+              <div className={styles.deviceInfoPanel}>
+                <div className={styles.deviceSelector}>
+                  <label className={styles.selectorLabel}>Select Device</label>
+                  <select
+                    className={styles.deviceDropdown}
+                    value={selectedDeviceId || ''}
+                    onChange={(e) => handleSelectDevice(e.target.value)}
+                  >
+                    <option value="">-- Select a device --</option>
+                    {devices.map((device) => (
+                      <option key={device.device_id} value={device.device_id}>
+                        {device.device_name} ({device.status})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {displayDevice ? (
+                  <DeviceDetails
+                    device={displayDevice}
+                    onEdit={handleEdit}
+                  />
+                ) : (
+                  <div className={styles.noDeviceSelected}>
+                    <p>Select a device from the dropdown to view details</p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Bottom: Device List with Details Panel */}
-            <div className={styles.bottomGrid}>
+            {/* Bottom: Device List */}
+            <div className={styles.listSection}>
               <DeviceList
                 devices={filteredDevices}
                 loading={loading}
@@ -247,19 +279,6 @@ export function DeviceManagement() {
                 filters={filterOptions}
                 onFilterChange={handleFilterChange}
               />
-              <div className={styles.detailsSection}>
-                {displayDevice ? (
-                  <DeviceDetails
-                    device={displayDevice}
-                    onEdit={handleEdit}
-                  />
-                ) : (
-                  <div className={styles.noSelection}>
-                    <div className={styles.noSelectionIcon}>📡</div>
-                    <p>Select a device to view details</p>
-                  </div>
-                )}
-              </div>
             </div>
           </>
         ) : (
