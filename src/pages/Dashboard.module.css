@@ -556,6 +556,31 @@
   line-height: 1.5;
 }
 
+/* Map Legend */
+.mapLegend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 18px;
+  border-top: 1px solid rgba(13, 17, 23, 0.07);
+  background: #f9fafb;
+}
+
+.leg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #8897aa;
+}
+
+.legDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
 /* Buttons */
 .btn {
   height: 32px;
