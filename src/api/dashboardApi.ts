@@ -60,6 +60,7 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
       return {
         device_id: d.device_id,
         device_name: d.device_name,
+        location_id: d.location_id,
         location_name: location?.location_name || 'Unknown',
         river_section: location?.river_section || 'upstream',
         status: d.status,
@@ -137,6 +138,27 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
     const sectionConditions = processSectionConditions(processedReadings);
     const logs = processActivityLogs(processedReadings);
 
+    // Build map locations with device counts
+    const mapLocations = (locationsData || []).map((loc: { 
+      location_id: string; 
+      location_name: string; 
+      river_section: string;
+      latitude: number;
+      longitude: number;
+    }) => {
+      const locDevices = (devicesData || []).filter((d: { location_id?: string }) => d.location_id === loc.location_id);
+      return {
+        location_id: loc.location_id,
+        location_name: loc.location_name,
+        river_section: loc.river_section,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        total_devices: locDevices.length,
+        active_devices: locDevices.filter((d: { status?: string }) => d.status === 'active').length,
+        maint_devices: locDevices.filter((d: { status?: string }) => d.status === 'maintenance').length,
+      };
+    });
+
     return {
       ok: true,
       ts: new Date().toISOString(),
@@ -150,7 +172,7 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
       device_readings: {},
       alerts: transformedAlerts,
       logs: logs,
-      map_locations: [],
+      map_locations: mapLocations,
       chart_data: chartData,
       device_chart_data: {},
       maintenance: [],

@@ -83,16 +83,19 @@ export function useDashboardSync(interval: number = 10000) {
           sensor_type: a.sensors?.sensor_type || 'unknown',
         })),
         logs: [],
-        map_locations: (mapLocations || []).map((l: { location_id: string; location_name: string; river_section: string; latitude: number; longitude: number }) => ({
-          location_id: l.location_id,
-          location_name: l.location_name,
-          river_section: l.river_section,
-          latitude: l.latitude,
-          longitude: l.longitude,
-          total_devices: 0,
-          active_devices: 0,
-          maint_devices: 0,
-        })),
+        map_locations: (mapLocations || []).map((l: { location_id: string; location_name: string; river_section: string; latitude: number; longitude: number }) => {
+          const locationDevices = (devices || []).filter((d: { locations?: { location_id?: string } }) => d.locations?.location_id === l.location_id);
+          return {
+            location_id: l.location_id,
+            location_name: l.location_name,
+            river_section: l.river_section,
+            latitude: l.latitude,
+            longitude: l.longitude,
+            total_devices: locationDevices.length,
+            active_devices: locationDevices.filter((d: { status?: string }) => d.status === 'active').length,
+            maint_devices: locationDevices.filter((d: { status?: string }) => d.status === 'maintenance').length,
+          };
+        }),
         chart_data: {
           temperature: Array(24).fill(null),
           pH: Array(24).fill(null),
