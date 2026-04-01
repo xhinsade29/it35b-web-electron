@@ -229,16 +229,18 @@ export function DashboardPage() {
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '0' }}>
                   <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Simulation Log</div>
-                  <div className={styles.simLog}>
-                    {simulationLogs.length === 0 ? (
-                      <div style={{ color: '#9ca3af', fontStyle: 'italic' }}>Monitoring stopped — press ▶ Start to begin.</div>
-                    ) : (
-                      simulationLogs.slice().reverse().map((log, index) => (
-                        <div key={log.id || index} style={{ color: log.type === 'error' ? '#dc2626' : log.type === 'alert' ? '#d97706' : '#3d4a5c', padding: '2px 0', fontSize: '11px' }}>
-                          [{new Date(log.timestamp).toLocaleTimeString('en-PH', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}] {log.message}
-                        </div>
-                      ))
-                    )}
+                  <div 
+                    className={styles.simLog}
+                    ref={(el) => {
+                      if (el) el.scrollTop = el.scrollHeight;
+                    }}
+                  >
+                    <div style={{ color: '#9ca3af', fontStyle: 'italic', marginBottom: '8px' }}>Press ▶ Start to begin simulation</div>
+                    {simulationLogs.map((log, index) => (
+                      <div key={log.id || index} style={{ color: log.type === 'error' ? '#dc2626' : log.type === 'alert' ? '#d97706' : '#3d4a5c', padding: '2px 0', fontSize: '11px' }}>
+                        [{new Date(log.timestamp).toLocaleTimeString('en-PH', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}] {log.message}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
