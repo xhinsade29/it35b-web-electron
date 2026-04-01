@@ -80,6 +80,18 @@ function MapClickHandler({ onClick }: { onClick: (lat: number, lng: number) => v
   return null;
 }
 
+// Map resizer to fix rendering issues
+function MapResizer() {
+  const map = useMapEvents({});
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [map]);
+  return null;
+}
+
 export function DeviceForm({
   device,
   onSave,
@@ -199,7 +211,97 @@ export function DeviceForm({
       </div>
 
       <div className={styles.content}>
-        {/* Form Section */}
+        {/* Map Section - Now on the LEFT */}
+        <div className={styles.mapSection}>
+          {showMap ? (
+            <>
+              <MapContainer
+                key={markerPosition ? `${markerPosition[0]}-${markerPosition[1]}` : 'no-marker'}
+                center={markerPosition || DEFAULT_CENTER}
+                zoom={13}
+                className={styles.map}
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                />
+
+                {/* River polyline */}
+                <Polyline
+                  positions={RIVER_COORDS}
+                  color="#3b82f6"
+                  weight={4}
+                  opacity={0.85}
+                />
+
+                {/* Existing devices */}
+                {existingDevices.map((existingDevice) => {
+                  if (!existingDevice.latitude || !existingDevice.longitude) return null;
+                  if (isEditing && existingDevice.device_id === device?.device_id) return null;
+
+                  const color = getStatusColor(
+                    existingDevice.status,
+                    existingDevice.device_condition
+                  );
+
+                  return (
+                    <Marker
+                      key={existingDevice.device_id}
+                      position={[existingDevice.latitude, existingDevice.longitude]}
+                      icon={L.divIcon({
+                        className: styles.existingMarker,
+                        html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8],
+                      })}
+                    >
+                      <Popup>
+                        <div className={styles.popup}>
+                          <strong>{existingDevice.device_name}</strong>
+                          <div>Status: {existingDevice.status}</div>
+                          {existingDevice.device_condition !== 'normal' && (
+                            <div>⚠️ {existingDevice.device_condition}</div>
+                          )}
+                        </div>
+                      </Popup>
+                    </Marker>
+                  );
+                })}
+
+                {/* Draggable marker */}
+                {markerPosition && (
+                  <Marker
+                    position={markerPosition}
+                    draggable={true}
+                    eventHandlers={{
+                      dragend: handleMarkerDrag,
+                    }}
+                    icon={L.divIcon({
+                      className: styles.newMarker,
+                      html: `<div style="background-color: #1a56db; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"></div>`,
+                      iconSize: [22, 22],
+                      iconAnchor: [11, 11],
+                    })}
+                  />
+                )}
+
+                <MapClickHandler onClick={handleMapClick} />
+                <MapResizer />
+              </MapContainer>
+              <p className={styles.mapHint}>
+                💡 Click on the map to set device location, or drag the marker
+              </p>
+            </>
+          ) : (
+            <div className={styles.mapPlaceholder}>
+              <div className={styles.mapPlaceholderIcon}>📍</div>
+              <p>Select "Active" status to enable map location assignment</p>
+            </div>
+          )}
+        </div>
+
+        {/* Form Section - Now on the RIGHT */}
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formGroup}>
             <label className={styles.label}>
@@ -313,93 +415,6 @@ export function DeviceForm({
             </button>
           </div>
         </form>
-
-        {/* Map Section */}
-        <div className={styles.mapSection}>
-          {showMap ? (
-            <>
-              <MapContainer
-                center={markerPosition || DEFAULT_CENTER}
-                zoom={13}
-                className={styles.map}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                />
-
-                {/* River polyline */}
-                <Polyline
-                  positions={RIVER_COORDS}
-                  color="#3b82f6"
-                  weight={4}
-                  opacity={0.85}
-                />
-
-                {/* Existing devices */}
-                {existingDevices.map((existingDevice) => {
-                  if (!existingDevice.latitude || !existingDevice.longitude) return null;
-                  if (isEditing && existingDevice.device_id === device?.device_id) return null;
-
-                  const color = getStatusColor(
-                    existingDevice.status,
-                    existingDevice.device_condition
-                  );
-
-                  return (
-                    <Marker
-                      key={existingDevice.device_id}
-                      position={[existingDevice.latitude, existingDevice.longitude]}
-                      icon={L.divIcon({
-                        className: styles.existingMarker,
-                        html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
-                        iconSize: [16, 16],
-                        iconAnchor: [8, 8],
-                      })}
-                    >
-                      <Popup>
-                        <div className={styles.popup}>
-                          <strong>{existingDevice.device_name}</strong>
-                          <div>Status: {existingDevice.status}</div>
-                          {existingDevice.device_condition !== 'normal' && (
-                            <div>⚠️ {existingDevice.device_condition}</div>
-                          )}
-                        </div>
-                      </Popup>
-                    </Marker>
-                  );
-                })}
-
-                {/* Draggable marker */}
-                {markerPosition && (
-                  <Marker
-                    position={markerPosition}
-                    draggable={true}
-                    eventHandlers={{
-                      dragend: handleMarkerDrag,
-                    }}
-                    icon={L.divIcon({
-                      className: styles.newMarker,
-                      html: `<div style="background-color: #1a56db; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"></div>`,
-                      iconSize: [22, 22],
-                      iconAnchor: [11, 11],
-                    })}
-                  />
-                )}
-
-                <MapClickHandler onClick={handleMapClick} />
-              </MapContainer>
-              <p className={styles.mapHint}>
-                💡 Click on the map to set device location, or drag the marker
-              </p>
-            </>
-          ) : (
-            <div className={styles.mapPlaceholder}>
-              <div className={styles.mapPlaceholderIcon}>📍</div>
-              <p>Select "Active" status to enable map location assignment</p>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
