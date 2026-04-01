@@ -133,20 +133,18 @@ export function DeviceManagement() {
       <div className={styles.content}>
         {viewMode === 'list' ? (
           <>
-            {/* Top Row: Map + Legend + Details in 3 columns */}
+            {/* Top Row: (Map+Legend) + Details in 2 columns */}
             <div className={styles.topGrid}>
-              {/* Device Locations (Map) - Takes more space */}
-              <div className={styles.mapSection}>
+              {/* Map + Legend Combined */}
+              <div className={styles.mapLegendSection}>
                 <DeviceMapOverview
                   devices={devices}
                   selectedDeviceId={selectedDeviceId}
                   onSelectDevice={handleSelectDevice}
                 />
-              </div>
-
-              {/* Legend - Compact reference */}
-              <div className={styles.legendSection}>
-                <DeviceLegend />
+                <div style={{ marginTop: 'var(--space-3)' }}>
+                  <DeviceLegend />
+                </div>
               </div>
 
               {/* Device Details Panel */}
