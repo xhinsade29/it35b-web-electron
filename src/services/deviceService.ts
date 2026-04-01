@@ -4,7 +4,7 @@
  * Handles all device-related database operations via Supabase
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAdmin } from '../lib/supabase';
 import type {
   Device,
   DeviceLocation,
@@ -90,7 +90,7 @@ export async function createDevice(formData: DeviceFormData): Promise<Device> {
   }
 
   // Check distance to river and set condition if needed
-  let deviceCondition = formData.device_condition;
+  let deviceCondition = formData.device_condition || 'normal';
   if (formData.status === 'active' && formData.latitude && formData.longitude) {
     const isNearRiver = await checkDistanceToRiver(formData.latitude, formData.longitude);
     if (!isNearRiver) {
@@ -98,10 +98,11 @@ export async function createDevice(formData: DeviceFormData): Promise<Device> {
     }
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('devices')
     .insert({
       device_name: formData.device_name,
+      device_type: 'sensor', // Default device type
       status: formData.status,
       device_condition: deviceCondition,
       location_id: locationId,
@@ -112,7 +113,7 @@ export async function createDevice(formData: DeviceFormData): Promise<Device> {
 
   if (error) {
     console.error('Error creating device:', error);
-    throw new Error('Failed to create device');
+    throw new Error(`Failed to create device: ${error.message || error.details || 'Unknown error'}`);
   }
 
   // Log activity
@@ -160,10 +161,11 @@ export async function updateDevice(
     }
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('devices')
     .update({
       device_name: formData.device_name,
+      device_type: formData.device_type || originalDevice?.device_type || 'sensor',
       status: formData.status,
       device_condition: formData.device_condition,
       location_id: locationId,
@@ -209,25 +211,22 @@ export async function updateDevice(
 }
 
 /**
- * Delete device
+ * Delete device with cascade delete for sensor readings
  */
 export async function deleteDevice(deviceId: string): Promise<void> {
-  // Check if device has readings
-  const { count, error: countError } = await supabase
+  // First delete all sensor readings for this device
+  const { error: deleteReadingsError } = await supabaseAdmin
     .from('sensor_readings')
-    .select('reading_id', { count: 'exact', head: true })
+    .delete()
     .eq('device_id', deviceId);
 
-  if (countError) {
-    console.error('Error checking readings:', countError);
-    throw new Error('Failed to check device readings');
+  if (deleteReadingsError) {
+    console.error('Error deleting sensor readings:', deleteReadingsError);
+    throw new Error('Failed to delete sensor readings');
   }
 
-  if (count && count > 0) {
-    throw new Error(`Cannot delete device: It has ${count} sensor readings. Delete readings first.`);
-  }
-
-  const { error } = await supabase
+  // Delete the device
+  const { error } = await supabaseAdmin
     .from('devices')
     .delete()
     .eq('device_id', deviceId);
@@ -577,7 +576,7 @@ function detectRiverSection(lng: number): RiverSection {
  * Log activity to system logs
  */
 async function logActivity(action: string, details: string): Promise<void> {
-  const { error } = await supabase.from('system_logs').insert({
+  const { error } = await supabaseAdmin.from('system_logs').insert({
     action,
     details,
     // user_id will be set by RLS/policy

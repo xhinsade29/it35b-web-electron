@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY || ''
+const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || ''
 
 // Validate URL format
 const isValidUrl = (url: string) => {
@@ -17,6 +18,13 @@ const isValidUrl = (url: string) => {
 export const supabase = isValidUrl(supabaseUrl) && supabaseKey
   ? createClient(supabaseUrl, supabaseKey)
   : createMockClient()
+
+// Admin client with service role key (bypasses RLS for admin operations)
+export const supabaseAdmin = isValidUrl(supabaseUrl) && supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
+  : supabase
 
 // Mock client for development without Supabase credentials
 function createMockClient() {
@@ -38,6 +46,7 @@ function createMockClient() {
       insert: () => Promise.resolve({ data: null, error: null }),
       update: () => Promise.resolve({ data: null, error: null }),
       upsert: () => Promise.resolve({ data: null, error: null }),
+      delete: () => Promise.resolve({ data: null, error: null }),
     }),
     rpc: (fn: string, params?: Record<string, unknown>) => {
       console.log(`Mock RPC call: ${fn}`, params)

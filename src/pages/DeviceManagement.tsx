@@ -9,8 +9,8 @@ import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, useMap } from '
 import { DeviceList } from '../components/DeviceList';
 import { DeviceForm } from '../components/DeviceForm';
 import { DeviceDetails } from '../components/DeviceDetails';
-import { useDevices, useDevice } from '../hooks/useDevices';
-import { getDeviceStatusColor } from '../services/deviceService';
+import { useDevices } from '../hooks/useDevices';
+import { createDevice, updateDevice, deleteDevice, getDeviceStatusColor } from '../services/deviceService';
 import type { Device, DeviceFormData, DeviceStatus, DeviceCondition, RiverSection } from '../types/device.types';
 import styles from './DeviceManagement.module.css';
 
@@ -59,6 +59,7 @@ function MapBounds({ devices }: { devices: Device[] }) {
 export function DeviceManagement() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     devices,
@@ -69,13 +70,6 @@ export function DeviceManagement() {
     setFilterOptions,
     refresh: refreshDevices,
   } = useDevices();
-
-  const {
-    device: selectedDevice,
-    create,
-    update,
-    remove,
-  } = useDevice(selectedDeviceId || undefined);
 
   // Handle device selection
   const handleSelectDevice = useCallback((deviceId: string) => {
@@ -94,42 +88,57 @@ export function DeviceManagement() {
     setViewMode('edit');
   }, []);
 
-  // Handle delete device
+  // Handle delete device - use deviceId directly from the device being deleted
   const handleDelete = useCallback(async (device: Device) => {
     if (confirm(`Are you sure you want to delete ${device.device_name}?`)) {
-      const success = await remove();
-      if (success) {
+      try {
+        await deleteDevice(device.device_id);
         refreshDevices();
         if (selectedDeviceId === device.device_id) {
           setSelectedDeviceId(null);
         }
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Failed to delete device');
       }
     }
-  }, [remove, refreshDevices, selectedDeviceId]);
+  }, [refreshDevices, selectedDeviceId]);
 
-  // Handle save device
-  const handleSave = useCallback(async (formData: DeviceFormData) => {
-    let success = false;
+  // Handle save device - call service functions directly
+  const handleSave = useCallback(async (formData: DeviceFormData, originalDevice?: Device) => {
+    setIsSubmitting(true);
+    try {
+      let success = false;
 
-    if (viewMode === 'add') {
-      const newDevice = await create(formData);
-      success = !!newDevice;
-    } else if (viewMode === 'edit' && selectedDeviceId) {
-      const updated = await update(formData);
-      success = !!updated;
+      if (viewMode === 'add') {
+        const newDevice = await createDevice(formData);
+        success = !!newDevice;
+      } else if (viewMode === 'edit' && selectedDeviceId && originalDevice) {
+        const updated = await updateDevice(selectedDeviceId, formData, originalDevice);
+        success = !!updated;
+      }
+
+      if (success) {
+        setViewMode('list');
+        setSelectedDeviceId(null);
+        refreshDevices();
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to save device');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    if (success) {
-      setViewMode('list');
-      refreshDevices();
-    }
-  }, [viewMode, selectedDeviceId, create, update, refreshDevices]);
+  }, [viewMode, selectedDeviceId, refreshDevices]);
 
   // Handle cancel
   const handleCancel = () => {
     setViewMode('list');
     setSelectedDeviceId(null);
   };
+
+  // Get selected device for edit form
+  const selectedDevice = selectedDeviceId 
+    ? devices.find(d => d.device_id === selectedDeviceId) 
+    : null;
 
   // Handle filter change
   const handleFilterChange = useCallback((filters: {
@@ -289,7 +298,7 @@ export function DeviceManagement() {
               onSave={handleSave}
               onCancel={handleCancel}
               existingDevices={devices}
-              isSubmitting={false}
+              isSubmitting={isSubmitting}
             />
           </div>
         )}

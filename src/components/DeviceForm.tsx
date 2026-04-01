@@ -50,7 +50,7 @@ const DEFAULT_CENTER: [number, number] = [8.369297, 124.876785];
 
 interface DeviceFormProps {
   device?: Device | null;
-  onSave: (data: DeviceFormData) => void;
+  onSave: (data: DeviceFormData, originalDevice?: Device) => void;
   onCancel: () => void;
   existingDevices: Device[];
   isSubmitting?: boolean;
@@ -181,7 +181,7 @@ export function DeviceForm({
         ? (checkDistanceToRiver(formData.latitude, formData.longitude, RIVER_COORDS) ? 'normal' : 'displaced')
         : 'normal',
     };
-    onSave(submitData);
+    onSave(submitData, device || undefined);
   };
 
   // Get status color

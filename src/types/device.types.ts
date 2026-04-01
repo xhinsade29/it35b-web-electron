@@ -10,6 +10,7 @@ export type RiverSection = 'upstream' | 'midstream' | 'downstream' | 'custom';
 export interface Device {
   device_id: string;
   device_name: string;
+  device_type: string;
   status: DeviceStatus;
   device_condition: DeviceCondition;
   location_id: string | null;
@@ -65,6 +66,7 @@ export interface DeviceMapData {
 
 export interface DeviceFormData {
   device_name: string;
+  device_type?: string;
   status: DeviceStatus;
   device_condition?: DeviceCondition;
   latitude?: number;
