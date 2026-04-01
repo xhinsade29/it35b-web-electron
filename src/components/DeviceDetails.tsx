@@ -126,6 +126,11 @@ export function DeviceDetails({ device, onEdit }: DeviceDetailsProps) {
           <div className={styles.readingsGrid}>
             {readingsLoading ? (
               <div className={styles.loading}>Loading readings...</div>
+            ) : !readings || Object.values(readings).every(v => v === null || v === undefined) ? (
+              <div className={styles.noReadings}>
+                <p>No sensor readings available</p>
+                <small>Device may not have sensors configured or no data has been recorded yet.</small>
+              </div>
             ) : (
               SENSOR_CONFIG.map((sensor) => {
                 const value = readings?.[sensor.key as keyof typeof readings];

@@ -153,6 +153,23 @@
   font-family: var(--font-mono);
 }
 
+.noReadings {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.noReadings p {
+  margin: 0 0 var(--space-1) 0;
+  font-size: var(--text-sm);
+}
+
+.noReadings small {
+  font-size: var(--text-xs);
+  opacity: 0.8;
+}
+
 .loading {
   font-size: var(--text-sm);
   color: var(--color-text-muted);
