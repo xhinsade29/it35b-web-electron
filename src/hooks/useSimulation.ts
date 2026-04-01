@@ -1,0 +1,543 @@
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { simulateDevice, saveMonitorState } from '../api/dashboardApi';
+import { useDashboardSync } from './useDashboardSync';
+import type { SimulationResponse, MonitorState } from '../types/dashboard.types';
+
+// =====================================================
+// Simulation Engine Hook
+// Replaces PHP simulation engine (MODES, _initDs, _next, _sendTick)
+// =====================================================
+
+export type SimulationMode = 'normal' | 'flood' | 'pollution' | 'drought';
+
+interface SensorConfig {
+  base: number;
+  drift: number;
+  min: number;
+  max: number;
+}
+
+interface ModeConfig {
+  temperature: SensorConfig;
+  ph_level: SensorConfig;
+  turbidity: SensorConfig;
+  dissolved_oxygen: SensorConfig;
+  water_level: SensorConfig;
+  sediments: SensorConfig;
+}
+
+// Mode configurations matching PHP MODES
+const MODE_CONFIGS: Record<SimulationMode, ModeConfig> = {
+  normal: {
+    temperature: { base: 27, drift: 1.5, min: 24, max: 30 },
+    ph_level: { base: 7.2, drift: 0.2, min: 6.8, max: 7.6 },
+    turbidity: { base: 20, drift: 8, min: 5, max: 45 },
+    dissolved_oxygen: { base: 7.5, drift: 0.5, min: 6.5, max: 8.5 },
+    water_level: { base: 1.5, drift: 0.1, min: 1.2, max: 1.8 },
+    sediments: { base: 40, drift: 10, min: 10, max: 80 }
+  },
+  flood: {
+    temperature: { base: 26, drift: 1, min: 24, max: 28 },
+    ph_level: { base: 6.8, drift: 0.3, min: 6.2, max: 7.2 },
+    turbidity: { base: 120, drift: 30, min: 60, max: 200 },
+    dissolved_oxygen: { base: 5.5, drift: 0.8, min: 4.0, max: 6.5 },
+    water_level: { base: 2.7, drift: 0.2, min: 2.3, max: 3.5 },
+    sediments: { base: 350, drift: 80, min: 200, max: 550 }
+  },
+  pollution: {
+    temperature: { base: 29, drift: 1, min: 27, max: 32 },
+    ph_level: { base: 5.8, drift: 0.4, min: 5.0, max: 6.8 },
+    turbidity: { base: 80, drift: 20, min: 40, max: 130 },
+    dissolved_oxygen: { base: 3.5, drift: 0.5, min: 2.5, max: 4.5 },
+    water_level: { base: 1.4, drift: 0.1, min: 1.1, max: 1.6 },
+    sediments: { base: 200, drift: 60, min: 100, max: 400 }
+  },
+  drought: {
+    temperature: { base: 33, drift: 1.5, min: 30, max: 37 },
+    ph_level: { base: 8.0, drift: 0.3, min: 7.5, max: 8.7 },
+    turbidity: { base: 8, drift: 3, min: 3, max: 15 },
+    dissolved_oxygen: { base: 9.0, drift: 0.5, min: 8.0, max: 10 },
+    water_level: { base: 0.4, drift: 0.05, min: 0.3, max: 0.6 },
+    sediments: { base: 15, drift: 5, min: 5, max: 30 }
+  }
+};
+
+interface SimulationLog {
+  id: string;
+  timestamp: string;
+  deviceId: string;
+  deviceName: string;
+  mode: SimulationMode;
+  message: string;
+  type: 'success' | 'alert' | 'error';
+  readings?: Record<string, number>;
+}
+
+interface SimulationState {
+  isRunning: boolean;
+  mode: SimulationMode;
+  interval: number;
+  tickCount: number;
+  alertCount: number;
+  logs: SimulationLog[];
+  lastDeviceId?: string;
+  lastDeviceName?: string;
+}
+
+export function useSimulationEngine(deviceIds: string[]) {
+  const [state, setState] = useState<SimulationState>({
+    isRunning: false,
+    mode: 'normal',
+    interval: 5000,
+    tickCount: 0,
+    alertCount: 0,
+    logs: []
+  });
+
+  // Device-specific modes (distributed round-robin)
+  const deviceModesRef = useRef<Record<string, SimulationMode>>({});
+  const deviceStatesRef = useRef<Record<string, Record<string, number>>>({});
+  const timerRef = useRef<number | null>(null);
+  const isRunningRef = useRef(false);
+
+  const [dashboardState, dashboardActions] = useDashboardSync();
+
+  // Initialize device modes (distributed round-robin like PHP)
+  const assignDeviceModes = useCallback(() => {
+    const modes: SimulationMode[] = ['normal', 'flood', 'pollution', 'drought'];
+    deviceIds.forEach((id, index) => {
+      deviceModesRef.current[id] = modes[index % modes.length];
+    });
+  }, [deviceIds]);
+
+  // Initialize device state for a mode
+  const initDeviceState = useCallback((deviceId: string, mode: SimulationMode) => {
+    const config = MODE_CONFIGS[mode];
+    deviceStatesRef.current[deviceId] = {};
+    
+    Object.entries(config).forEach(([key, cfg]) => {
+      const variation = (Math.random() - 0.5) * cfg.drift;
+      deviceStatesRef.current[deviceId][key] = parseFloat((cfg.base + variation).toFixed(2));
+    });
+  }, []);
+
+  // Generate next value for a sensor
+  const getNextValue = useCallback((deviceId: string, sensorType: keyof ModeConfig): number | null => {
+    const mode = deviceModesRef.current[deviceId] || 'normal';
+    const config = MODE_CONFIGS[mode][sensorType];
+    
+    if (!config) return null;
+    
+    if (!deviceStatesRef.current[deviceId]) {
+      initDeviceState(deviceId, mode);
+    }
+    
+    const currentValue = deviceStatesRef.current[deviceId][sensorType];
+    const drift = config.drift * 0.35;
+    const variation = (Math.random() - 0.5) * drift;
+    let newValue = currentValue + variation;
+    
+    // Clamp to min/max
+    newValue = Math.max(config.min, Math.min(config.max, newValue));
+    newValue = parseFloat(newValue.toFixed(2));
+    
+    deviceStatesRef.current[deviceId][sensorType] = newValue;
+    return newValue;
+  }, [initDeviceState]);
+
+  // Add log entry
+  const addLog = useCallback((log: Omit<SimulationLog, 'id' | 'timestamp'>) => {
+    const entry: SimulationLog = {
+      ...log,
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: new Date().toISOString()
+    };
+    
+    setState(prev => ({
+      ...prev,
+      logs: [...prev.logs.slice(-79), entry] // Keep last 80 logs
+    }));
+  }, []);
+
+  // Execute a simulation tick for all devices
+  const executeTick = useCallback(async () => {
+    if (deviceIds.length === 0) {
+      addLog({
+        deviceId: '',
+        deviceName: 'System',
+        mode: state.mode,
+        message: 'No active devices.',
+        type: 'error'
+      });
+      return;
+    }
+
+    const promises = deviceIds.map(async (deviceId) => {
+      const mode = deviceModesRef.current[deviceId] || 'normal';
+      
+      const readings = {
+        temperature: getNextValue(deviceId, 'temperature'),
+        ph_level: getNextValue(deviceId, 'ph_level'),
+        turbidity: getNextValue(deviceId, 'turbidity'),
+        dissolved_oxygen: getNextValue(deviceId, 'dissolved_oxygen'),
+        water_level: getNextValue(deviceId, 'water_level'),
+        sediments: getNextValue(deviceId, 'sediments')
+      };
+
+      try {
+        const result: SimulationResponse = await simulateDevice(deviceId, readings);
+        
+        if (!result.success) {
+          addLog({
+            deviceId,
+            deviceName: result.device_name || 'Unknown',
+            mode,
+            message: `Error: ${result.reading_id}`,
+            type: 'error'
+          });
+          return null;
+        }
+
+        // Log alerts
+        if (result.alerts_created && result.alerts_created.length > 0) {
+          result.alerts_created.forEach(alert => {
+            addLog({
+              deviceId,
+              deviceName: result.device_name,
+              mode,
+              message: `⚠ ALERT [${alert.type.toUpperCase()}] ${alert.message}`,
+              type: 'alert'
+            });
+          });
+
+          setState(prev => ({
+            ...prev,
+            alertCount: prev.alertCount + result.alerts_created.length
+          }));
+        }
+
+        // Log success
+        addLog({
+          deviceId,
+          deviceName: result.device_name,
+          mode,
+          message: `✓ #${result.reading_id} ${result.device_name} [${mode.toUpperCase()}] — T:${readings.temperature} pH:${readings.ph_level} Tu:${readings.turbidity} DO:${readings.dissolved_oxygen} Lv:${readings.water_level} Sed:${readings.sediments}`,
+          type: 'success',
+          readings
+        });
+
+        return result;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        addLog({
+          deviceId,
+          deviceName: 'Unknown',
+          mode,
+          message: `Fetch error: ${errorMessage}`,
+          type: 'error'
+        });
+        return null;
+      }
+    });
+
+    const results = await Promise.all(promises);
+    const lastSuccess = results.filter(r => r && r.success).pop();
+
+    setState(prev => ({
+      ...prev,
+      tickCount: prev.tickCount + 1,
+      lastDeviceId: lastSuccess?.device_id,
+      lastDeviceName: lastSuccess?.device_name
+    }));
+
+    // Refresh dashboard data
+    dashboardActions.refresh();
+  }, [deviceIds, state.mode, getNextValue, addLog, dashboardActions]);
+
+  // Start simulation
+  const start = useCallback((mode?: SimulationMode, interval?: number) => {
+    const simMode = mode || state.mode;
+    const simInterval = interval || state.interval;
+
+    // Stop existing simulation
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    // Assign modes to devices
+    assignDeviceModes();
+
+    // Initialize states
+    deviceIds.forEach(id => {
+      const deviceMode = deviceModesRef.current[id] || simMode;
+      initDeviceState(id, deviceMode);
+    });
+
+    addLog({
+      deviceId: '',
+      deviceName: 'System',
+      mode: simMode,
+      message: `Started — Mixed Modes · interval:${simInterval / 1000}s`,
+      type: 'success'
+    });
+
+    // Set state
+    setState(prev => ({
+      ...prev,
+      isRunning: true,
+      mode: simMode,
+      interval: simInterval
+    }));
+    isRunningRef.current = true;
+
+    // Save state to server
+    saveMonitorState({
+      running: true,
+      mode: simMode,
+      interval: simInterval
+    });
+
+    // Execute immediately then set interval
+    executeTick();
+    timerRef.current = window.setInterval(executeTick, simInterval);
+  }, [state.mode, state.interval, assignDeviceModes, initDeviceState, deviceIds, addLog, executeTick]);
+
+  // Stop simulation
+  const stop = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    setState(prev => ({
+      ...prev,
+      isRunning: false
+    }));
+    isRunningRef.current = false;
+
+    addLog({
+      deviceId: '',
+      deviceName: 'System',
+      mode: state.mode,
+      message: '■ Stopped.',
+      type: 'error'
+    });
+
+    // Save state to server
+    saveMonitorState({
+      running: false,
+      mode: state.mode,
+      interval: state.interval
+    });
+  }, [state.mode, state.interval, addLog]);
+
+  // Update mode (restart if running)
+  const setMode = useCallback((mode: SimulationMode) => {
+    setState(prev => ({ ...prev, mode }));
+    
+    if (isRunningRef.current) {
+      start(mode, state.interval);
+    }
+  }, [start, state.interval]);
+
+  // Update interval (restart if running)
+  const setInterval = useCallback((interval: number) => {
+    setState(prev => ({ ...prev, interval }));
+    
+    if (isRunningRef.current) {
+      start(state.mode, interval);
+    }
+  }, [start, state.mode]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
+  // Load saved state on mount
+  useEffect(() => {
+    const loadSavedState = async () => {
+      try {
+        const { loadMonitorState } = await import('../api/dashboardApi');
+        const result = await loadMonitorState();
+        
+        if (result.ok && result.state && result.state.running) {
+          // Resume simulation
+          setState(prev => ({
+            ...prev,
+            mode: result.state?.mode || 'normal',
+            interval: result.state?.interval || 5000
+          }));
+          
+          addLog({
+            deviceId: '',
+            deviceName: 'System',
+            mode: result.state?.mode || 'normal',
+            message: `↻ Resuming (mode:${result.state?.mode}, started ${result.state?.started_at})`,
+            type: 'success'
+          });
+          
+          start(result.state?.mode, result.state?.interval);
+        }
+      } catch (err) {
+        console.error('Failed to load monitor state:', err);
+      }
+    };
+
+    loadSavedState();
+  }, [start, addLog]);
+
+  return {
+    // State
+    isRunning: state.isRunning,
+    mode: state.mode,
+    interval: state.interval,
+    tickCount: state.tickCount,
+    alertCount: state.alertCount,
+    logs: state.logs,
+    lastDeviceId: state.lastDeviceId,
+    lastDeviceName: state.lastDeviceName,
+    deviceModes: deviceModesRef.current,
+    
+    // Actions
+    start,
+    stop,
+    setMode,
+    setInterval: setInterval,
+    executeTick,
+    
+    // Dashboard data
+    dashboardData: dashboardState.data,
+    dashboardLoading: dashboardState.loading,
+    dashboardError: dashboardState.error,
+    refreshDashboard: dashboardActions.refresh
+  };
+}
+
+// =====================================================
+// Single Device Simulation Hook (simpler version)
+// =====================================================
+
+export function useDeviceSimulation(deviceId: string | null) {
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [logs, setLogs] = useState<SimulationLog[]>([]);
+  const [mode, setMode] = useState<SimulationMode>('normal');
+  const timerRef = useRef<number | null>(null);
+  const deviceStateRef = useRef<Record<string, number>>({});
+
+  const initState = useCallback(() => {
+    const config = MODE_CONFIGS[mode];
+    deviceStateRef.current = {};
+    
+    Object.entries(config).forEach(([key, cfg]) => {
+      const variation = (Math.random() - 0.5) * cfg.drift;
+      deviceStateRef.current[key] = parseFloat((cfg.base + variation).toFixed(2));
+    });
+  }, [mode]);
+
+  const getNextValue = useCallback((sensorType: keyof ModeConfig): number => {
+    const config = MODE_CONFIGS[mode][sensorType];
+    const currentValue = deviceStateRef.current[sensorType];
+    const drift = config.drift * 0.35;
+    const variation = (Math.random() - 0.5) * drift;
+    let newValue = currentValue + variation;
+    newValue = Math.max(config.min, Math.min(config.max, newValue));
+    newValue = parseFloat(newValue.toFixed(2));
+    deviceStateRef.current[sensorType] = newValue;
+    return newValue;
+  }, [mode]);
+
+  const simulate = useCallback(async () => {
+    if (!deviceId) return;
+
+    const readings = {
+      temperature: getNextValue('temperature'),
+      ph_level: getNextValue('ph_level'),
+      turbidity: getNextValue('turbidity'),
+      dissolved_oxygen: getNextValue('dissolved_oxygen'),
+      water_level: getNextValue('water_level'),
+      sediments: getNextValue('sediments')
+    };
+
+    try {
+      const result = await simulateDevice(deviceId, readings);
+      
+      const log: SimulationLog = {
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: new Date().toISOString(),
+        deviceId,
+        deviceName: result.device_name || 'Unknown',
+        mode,
+        message: result.success 
+          ? `Reading #${result.reading_id}: ${Object.entries(readings).map(([k, v]) => `${k}=${v}`).join(', ')}`
+          : `Error: ${result.reading_id}`,
+        type: result.success ? 'success' : 'error',
+        readings
+      };
+
+      setLogs(prev => [...prev.slice(-49), log]);
+      
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const log: SimulationLog = {
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: new Date().toISOString(),
+        deviceId,
+        deviceName: 'Unknown',
+        mode,
+        message: `Error: ${errorMessage}`,
+        type: 'error'
+      };
+      setLogs(prev => [...prev.slice(-49), log]);
+      throw err;
+    }
+  }, [deviceId, mode, getNextValue]);
+
+  const start = useCallback((intervalMs: number = 5000) => {
+    if (!deviceId || timerRef.current) return;
+    
+    initState();
+    setIsSimulating(true);
+    
+    simulate(); // Immediate first tick
+    timerRef.current = window.setInterval(simulate, intervalMs);
+  }, [deviceId, initState, simulate]);
+
+  const stop = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setIsSimulating(false);
+  }, []);
+
+  const changeMode = useCallback((newMode: SimulationMode) => {
+    setMode(newMode);
+    if (isSimulating) {
+      initState();
+    }
+  }, [isSimulating, initState]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
+  return {
+    isSimulating,
+    mode,
+    logs,
+    start,
+    stop,
+    setMode: changeMode,
+    simulateOnce: simulate
+  };
+}

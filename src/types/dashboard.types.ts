@@ -9,8 +9,10 @@ export interface SensorReading {
   recorded_at: string;
   min_threshold?: number;
   max_threshold?: number;
+  device_id?: string;
   device_name?: string;
   location_name?: string;
+  river_section?: string;
 }
 
 // Device Info
@@ -158,4 +160,13 @@ export interface SensorMeta {
   unit: string;
   min: number;
   max: number;
+}
+
+// Log Group (for grouped sensor readings by device)
+export interface LogGroup {
+  device_id?: string;
+  device_name: string;
+  location_name: string;
+  river_section?: string;
+  readings: Record<string, SensorReading>;
 }
