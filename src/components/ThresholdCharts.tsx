@@ -6,17 +6,13 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
   Line,
   Area,
-  AreaChart,
   PieChart,
   Pie,
   Cell,
   Legend,
-  ReferenceLine,
   ComposedChart,
-  Scatter,
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
@@ -26,7 +22,6 @@ import {
 import styles from '../pages/Dashboard.module.css';
 
 interface ThresholdChartProps {
-  sensorType: string;
   value: number | null;
   min: number;
   max: number;
@@ -35,12 +30,10 @@ interface ThresholdChartProps {
   color: string;
 }
 
-function ThresholdGauge({ sensorType, value, min, max, unit, label, color }: ThresholdChartProps) {
+function ThresholdGauge({ value, min, max, unit, label, color }: ThresholdChartProps) {
   const hasValue = value !== null && value !== undefined;
   
   // Calculate percentage position for the threshold bar
-  const minPercent = 0;
-  const maxPercent = 100;
   const range = max - min;
   
   // Calculate safe zone (middle 50%)
@@ -52,7 +45,6 @@ function ThresholdGauge({ sensorType, value, min, max, unit, label, color }: Thr
     ? Math.max(0, Math.min(100, ((value - min) / range) * 100))
     : 50;
 
-  const isGood = hasValue && value >= safeStart && value <= safeEnd;
   const isWarn = hasValue && (value < safeStart || value > safeEnd) && (value >= min && value <= max);
   const isCritical = hasValue && (value < min || value > max);
 
@@ -306,7 +298,6 @@ export function ThresholdCharts({ sectionConditions }: ThresholdChartsProps) {
               return (
                 <ThresholdGauge
                   key={sensor.key}
-                  sensorType={sensor.key}
                   value={value}
                   min={sensor.min}
                   max={sensor.max}
