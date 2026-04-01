@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styles from './Dashboard.module.css';
-import { useDashboardSync, useSimulation } from '../hooks/useDashboard';
+import { useDashboardSync } from '../hooks/useDashboardSync';
+import { useSimulationEngine } from '../hooks/useSimulation';
 import type { DeviceReading } from '../types/dashboard.types';
 import { RiverBanner } from '../components/RiverBanner';
 import { KPICards } from '../components/KPICards';
@@ -13,18 +14,24 @@ import { SimulationControls } from '../components/SimulationControls';
 import { ActivityLogs } from '../components/ActivityLogs';
 
 export function DashboardPage() {
-  const { data, loading, error, lastSync } = useDashboardSync(10000);
+  const [{ data, loading, error, lastSync }, { refresh }] = useDashboardSync(10000);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  
+  // Get device IDs for simulation
+  const deviceIds = data?.devices?.map(d => d.device_id) || [];
   
   const {
     isRunning,
-    count,
+    tickCount,
     alertCount: simAlertCount,
-    lastDevice,
+    lastDeviceName,
     logs,
-    startSimulation,
-    stopSimulation,
-  } = useSimulation();
+    start,
+    stop,
+    mode,
+    setMode,
+    setInterval: setSimInterval
+  } = useSimulationEngine(deviceIds);
 
   // Handle loading state
   if (loading && !data) {
@@ -154,13 +161,13 @@ export function DashboardPage() {
           />
           <SimulationControls
             devices={dashboardData.devices}
-            onStart={startSimulation}
-            onStop={stopSimulation}
+            onStart={start}
+            onStop={stop}
             isRunning={isRunning}
-            count={count}
+            count={tickCount}
             alertCount={simAlertCount}
-            lastDevice={lastDevice}
-            logs={logs}
+            lastDevice={lastDeviceName}
+            logs={logs.map(l => l.message)}
           />
         </div>
 
