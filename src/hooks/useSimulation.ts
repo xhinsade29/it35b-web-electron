@@ -99,6 +99,7 @@ export function useSimulationEngine(deviceIds: string[]) {
   const deviceStatesRef = useRef<Record<string, Record<string, number>>>({});
   const timerRef = useRef<number | null>(null);
   const isRunningRef = useRef(false);
+  const lastRefreshRef = useRef<number>(0);
 
   const [dashboardState, dashboardActions] = useDashboardSync();
 
@@ -161,6 +162,12 @@ export function useSimulationEngine(deviceIds: string[]) {
 
   // Execute a simulation tick for all devices
   const executeTick = useCallback(async () => {
+    // Guard: don't execute if simulation has been stopped
+    if (!isRunningRef.current) {
+      console.log('executeTick: skipped - not running');
+      return;
+    }
+
     if (deviceIds.length === 0) {
       addLog({
         deviceId: '',
@@ -241,6 +248,13 @@ export function useSimulationEngine(deviceIds: string[]) {
     });
 
     const results = await Promise.all(promises);
+    
+    // Guard: don't update state if simulation was stopped during execution
+    if (!isRunningRef.current) {
+      console.log('executeTick: stopped during execution');
+      return;
+    }
+    
     const lastSuccess = results.filter(r => r && r.success).pop();
 
     setState(prev => ({
@@ -250,70 +264,111 @@ export function useSimulationEngine(deviceIds: string[]) {
       lastDeviceName: lastSuccess?.device_name
     }));
 
-    // Refresh dashboard data
-    dashboardActions.refresh();
-  }, [deviceIds, state.mode, getNextValue, addLog, dashboardActions]);
+    // Refresh dashboard data only if still running and enough time has passed
+    if (isRunningRef.current) {
+      const now = Date.now();
+      const timeSinceLastRefresh = now - lastRefreshRef.current;
+      const refreshInterval = Math.max(15000, state.interval * 2);
+      
+      if (timeSinceLastRefresh >= refreshInterval) {
+        lastRefreshRef.current = now;
+        // Fire and forget - don't block simulation
+        dashboardActions.refresh().catch(() => {});
+      }
+    }
+  }, [deviceIds, state.mode, state.interval, getNextValue, addLog, dashboardActions]);
 
-  // Start simulation
+  // Simple interval-based simulation with proper cleanup
   const start = useCallback((mode?: SimulationMode, interval?: number) => {
     const simMode = mode || state.mode;
     const simInterval = interval || state.interval;
 
-    // Stop existing simulation
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-
-    // Assign modes to devices
-    assignDeviceModes();
-
-    // Initialize states
-    deviceIds.forEach(id => {
-      const deviceMode = deviceModesRef.current[id] || simMode;
-      initDeviceState(id, deviceMode);
-    });
-
-    addLog({
-      deviceId: '',
-      deviceName: 'System',
-      mode: simMode,
-      message: `Started — Mixed Modes · interval:${simInterval / 1000}s`,
-      type: 'success'
-    });
-
-    // Set state
-    setState(prev => ({
-      ...prev,
-      isRunning: true,
-      mode: simMode,
-      interval: simInterval
-    }));
-    isRunningRef.current = true;
-
-    // Save state to server
-    saveMonitorState({
-      running: true,
-      mode: simMode,
-      interval: simInterval
-    });
-
-    // Execute immediately then set interval
-    executeTick();
-    timerRef.current = window.setInterval(executeTick, simInterval);
-  }, [state.mode, state.interval, assignDeviceModes, initDeviceState, deviceIds, addLog, executeTick]);
-
-  // Stop simulation
-  const stop = useCallback(() => {
+    // Stop any existing simulation first
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    isRunningRef.current = false;
 
+    // Small delay to ensure any pending async operations complete
+    setTimeout(() => {
+      // Reset state
+      isRunningRef.current = true;
+      
+      // Assign modes to devices
+      assignDeviceModes();
+
+      // Initialize states
+      deviceIds.forEach(id => {
+        const deviceMode = deviceModesRef.current[id] || simMode;
+        initDeviceState(id, deviceMode);
+      });
+
+      addLog({
+        deviceId: '',
+        deviceName: 'System',
+        mode: simMode,
+        message: `Started — Mixed Modes · interval:${simInterval / 1000}s`,
+        type: 'success'
+      });
+
+      // Set state
+      setState(prev => ({
+        ...prev,
+        isRunning: true,
+        mode: simMode,
+        interval: simInterval
+      }));
+
+      // Save state to server (fire-and-forget)
+      saveMonitorState({
+        running: true,
+        mode: simMode,
+        interval: simInterval
+      }).catch(err => {
+        console.warn('Failed to save monitor state (non-critical):', err);
+      });
+
+      // Execute first tick immediately
+      executeTick();
+
+      // Set up interval for subsequent ticks
+      timerRef.current = window.setInterval(() => {
+        if (!isRunningRef.current) {
+          console.log('Interval: simulation not running, clearing');
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          return;
+        }
+        executeTick();
+      }, simInterval);
+    }, 100);
+  }, [state.mode, state.interval, assignDeviceModes, initDeviceState, deviceIds, addLog, executeTick]);
+
+  // Stop simulation
+  const stop = useCallback(() => {
+    console.log('STOP called - clearing interval and setting flags');
+    
+    // Clear the interval first
+    if (timerRef.current !== null) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+      console.log('Interval cleared');
+    }
+    
+    // Set running flag false
+    isRunningRef.current = false;
+    
+    // Update state immediately
     setState(prev => ({
       ...prev,
-      isRunning: false
+      isRunning: false,
+      tickCount: prev.tickCount
     }));
-    isRunningRef.current = false;
+    
+    console.log('Simulation stopped');
 
     addLog({
       deviceId: '',
@@ -323,19 +378,46 @@ export function useSimulationEngine(deviceIds: string[]) {
       type: 'error'
     });
 
-    // Save state to server
+    // Save state to server (fire-and-forget)
     saveMonitorState({
       running: false,
       mode: state.mode,
       interval: state.interval
-    });
-  }, [state.mode, state.interval, addLog]);
+    }).catch(() => {});
+
+    // Insert simulation summary (non-blocking)
+    (async () => {
+      try {
+        const { saveSimulationSummary } = await import('../api/dashboardApi');
+        await saveSimulationSummary({
+          mode: state.mode,
+          interval: state.interval,
+          total_ticks: state.tickCount,
+          total_alerts: state.alertCount,
+          started_at: state.logs.find(log => log.message.includes('Started'))?.timestamp || new Date().toISOString(),
+          stopped_at: new Date().toISOString(),
+          last_device_id: state.lastDeviceId,
+          last_device_name: state.lastDeviceName
+        });
+        addLog({
+          deviceId: '',
+          deviceName: 'System',
+          mode: state.mode,
+          message: '✓ Summary saved',
+          type: 'success'
+        });
+      } catch (err) {
+        console.error('Failed to save summary:', err);
+      }
+    })();
+  }, [state.mode, state.interval, state.tickCount, state.alertCount, state.lastDeviceId, state.lastDeviceName, state.logs, addLog]);
 
   // Update mode (restart if running)
   const setMode = useCallback((mode: SimulationMode) => {
     setState(prev => ({ ...prev, mode }));
     
-    if (isRunningRef.current) {
+    if (isRunningRef.current && timerRef.current) {
+      // Restart with new mode
       start(mode, state.interval);
     }
   }, [start, state.interval]);
@@ -344,7 +426,8 @@ export function useSimulationEngine(deviceIds: string[]) {
   const setInterval = useCallback((interval: number) => {
     setState(prev => ({ ...prev, interval }));
     
-    if (isRunningRef.current) {
+    if (isRunningRef.current && timerRef.current) {
+      // Restart with new interval
       start(state.mode, interval);
     }
   }, [start, state.mode]);
@@ -352,36 +435,47 @@ export function useSimulationEngine(deviceIds: string[]) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      console.log('Unmounting - stopping simulation');
+      isRunningRef.current = false;
       if (timerRef.current) {
         clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, []);
 
-  // Load saved state on mount
+  // Load saved state on mount - but DON'T auto-start
   useEffect(() => {
     const loadSavedState = async () => {
       try {
         const { loadMonitorState } = await import('../api/dashboardApi');
         const result = await loadMonitorState();
         
-        if (result.ok && result.state && result.state.running) {
-          // Resume simulation
+        if (result.ok && result.state) {
+          // Just load the settings, don't auto-start
           setState(prev => ({
             ...prev,
             mode: result.state?.mode || 'normal',
             interval: result.state?.interval || 5000
           }));
           
-          addLog({
-            deviceId: '',
-            deviceName: 'System',
-            mode: result.state?.mode || 'normal',
-            message: `↻ Resuming (mode:${result.state?.mode}, started ${result.state?.started_at})`,
-            type: 'success'
-          });
-          
-          start(result.state?.mode, result.state?.interval);
+          // If it was running, log that it was stopped
+          if (result.state.running) {
+            addLog({
+              deviceId: '',
+              deviceName: 'System',
+              mode: result.state?.mode || 'normal',
+              message: `Previous simulation was stopped. Press ▶ Start to begin.`,
+              type: 'success'
+            });
+            
+            // Update server state to stopped
+            saveMonitorState({
+              running: false,
+              mode: result.state?.mode || 'normal',
+              interval: result.state?.interval || 5000
+            }).catch(() => {});
+          }
         }
       } catch (err) {
         console.error('Failed to load monitor state:', err);
@@ -389,7 +483,7 @@ export function useSimulationEngine(deviceIds: string[]) {
     };
 
     loadSavedState();
-  }, [start, addLog]);
+  }, [addLog]);
 
   return {
     // State

@@ -71,13 +71,13 @@ export async function simulateDevice(
 ): Promise<SimulationResponse> {
   const { data, error } = await supabase
     .rpc('dashboard_simulate', {
-      device_id: deviceId,
-      temperature: readings.temperature ?? null,
-      ph_level: readings.ph_level ?? null,
-      turbidity: readings.turbidity ?? null,
-      dissolved_oxygen: readings.dissolved_oxygen ?? null,
-      water_level: readings.water_level ?? null,
-      sediments: readings.sediments ?? null
+      p_device_id: deviceId,
+      p_temperature: readings.temperature ?? null,
+      p_ph_level: readings.ph_level ?? null,
+      p_turbidity: readings.turbidity ?? null,
+      p_dissolved_oxygen: readings.dissolved_oxygen ?? null,
+      p_water_level: readings.water_level ?? null,
+      p_sediments: readings.sediments ?? null
     });
 
   if (error) {
@@ -122,6 +122,39 @@ export async function saveMonitorState(state: {
   if (error) {
     console.error('Save monitor state error:', error);
     throw new Error(`Failed to save state: ${error.message}`);
+  }
+
+  return { ok: data?.ok || false };
+}
+
+/**
+ * Save simulation summary when stopping
+ */
+export async function saveSimulationSummary(summary: {
+  mode: string;
+  interval: number;
+  total_ticks: number;
+  total_alerts: number;
+  started_at: string;
+  stopped_at: string;
+  last_device_id?: string;
+  last_device_name?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  const { data, error } = await supabase
+    .rpc('dashboard_save_simulation_summary', {
+      p_mode: summary.mode,
+      p_interval: summary.interval,
+      p_total_ticks: summary.total_ticks,
+      p_total_alerts: summary.total_alerts,
+      p_started_at: summary.started_at,
+      p_stopped_at: summary.stopped_at,
+      p_last_device_id: summary.last_device_id || null,
+      p_last_device_name: summary.last_device_name || null
+    });
+
+  if (error) {
+    console.error('Save simulation summary error:', error);
+    return { ok: false, error: error.message };
   }
 
   return { ok: data?.ok || false };

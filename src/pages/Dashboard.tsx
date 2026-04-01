@@ -19,6 +19,9 @@ export function DashboardPage() {
   // Get device IDs for simulation
   const deviceIds = data?.devices?.map(d => d.device_id) || [];
   
+  // Simulation interval state - declare BEFORE useSimulationEngine
+  const [simInterval, setSimInterval] = useState(10000);
+  
   const {
     isRunning,
     tickCount,
@@ -29,9 +32,7 @@ export function DashboardPage() {
     stop
   } = useSimulationEngine(deviceIds);
   
-  // Simulation interval state
-  const [simInterval, setSimInterval] = useState(10000);
-  
+  // handleStart declared AFTER start is available
   const handleStart = useCallback(() => {
     start('normal', simInterval);
   }, [start, simInterval]);
@@ -172,9 +173,10 @@ export function DashboardPage() {
                 </button>
                 <button
                   className={styles.btnOutline}
-                  onClick={stop}
+                  type="button"
+                  onClick={() => { console.log('Stop clicked, isRunning:', isRunning); stop(); }}
                   disabled={!isRunning}
-                  style={{ height: '30px', padding: '0 14px', fontSize: '11px', fontWeight: 600, opacity: isRunning ? 1 : 0.45 }}
+                  style={{ height: '30px', padding: '0 14px', fontSize: '11px', fontWeight: 600, opacity: isRunning ? 1 : 0.45, cursor: isRunning ? 'pointer' : 'not-allowed' }}
                 >
                   ■ Stop
                 </button>
