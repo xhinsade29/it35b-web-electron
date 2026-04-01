@@ -26,6 +26,11 @@
   align-items: start;
 }
 
+/* 3-column layout when editing (has device info column) */
+.content:has(.deviceInfoColumn) {
+  grid-template-columns: 2fr 1fr 1fr;
+}
+
 .mapSection {
   width: 100%;
 }
@@ -235,7 +240,108 @@
   margin-bottom: var(--space-1);
 }
 
+/* Device Information Column (beside form when editing) */
+.deviceInfoColumn {
+  background: var(--color-bg);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  padding: var(--space-4);
+  overflow: hidden;
+}
+
+.infoSectionTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.infoLabelSmall {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.infoValueSmall {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+}
+
+/* History List */
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.historyLoading,
+.historyEmpty {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-3);
+}
+
+.historyEntry {
+  padding: var(--space-2);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.historyEntryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-1);
+}
+
+.historyEntryAction {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.historyEntryDate {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.historyEntryDetails {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
 /* Responsive */
+@media (max-width: 1200px) {
+  .content:has(.deviceInfoColumn) {
+    grid-template-columns: 1fr;
+  }
+
+  .deviceInfoColumn {
+    order: -1;
+  }
+}
+
 @media (max-width: 1024px) {
   .content {
     grid-template-columns: 1fr;

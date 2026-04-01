@@ -9,7 +9,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from '
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Device, DeviceFormData, DeviceStatus } from '../types/device.types';
-import { checkDistanceToRiver, detectRiverSection } from '../utils/riverUtils';
+import { useDeviceHistory } from '../hooks/useDevices';
 import styles from './DeviceForm.module.css';
 
 // Fix Leaflet default icon using inline SVG data URLs
@@ -94,6 +94,8 @@ export function DeviceForm({
   isSubmitting = false,
 }: DeviceFormProps) {
   const isEditing = !!device;
+
+  const { history, loading: historyLoading } = useDeviceHistory(isEditing ? device?.device_id : undefined);
 
   const [formData, setFormData] = useState<DeviceFormData>({
     device_name: '',
@@ -396,6 +398,81 @@ export function DeviceForm({
             </button>
           </div>
         </form>
+
+        {/* Device Information & History - Beside the form when editing */}
+        {isEditing && device && (
+          <div className={styles.deviceInfoColumn}>
+            <h4 className={styles.infoSectionTitle}>Device Information</h4>
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabelSmall}>Device ID</span>
+                <span className={styles.infoValueSmall}>#{device.device_id.slice(0, 8)}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabelSmall}>Current Status</span>
+                <span className={styles.infoValueSmall} style={{ color: getStatusColor(device.status, device.device_condition) }}>
+                  {device.status}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabelSmall}>Current Location</span>
+                <span className={styles.infoValueSmall}>
+                  {device.latitude && device.longitude
+                    ? `${device.latitude.toFixed(5)}°N, ${device.longitude.toFixed(5)}°E`
+                    : 'Not set'}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabelSmall}>Created</span>
+                <span className={styles.infoValueSmall}>
+                  {device.created_at ? new Date(device.created_at).toLocaleDateString('en-PH') : 'N/A'}
+                </span>
+              </div>
+            </div>
+
+            <h4 className={styles.infoSectionTitle}>Activity History</h4>
+            <div className={styles.historyList}>
+              {historyLoading ? (
+                <div className={styles.historyLoading}>Loading history...</div>
+              ) : history.length === 0 ? (
+                <div className={styles.historyEmpty}>No history available</div>
+              ) : (
+                history.slice(0, 10).map((entry) => {
+                  const date = new Date(entry.created_at);
+                  const dateStr = date.toLocaleDateString('en-PH', {
+                    month: 'short',
+                    day: 'numeric',
+                  });
+                  const timeStr = date.toLocaleTimeString('en-PH', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+
+                  const getActionIcon = (action: string) => {
+                    if (action.includes('CREATE')) return '➕';
+                    if (action.includes('UPDATE')) return '✏️';
+                    if (action.includes('DELETE')) return '🗑️';
+                    return '📝';
+                  };
+
+                  return (
+                    <div key={entry.log_id} className={styles.historyEntry}>
+                      <div className={styles.historyEntryHeader}>
+                        <span className={styles.historyEntryAction}>
+                          {getActionIcon(entry.action)} {entry.action}
+                        </span>
+                        <span className={styles.historyEntryDate}>
+                          {dateStr}, {timeStr}
+                        </span>
+                      </div>
+                      <div className={styles.historyEntryDetails}>{entry.details}</div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
