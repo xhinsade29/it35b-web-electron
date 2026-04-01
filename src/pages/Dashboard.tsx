@@ -14,7 +14,7 @@ import { SimulationControls } from '../components/SimulationControls';
 import { ActivityLogs } from '../components/ActivityLogs';
 
 export function DashboardPage() {
-  const [{ data, loading, error, lastSync }, { refresh }] = useDashboardSync(10000);
+  const [{ data, loading, error, lastSync }] = useDashboardSync(10000);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   
   // Get device IDs for simulation
@@ -27,10 +27,7 @@ export function DashboardPage() {
     lastDeviceName,
     logs,
     start,
-    stop,
-    mode,
-    setMode,
-    setInterval: setSimInterval
+    stop
   } = useSimulationEngine(deviceIds);
 
   // Handle loading state
@@ -161,12 +158,12 @@ export function DashboardPage() {
           />
           <SimulationControls
             devices={dashboardData.devices}
-            onStart={start}
+            onStart={(_deviceIds, interval, mode) => start(mode, interval)}
             onStop={stop}
             isRunning={isRunning}
             count={tickCount}
             alertCount={simAlertCount}
-            lastDevice={lastDeviceName}
+            lastDevice={lastDeviceName || ''}
             logs={logs.map(l => l.message)}
           />
         </div>

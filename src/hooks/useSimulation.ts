@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { simulateDevice, saveMonitorState } from '../api/dashboardApi';
 import { useDashboardSync } from './useDashboardSync';
-import type { SimulationResponse, MonitorState } from '../types/dashboard.types';
+import type { SimulationResponse } from '../types/dashboard.types';
 
 // =====================================================
 // Simulation Engine Hook

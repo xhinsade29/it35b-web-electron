@@ -269,11 +269,12 @@ export function subscribeToSensorReadings(
         schema: 'public',
         table: 'sensor_readings'
       },
-      (payload) => {
+      (payload: { new: Record<string, unknown> }) => {
+        const newData = payload.new as { sensor_id: string; value: number; recorded_at: string };
         callback({
-          sensor_id: payload.new.sensor_id,
-          value: payload.new.value,
-          recorded_at: payload.new.recorded_at
+          sensor_id: newData.sensor_id,
+          value: newData.value,
+          recorded_at: newData.recorded_at
         });
       }
     )
@@ -295,8 +296,8 @@ export function subscribeToAlerts(
         schema: 'public',
         table: 'alerts'
       },
-      (payload) => {
-        callback(payload.new as Alert);
+      (payload: { new: Record<string, unknown> }) => {
+        callback((payload.new as unknown) as Alert);
       }
     )
     .subscribe();
