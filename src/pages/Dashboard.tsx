@@ -129,18 +129,35 @@ export function DashboardPage() {
           warnCount={dashboardData.warn_count}
         />
 
-        {/* Main Grid - Device Panel + Alerts/Charts */}
+        {/* Main Grid - Map + Device Panel */}
         <div className={styles.gridMain}>
-          {/* Left Column - Device Readings */}
-          <DeviceReadingsPanel
-            devices={dashboardData.devices}
-            selectedDeviceId={selectedDeviceId}
-            onSelectDevice={setSelectedDeviceId}
-            deviceReading={deviceReading}
-          />
-
-          {/* Right Column - Alerts & Charts */}
+          {/* Left Column - Map */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <LeafletMap
+              locations={dashboardData.map_locations}
+              devices={dashboardData.devices}
+              onDeviceClick={setSelectedDeviceId}
+            />
+            <SimulationControls
+              devices={dashboardData.devices}
+              onStart={(_deviceIds, interval, mode) => start(mode, interval)}
+              onStop={stop}
+              isRunning={isRunning}
+              count={tickCount}
+              alertCount={simAlertCount}
+              lastDevice={lastDeviceName || ''}
+              logs={logs.map(l => l.message)}
+            />
+          </div>
+
+          {/* Right Column - Device Readings + Alerts/Charts */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <DeviceReadingsPanel
+              devices={dashboardData.devices}
+              selectedDeviceId={selectedDeviceId}
+              onSelectDevice={setSelectedDeviceId}
+              deviceReading={deviceReading}
+            />
             <AlertsPanel
               alerts={dashboardData.alerts}
               alertCount={dashboardData.alert_count}
@@ -149,27 +166,8 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {/* Bottom Grid - Map, Simulation, Water Conditions, Logs */}
+        {/* Bottom Grid - Water Conditions & Activity Logs */}
         <div className={styles.gridBottom}>
-          <LeafletMap
-            locations={dashboardData.map_locations}
-            devices={dashboardData.devices}
-            onDeviceClick={setSelectedDeviceId}
-          />
-          <SimulationControls
-            devices={dashboardData.devices}
-            onStart={(_deviceIds, interval, mode) => start(mode, interval)}
-            onStop={stop}
-            isRunning={isRunning}
-            count={tickCount}
-            alertCount={simAlertCount}
-            lastDevice={lastDeviceName || ''}
-            logs={logs.map(l => l.message)}
-          />
-        </div>
-
-        {/* Water Conditions & Activity Logs */}
-        <div className={styles.gridBottom} style={{ marginTop: '16px' }}>
           <WaterConditions
             sectionConditions={dashboardData.section_conditions}
           />
