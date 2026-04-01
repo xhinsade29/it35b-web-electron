@@ -183,7 +183,7 @@ export function DashboardPage() {
                 </button>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr minmax(280px, 1fr)', gap: '0' }}>
               <div>
                 <LeafletMap
                   locations={dashboardData.map_locations}

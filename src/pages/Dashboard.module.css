@@ -86,7 +86,6 @@
    Base Layout
    -------------------------------------------------------------------------- */
 .dashboard {
-  margin-left: var(--sidebar-width);
   min-height: 100vh;
   background: var(--color-bg);
   font-family: var(--font-body);
@@ -94,9 +93,10 @@
 }
 
 .wrap {
-  max-width: var(--max-content-width);
-  padding: var(--space-6) var(--space-8) var(--space-16);
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  padding: var(--space-4) var(--space-6) var(--space-4) var(--space-4);
+  box-sizing: border-box;
 }
 
 /* --------------------------------------------------------------------------
@@ -363,17 +363,19 @@
 /* Grid Layouts */
 .gridMain {
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: 1fr 300px;
   gap: var(--space-4);
   margin-bottom: var(--space-4);
   align-items: start;
+  min-width: 0;
 }
 
 .gridBottom {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-4);
+  min-width: 0;
 }
 
 /* Cards */
