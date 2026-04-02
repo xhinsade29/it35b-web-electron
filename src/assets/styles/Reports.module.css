@@ -99,3 +99,118 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+/* Loading Modal Styles */
+.loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 22, 40, 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loadingModal {
+  background: linear-gradient(135deg, #0F2854 0%, #0a1f42 100%);
+  border: 1px solid rgba(73, 136, 196, 0.3);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.loadingSpinner {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(73, 136, 196, 0.3);
+  border-top-color: #4988C4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  color: #e8ecf1;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.loadingStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.loadingStatCard {
+  background: rgba(10, 22, 40, 0.6);
+  border: 1px solid rgba(73, 136, 196, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.loadingStatValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.loadingStatLabel {
+  font-size: 0.75rem;
+  color: #8b9aae;
+  text-transform: uppercase;
+}
+
+.loadingProgress {
+  text-align: center;
+}
+
+.progressBar {
+  height: 4px;
+  background: rgba(73, 136, 196, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progressFill {
+  height: 100%;
+  width: 60%;
+  background: linear-gradient(90deg, #4988C4, #4ade80);
+  border-radius: 2px;
+  animation: progress 1.5s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.loadingStatus {
+  color: #8b9aae;
+  font-size: 0.875rem;
+  margin: 0;
+}

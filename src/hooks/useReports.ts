@@ -81,7 +81,7 @@ export function useReports(): UseReportsReturn {
         getDeviceActivity(filterOptions),
         getDailyReadingsTrend(filterOptions),
         getRiverSectionStats(filterOptions),
-        getDeviceSensorReadings(filterOptions, 10000), // Increased limit to get actual count
+        getDeviceSensorReadings(filterOptions, 10000000), // No limit - fetch all data
         getDevicesForFilter(),
       ]);
 
@@ -113,9 +113,10 @@ export function useReports(): UseReportsReturn {
     return exportReportToCSV(summary, deviceActivity, filterOptions);
   }, [sensorStats, alertSummary, deviceActivity, filterOptions]);
 
-  // Calculate summary from already-filtered data (sensorStats has correct filtered counts)
+  // Calculate summary using actual deviceActivity total (not limited by sensorStats)
+  const actualTotalReadings = deviceActivity.reduce((sum, d) => sum + d.total_readings, 0);
   const summary: ReportSummary = {
-    total_readings: sensorStats.reduce((sum, s) => sum + s.total_readings, 0),
+    total_readings: actualTotalReadings || sensorStats.reduce((sum, s) => sum + s.total_readings, 0),
     active_devices: deviceActivity.filter((d) => d.total_readings > 0).length,
     total_devices: deviceActivity.length,
     total_alerts: alertSummary.reduce((sum, a) => sum + a.total_alerts, 0),
