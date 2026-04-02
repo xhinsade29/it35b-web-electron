@@ -200,7 +200,12 @@ export function DeviceManagement() {
                   center={DEFAULT_CENTER}
                   zoom={13}
                   className={styles.embeddedMap}
-                  scrollWheelZoom={true}
+                  dragging={false}
+                  touchZoom={false}
+                  scrollWheelZoom={false}
+                  doubleClickZoom={false}
+                  boxZoom={false}
+                  keyboard={false}
                 >
                   <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
