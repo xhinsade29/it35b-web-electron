@@ -450,7 +450,7 @@
 .devName {
   font-size: 14px;
   font-weight: 600;
-  color: #0d1117;
+  color: #e8ecf1;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -476,7 +476,8 @@
 }
 
 .sensorRowOut {
-  background: #fef3c7;
+  background: rgba(217, 119, 6, 0.15);
+  border-left: 3px solid #d97706;
 }
 
 .sensorIcon {
@@ -487,7 +488,8 @@
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  background: #f5f6f8;
+  background: rgba(15, 40, 84, 0.6);
+  border: 1px solid rgba(73, 136, 196, 0.3);
   flex-shrink: 0;
 }
 
