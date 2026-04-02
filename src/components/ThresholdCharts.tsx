@@ -8,164 +8,17 @@ import {
   ResponsiveContainer,
   Line,
   Area,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
   ComposedChart,
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
+  LineChart,
+  ReferenceArea,
+  ReferenceLine,
 } from 'recharts';
 import styles from '../pages/Dashboard.module.css';
-
-interface ThresholdChartProps {
-  value: number | null;
-  min: number;
-  max: number;
-  unit: string;
-  label: string;
-  color: string;
-}
-
-function ThresholdGauge({ value, min, max, unit, label, color }: ThresholdChartProps) {
-  const hasValue = value !== null && value !== undefined;
-  
-  // Calculate percentage position for the threshold bar
-  const range = max - min;
-  
-  // Calculate safe zone (middle 50%)
-  const safeStart = min + range * 0.25;
-  const safeEnd = min + range * 0.75;
-  
-  // Current value position
-  const valuePercent = hasValue 
-    ? Math.max(0, Math.min(100, ((value - min) / range) * 100))
-    : 50;
-
-  const isWarn = hasValue && (value < safeStart || value > safeEnd) && (value >= min && value <= max);
-  const isCritical = hasValue && (value < min || value > max);
-
-  return (
-    <div style={{ 
-      background: '#f9fafb', 
-      borderRadius: '12px', 
-      padding: '16px',
-      border: '1px solid rgba(13,17,23,0.06)',
-    }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '12px'
-      }}>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: '#3d4a5c' }}>
-          {label}
-        </span>
-        <span style={{ 
-          fontSize: '14px', 
-          fontWeight: 700, 
-          color: isCritical ? '#dc2626' : isWarn ? '#d97706' : '#059669',
-          fontFamily: 'JetBrains Mono, monospace'
-        }}>
-          {hasValue ? `${value.toFixed(1)} ${unit}` : '—'}
-        </span>
-      </div>
-
-      {/* Threshold bar */}
-      <div style={{ position: 'relative', height: '24px', marginBottom: '8px' }}>
-        {/* Background track */}
-        <div style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          height: '8px',
-          background: '#e5e7eb',
-          borderRadius: '4px',
-        }}>
-          {/* Safe zone */}
-          <div style={{
-            position: 'absolute',
-            left: '25%',
-            width: '50%',
-            height: '100%',
-            background: 'rgba(5, 150, 105, 0.3)',
-            borderRadius: '2px',
-          }} />
-        </div>
-
-        {/* Threshold markers */}
-        <div style={{
-          position: 'absolute',
-          left: '0%',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: '2px',
-          height: '14px',
-          background: '#dc2626',
-          borderRadius: '1px',
-        }} title={`Min: ${min}`} />
-        <div style={{
-          position: 'absolute',
-          left: '100%',
-          transform: 'translateX(-100%) translateY(-50%)',
-          top: '50%',
-          width: '2px',
-          height: '14px',
-          background: '#dc2626',
-          borderRadius: '1px',
-        }} title={`Max: ${max}`} />
-
-        {/* Current value indicator */}
-        {hasValue && (
-          <div style={{
-            position: 'absolute',
-            left: `${valuePercent}%`,
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '12px',
-            height: '20px',
-            background: isCritical ? '#dc2626' : isWarn ? '#d97706' : color,
-            borderRadius: '6px',
-            border: '2px solid white',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            zIndex: 10,
-          }} />
-        )}
-      </div>
-
-      {/* Labels */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between',
-        fontSize: '10px',
-        color: '#8897aa'
-      }}>
-        <span>{min} {unit}</span>
-        <span style={{ color: '#059669', fontWeight: 500 }}>Safe Zone</span>
-        <span>{max} {unit}</span>
-      </div>
-
-      {/* Status badge */}
-      <div style={{ marginTop: '8px', textAlign: 'center' }}>
-        <span style={{
-          fontSize: '11px',
-          padding: '4px 10px',
-          borderRadius: '12px',
-          fontWeight: 500,
-          background: isCritical ? '#fee2e2' : isWarn ? '#fef3c7' : '#d1fae5',
-          color: isCritical ? '#dc2626' : isWarn ? '#d97706' : '#059669',
-        }}>
-          {isCritical ? '⚠ Critical' : isWarn ? '⚡ Warning' : '✓ Normal'}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 interface ThresholdChartsProps {
   sectionConditions: Record<string, {
@@ -276,187 +129,464 @@ export function ThresholdCharts({ sectionConditions }: ThresholdChartsProps) {
         <div className={styles.cardTitle}>📊 Sensor Threshold Analytics</div>
       </div>
       <div className={styles.cardBody}>
-        
-        {/* Compact Layout - Gauges + Pie in 2 columns */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '2fr 1fr', 
-          gap: '12px',
-          marginBottom: '12px'
+        {/* Summary Description */}
+        <div style={{
+          background: 'linear-gradient(135deg, #1a56db 0%, #3b82f6 100%)',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '20px',
+          color: 'white',
         }}>
-          {/* Compact Gauges - 3x2 grid */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(3, 1fr)', 
-            gap: '8px',
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '1.25rem', fontWeight: 600 }}>
+            📊 Sensor Threshold Analytics
+          </h3>
+          <p style={{ margin: '0 0 16px 0', fontSize: '0.95rem', opacity: 0.95, lineHeight: 1.6 }}>
+            Monitor water quality sensor readings across all river sections. Real-time threshold monitoring 
+            helps identify critical conditions, warnings, and normal operating ranges for temperature, pH, 
+            turbidity, dissolved oxygen, water level, and sediment levels.
+          </p>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '16px',
+            marginTop: '16px',
           }}>
-            {SENSORS.map(sensor => {
-              const value = Object.values(sectionConditions)
-                .map(s => s[sensor.key as keyof typeof s])
-                .find(v => v !== null && v !== undefined) ?? null;
-              
-              return (
-                <ThresholdGauge
-                  key={sensor.key}
-                  value={value}
-                  min={sensor.min}
-                  max={sensor.max}
-                  unit={sensor.unit}
-                  label={sensor.label}
-                  color={sensor.color}
-                />
-              );
-            })}
-          </div>
-
-          {/* Compact Pie Chart */}
-          <div style={{ 
-            background: '#f9fafb', 
-            borderRadius: '8px', 
-            padding: '12px',
-            border: '1px solid rgba(13,17,23,0.06)',
-          }}>
-            <div style={{ 
-              fontSize: '12px', 
-              fontWeight: 600, 
-              color: '#3d4a5c',
-              marginBottom: '4px',
-              textAlign: 'center'
-            }}>
-              Status Distribution
+            <div style={{ textAlign: 'center', padding: '12px', background: 'rgba(255,255,255,0.15)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '2rem', fontWeight: 700 }}>{totalReadings}</div>
+              <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>Total Readings</div>
             </div>
-            <ResponsiveContainer width="100%" height={140}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={35}
-                  outerRadius={60}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    background: 'rgba(13, 17, 23, 0.92)', 
-                    border: 'none', 
-                    borderRadius: '6px',
-                    color: '#fff',
-                    fontSize: '11px'
-                  }} 
-                />
-                <Legend verticalAlign="bottom" height={20} iconSize={8} wrapperStyle={{fontSize: '10px'}} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div style={{ textAlign: 'center', padding: '12px', background: 'rgba(255,255,255,0.15)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#d1fae5' }}>{totalNormal}</div>
+              <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>Normal</div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '12px', background: 'rgba(255,255,255,0.15)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#fef3c7' }}>{totalWarning}</div>
+              <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>Warnings</div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '12px', background: 'rgba(255,255,255,0.15)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#fee2e2' }}>{totalCritical}</div>
+              <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>Critical</div>
+            </div>
           </div>
         </div>
-
-        {/* Compact Charts Row - 3 columns */}
+        
+        {/* Sensor Line Charts Grid - 3 columns */}
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(3, 1fr)', 
-          gap: '12px',
-          marginBottom: '12px'
+          gap: '16px',
+          marginBottom: '20px'
         }}>
-          {/* Stacked Bar */}
+          {SENSORS.map(sensor => {
+            const value = Object.values(sectionConditions)
+              .map(s => s[sensor.key as keyof typeof s])
+              .find(v => v !== null && v !== undefined) ?? null;
+            
+            // Create data points for the line chart
+            const chartData = [
+              { name: 'Min', value: sensor.min, threshold: 'limit' },
+              { name: 'Safe Min', value: sensor.safeMin, threshold: 'safe' },
+              { name: 'Current', value: value ?? sensor.safeMin, threshold: 'current' },
+              { name: 'Safe Max', value: sensor.safeMax, threshold: 'safe' },
+              { name: 'Max', value: sensor.max, threshold: 'limit' },
+            ];
+            
+            return (
+              <div key={sensor.key} style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '16px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                border: '1px solid rgba(13,17,23,0.06)',
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '12px'
+                }}>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#3d4a5c' }}>
+                    {sensor.label}
+                  </span>
+                  <span style={{
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    color: value && (value < sensor.min || value > sensor.max) ? '#dc2626' : 
+                           value && (value < sensor.safeMin || value > sensor.safeMax) ? '#d97706' : '#059669'
+                  }}>
+                    {value !== null && value !== undefined ? `${value.toFixed(1)} ${sensor.unit}` : '—'}
+                  </span>
+                </div>
+                <ResponsiveContainer width="100%" height={150}>
+                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(13,17,23,0.05)" />
+                    <XAxis dataKey="name" tick={{ fontSize: 8 }} axisLine={false} interval={0} />
+                    <YAxis domain={[sensor.min * 0.9, sensor.max * 1.1]} tick={{ fontSize: 8 }} width={30} />
+                    <Tooltip 
+                      contentStyle={{ background: 'rgba(13, 17, 23, 0.92)', border: 'none', borderRadius: '6px', color: '#fff', fontSize: '10px' }}
+                      formatter={(val) => [`${Number(val).toFixed(1)} ${sensor.unit}`, 'Value']}
+                    />
+                    {/* Safe zone area */}
+                    <ReferenceArea x1="Safe Min" x2="Safe Max" fill="rgba(5, 150, 105, 0.1)" />
+                    {/* Threshold lines */}
+                    <ReferenceLine y={sensor.min} stroke="#dc2626" strokeDasharray="3 3" />
+                    <ReferenceLine y={sensor.max} stroke="#dc2626" strokeDasharray="3 3" />
+                    <ReferenceLine y={sensor.safeMin} stroke="#059669" strokeDasharray="2 2" />
+                    <ReferenceLine y={sensor.safeMax} stroke="#059669" strokeDasharray="2 2" />
+                    {/* Main value line */}
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke={sensor.color} 
+                      strokeWidth={3}
+                      dot={{ fill: sensor.color, r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Charts Row - 3 columns with larger charts */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(3, 1fr)', 
+          gap: '20px',
+          marginBottom: '20px'
+        }}>
+          {/* Stacked Bar + Line Chart Combo */}
           <div style={{ 
             background: '#f9fafb', 
-            borderRadius: '8px', 
-            padding: '12px',
+            borderRadius: '12px', 
+            padding: '16px',
             border: '1px solid rgba(13,17,23,0.06)',
           }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: '#3d4a5c', marginBottom: '8px' }}>
-              Distribution
+            <div style={{ fontSize: '14px', fontWeight: 600, color: '#3d4a5c', marginBottom: '8px' }}>
+              Readings Distribution by Sensor
             </div>
-            <ResponsiveContainer width="100%" height={120}>
-              <BarChart data={distributionData} layout="vertical" margin={{ left: 60, right: 10, top: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(13,17,23,0.07)" />
-                <XAxis type="number" tick={{ fontSize: 9, fill: '#8897aa' }} axisLine={false} hide />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fill: '#3d4a5c' }} width={55} axisLine={false} />
-                <Tooltip contentStyle={{ background: 'rgba(13, 17, 23, 0.92)', border: 'none', borderRadius: '6px', color: '#fff', fontSize: '11px' }} />
-                <Bar dataKey="normal" stackId="a" fill="#059669" radius={[0, 2, 2, 0]} />
-                <Bar dataKey="warning" stackId="a" fill="#f59e0b" radius={[0, 2, 2, 0]} />
-                <Bar dataKey="critical" stackId="a" fill="#dc2626" radius={[0, 2, 2, 0]} />
-              </BarChart>
+            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px', lineHeight: 1.5 }}>
+              Stacked bars show Normal (green), Warning (orange), and Critical (red) readings per sensor. 
+              Purple line indicates average sensor value across all readings.
+            </p>
+            <ResponsiveContainer width="100%" height={180}>
+              <ComposedChart data={distributionData} margin={{ left: 40, right: 20, top: 10, bottom: 40 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(13,17,23,0.07)" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#3d4a5c' }} interval={0} height={50} angle={-45} textAnchor="end" />
+                <YAxis type="number" tick={{ fontSize: 10, fill: '#8897aa' }} axisLine={false} />
+                <Tooltip contentStyle={{ background: 'rgba(13, 17, 23, 0.92)', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }} />
+                <Bar dataKey="normal" stackId="a" fill="#059669" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="warning" stackId="a" fill="#f59e0b" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="critical" stackId="a" fill="#dc2626" radius={[3, 3, 0, 0]} />
+                <Line type="monotone" dataKey="avg" stroke="#7c3aed" strokeWidth={2} dot={{ fill: '#7c3aed', r: 3 }} />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Radar Chart */}
+          {/* Radar Chart - Larger with Description */}
           <div style={{ 
             background: '#f9fafb', 
-            borderRadius: '8px', 
-            padding: '12px',
+            borderRadius: '12px', 
+            padding: '20px',
             border: '1px solid rgba(13,17,23,0.06)',
           }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: '#3d4a5c', marginBottom: '4px', textAlign: 'center' }}>
-              Section Comparison
+            <div style={{ fontSize: '16px', fontWeight: 600, color: '#3d4a5c', marginBottom: '8px', textAlign: 'center' }}>
+              River Section Comparison
             </div>
-            <ResponsiveContainer width="100%" height={120}>
+            <p style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', marginBottom: '16px', lineHeight: 1.5 }}>
+              Compare normalized sensor readings across upstream, midstream, and downstream sections. 
+              Higher values indicate readings closer to maximum thresholds for each sensor type.
+            </p>
+            <ResponsiveContainer width="100%" height={220}>
               <RadarChart data={radarData}>
                 <PolarGrid gridType="polygon" />
-                <PolarAngleAxis dataKey="sensor" tick={{ fontSize: 8 }} />
+                <PolarAngleAxis dataKey="sensor" tick={{ fontSize: 11 }} />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} />
-                <Radar name="Up" dataKey="upstream" stroke="#059669" fill="#059669" fillOpacity={0.3} />
-                <Radar name="Mid" dataKey="midstream" stroke="#d97706" fill="#d97706" fillOpacity={0.3} />
-                <Radar name="Down" dataKey="downstream" stroke="#dc2626" fill="#dc2626" fillOpacity={0.3} />
-                <Tooltip contentStyle={{ background: 'rgba(13, 17, 23, 0.92)', border: 'none', borderRadius: '6px', color: '#fff', fontSize: '10px' }} />
+                <Radar name="Upstream" dataKey="upstream" stroke="#059669" fill="#059669" fillOpacity={0.3} />
+                <Radar name="Midstream" dataKey="midstream" stroke="#d97706" fill="#d97706" fillOpacity={0.3} />
+                <Radar name="Downstream" dataKey="downstream" stroke="#dc2626" fill="#dc2626" fillOpacity={0.3} />
+                <Tooltip contentStyle={{ background: 'rgba(13, 17, 23, 0.92)', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Compact Summary Stats */}
+          {/* Summary Stats Cards */}
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: '1fr 1fr', 
-            gap: '8px',
+            gap: '12px',
           }}>
-            <div style={{ background: '#d1fae5', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: '#059669' }}>{totalNormal}</div>
-              <div style={{ fontSize: '9px', color: '#3d4a5c' }}>Normal</div>
+            <div style={{ background: '#d1fae5', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#059669' }}>{totalNormal}</div>
+              <div style={{ fontSize: '12px', color: '#065f46', fontWeight: 500 }}>✓ Normal</div>
             </div>
-            <div style={{ background: '#fef3c7', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: '#d97706' }}>{totalWarning}</div>
-              <div style={{ fontSize: '9px', color: '#3d4a5c' }}>Warning</div>
+            <div style={{ background: '#fef3c7', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#d97706' }}>{totalWarning}</div>
+              <div style={{ fontSize: '12px', color: '#92400e', fontWeight: 500 }}>⚡ Warning</div>
             </div>
-            <div style={{ background: '#fee2e2', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: '#dc2626' }}>{totalCritical}</div>
-              <div style={{ fontSize: '9px', color: '#3d4a5c' }}>Critical</div>
+            <div style={{ background: '#fee2e2', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#dc2626' }}>{totalCritical}</div>
+              <div style={{ fontSize: '12px', color: '#991b1b', fontWeight: 500 }}>⚠ Critical</div>
             </div>
-            <div style={{ background: '#e0e7ff', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: '#4f46e5' }}>{totalReadings}</div>
-              <div style={{ fontSize: '9px', color: '#3d4a5c' }}>Total</div>
+            <div style={{ background: '#e0e7ff', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#4f46e5' }}>{totalReadings}</div>
+              <div style={{ fontSize: '12px', color: '#3730a3', fontWeight: 500 }}>📊 Total</div>
             </div>
           </div>
         </div>
 
-        {/* Compact Line Chart */}
+        {/* Large Threshold Line Chart */}
         <div style={{ 
           background: '#f9fafb', 
-          borderRadius: '8px', 
-          padding: '12px',
+          borderRadius: '12px', 
+          padding: '20px',
           border: '1px solid rgba(13,17,23,0.06)',
+          marginBottom: '20px',
         }}>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#3d4a5c', marginBottom: '8px' }}>
-            Threshold Boundaries
+          <div style={{ fontSize: '16px', fontWeight: 600, color: '#3d4a5c', marginBottom: '16px' }}>
+            Threshold Boundaries & Safe Zones
           </div>
-          <ResponsiveContainer width="100%" height={140}>
+          <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+            Compare average readings against minimum, maximum, and safe zone thresholds for each sensor type.
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
             <ComposedChart data={thresholdLineData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(13,17,23,0.07)" />
-              <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#3d4a5c' }} interval={0} height={30} />
-              <YAxis tick={{ fontSize: 9, fill: '#8897aa' }} width={30} />
-              <Tooltip contentStyle={{ background: 'rgba(13, 17, 23, 0.92)', border: 'none', borderRadius: '6px', color: '#fff', fontSize: '10px' }} />
-              <Line type="monotone" dataKey="max" stroke="#dc2626" strokeDasharray="5 5" dot={false} strokeWidth={1} />
-              <Line type="monotone" dataKey="min" stroke="#dc2626" strokeDasharray="5 5" dot={false} strokeWidth={1} />
-              <Line type="monotone" dataKey="safeMax" stroke="#059669" strokeDasharray="3 3" dot={false} strokeWidth={1} />
-              <Line type="monotone" dataKey="safeMin" stroke="#059669" strokeDasharray="3 3" dot={false} strokeWidth={1} />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#3d4a5c' }} interval={0} height={40} />
+              <YAxis tick={{ fontSize: 10, fill: '#8897aa' }} width={35} />
+              <Tooltip contentStyle={{ background: 'rgba(13, 17, 23, 0.92)', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '11px' }} />
+              <Line type="monotone" dataKey="max" stroke="#dc2626" strokeDasharray="5 5" dot={false} strokeWidth={2} />
+              <Line type="monotone" dataKey="min" stroke="#dc2626" strokeDasharray="5 5" dot={false} strokeWidth={2} />
+              <Line type="monotone" dataKey="safeMax" stroke="#059669" strokeDasharray="3 3" dot={false} strokeWidth={2} />
+              <Line type="monotone" dataKey="safeMin" stroke="#059669" strokeDasharray="3 3" dot={false} strokeWidth={2} />
               <Area type="monotone" dataKey="safeMax" stroke="none" fill="rgba(5, 150, 105, 0.15)" />
-              <Line type="monotone" dataKey="avg" stroke="#7c3aed" strokeWidth={2} dot={{ fill: '#7c3aed', r: 3 }} />
+              <Line type="monotone" dataKey="avg" stroke="#7c3aed" strokeWidth={3} dot={{ fill: '#7c3aed', r: 4 }} />
             </ComposedChart>
           </ResponsiveContainer>
+        </div>
+
+        {/* Summary Stats Row */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(4, 1fr)', 
+          gap: '16px',
+          marginBottom: '20px'
+        }}>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '12px', 
+            padding: '20px', 
+            textAlign: 'center',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            borderLeft: '4px solid #1a56db'
+          }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#111827' }}>
+              {totalReadings.toLocaleString()}
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '4px' }}>
+              Total Readings (7d)
+            </div>
+          </div>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '12px', 
+            padding: '20px', 
+            textAlign: 'center',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            borderLeft: '4px solid #059669'
+          }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#059669' }}>
+              {pieData.reduce((sum, d) => sum + d.value, 0) > 0 ? Math.round((totalNormal / totalReadings) * 100) + '%' : '0%'}
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '4px' }}>
+              Normal Rate
+            </div>
+          </div>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '12px', 
+            padding: '20px', 
+            textAlign: 'center',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            borderLeft: '4px solid #d97706'
+          }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#d97706' }}>
+              {totalWarning + totalCritical}
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '4px' }}>
+              Total Alerts
+            </div>
+          </div>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '12px', 
+            padding: '20px', 
+            textAlign: 'center',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            borderLeft: '4px solid #7c3aed'
+          }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#7c3aed' }}>
+              {SENSORS.length}
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '4px' }}>
+              Sensor Types
+            </div>
+          </div>
+        </div>
+
+        {/* River Stream Analytics Section */}
+        <div style={{
+          background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+          borderRadius: '16px',
+          padding: '24px',
+          marginBottom: '20px',
+          color: 'white',
+        }}>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', fontWeight: 600 }}>
+            🌊 River Stream Analytics
+          </h3>
+          <p style={{ margin: '0 0 20px 0', fontSize: '0.95rem', opacity: 0.95, lineHeight: 1.5 }}>
+            Monitor water quality across three river sections. Each section shows average readings 
+            for all sensors with real-time status indicators.
+          </p>
+
+          {/* Stream Cards Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '16px',
+            marginBottom: '20px'
+          }}>
+            {['upstream', 'midstream', 'downstream'].map((section, idx) => {
+              const sectionData = sectionReadings[section] || {};
+              const readings = Object.values(sectionData);
+              const hasData = readings.length > 0;
+              const avgValue = hasData ? readings.reduce((a, b) => a + b, 0) / readings.length : 0;
+              const colors = ['#059669', '#d97706', '#dc2626'];
+              const bgColors = ['rgba(5, 150, 105, 0.2)', 'rgba(217, 119, 6, 0.2)', 'rgba(220, 38, 38, 0.2)'];
+              
+              return (
+                <div key={section} style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '12px',
+                    fontSize: '1.1rem',
+                    fontWeight: 600,
+                    textTransform: 'capitalize'
+                  }}>
+                    <span style={{
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '50%',
+                      background: colors[idx]
+                    }} />
+                    {section}
+                  </div>
+                  
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '8px'
+                  }}>
+                    {SENSORS.slice(0, 4).map(sensor => {
+                      const val = sectionData[sensor.key];
+                      const isSafe = val && val >= sensor.safeMin && val <= sensor.safeMax;
+                      const isWarn = val && (val < sensor.safeMin || val > sensor.safeMax) && val >= sensor.min && val <= sensor.max;
+                      const isCritical = val && (val < sensor.min || val > sensor.max);
+                      
+                      return (
+                        <div key={sensor.key} style={{
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          textAlign: 'center'
+                        }}>
+                          <div style={{ fontSize: '0.7rem', opacity: 0.8, marginBottom: '4px' }}>
+                            {sensor.label}
+                          </div>
+                          <div style={{
+                            fontSize: '1rem',
+                            fontWeight: 700,
+                            color: isCritical ? '#fee2e2' : isWarn ? '#fef3c7' : isSafe ? '#d1fae5' : 'white'
+                          }}>
+                            {val !== undefined ? val.toFixed(1) : '—'}
+                          </div>
+                          <div style={{ fontSize: '0.65rem', opacity: 0.7 }}>
+                            {sensor.unit}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  <div style={{
+                    marginTop: '12px',
+                    paddingTop: '12px',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '0.85rem'
+                  }}>
+                    <span>Readings: {readings.length}</span>
+                    <span style={{
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      background: hasData ? 'rgba(5, 150, 105, 0.3)' : 'rgba(100, 100, 100, 0.3)',
+                      fontSize: '0.75rem'
+                    }}>
+                      {hasData ? 'Active' : 'No Data'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Stream Comparison Bar Chart */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '12px',
+            padding: '16px',
+          }}>
+            <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px', textAlign: 'center' }}>
+              Average Sensor Values by River Section
+            </div>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={radarData} margin={{ top: 10, right: 20, left: 0, bottom: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
+                <XAxis 
+                  dataKey="sensor" 
+                  tick={{ fill: 'white', fontSize: 10 }} 
+                  interval={0} 
+                  angle={-30} 
+                  textAnchor="end"
+                  height={50}
+                />
+                <YAxis tick={{ fill: 'rgba(255,255,255,0.8)', fontSize: 10 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    background: 'rgba(13, 17, 23, 0.95)', 
+                    border: 'none', 
+                    borderRadius: '8px', 
+                    color: '#fff',
+                    fontSize: '11px'
+                  }} 
+                />
+                <Bar dataKey="upstream" fill="#059669" radius={[4, 4, 0, 0]} name="Upstream" />
+                <Bar dataKey="midstream" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Midstream" />
+                <Bar dataKey="downstream" fill="#ef4444" radius={[4, 4, 0, 0]} name="Downstream" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>

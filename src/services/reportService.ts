@@ -63,22 +63,21 @@ export async function getSensorReadingsStats(
   }
 
   // Group by sensor type and calculate statistics
-  const grouped = (data || []).reduce((acc: Record<string, number[]>, row: any) => {
+  const grouped: Record<string, number[]> = {};
+  (data || []).forEach((row: any) => {
     const sensorType = row.sensors?.sensor_type || 'unknown';
-    if (!acc[sensorType]) acc[sensorType] = [];
-    acc[sensorType].push(row.value);
-    return acc;
-  }, {});
+    if (!grouped[sensorType]) grouped[sensorType] = [];
+    grouped[sensorType].push(row.value);
+  });
 
   return Object.entries(grouped).map(([sensor_type, values]) => {
-    const vals = values as number[];
-    const sum = vals.reduce((a: number, b: number) => a + b, 0);
-    const avg = sum / vals.length;
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
+    const sum = values.reduce((a: number, b: number) => a + b, 0);
+    const avg = sum / values.length;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
     
     // Calculate standard deviation
-    const variance = vals.reduce((acc: number, val: number) => acc + Math.pow(val - avg, 2), 0) / vals.length;
+    const variance = values.reduce((acc: number, val: number) => acc + Math.pow(val - avg, 2), 0) / values.length;
     const std_dev = Math.sqrt(variance);
 
     return {

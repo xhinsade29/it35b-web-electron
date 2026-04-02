@@ -38,6 +38,10 @@ export function ReportCharts({ dailyTrend, sensorStats }: ReportChartsProps) {
           <h2>Daily Readings Trend</h2>
         </div>
         <div className={styles.cardBody}>
+          <p className={styles.chartDescription}>
+            Shows the total number of sensor readings collected per day over the selected time period. 
+            This helps identify data collection patterns and detect any gaps in monitoring.
+          </p>
           <div className={styles.chartContainer}>
             {dailyTrend.length === 0 ? (
               <div className={styles.emptyState}>No data available</div>
@@ -93,6 +97,10 @@ export function ReportCharts({ dailyTrend, sensorStats }: ReportChartsProps) {
           <h2>Sensor Readings Distribution</h2>
         </div>
         <div className={styles.cardBody}>
+          <p className={styles.chartDescription}>
+            Displays the proportion of readings from each sensor type (temperature, pH, turbidity, etc.). 
+            This visualization helps understand which sensors are most active and contributing data.
+          </p>
           <div className={styles.chartContainer}>
             {sensorStats.length === 0 ? (
               <div className={styles.emptyState}>No data available</div>

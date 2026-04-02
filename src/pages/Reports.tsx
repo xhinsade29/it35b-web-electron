@@ -84,8 +84,6 @@ export function ReportsPage() {
         <p>Comprehensive water quality analysis and system performance reports</p>
       </div>
 
-      <ReportStats summary={summary} days={filterOptions.days} />
-
       <ThresholdCharts sectionConditions={sectionConditions} />
 
       <ReportFilters
