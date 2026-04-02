@@ -11,7 +11,6 @@ interface ReportFiltersProps {
   devices: { device_id: string; device_name: string; status: string }[];
   onFilterChange: (options: ReportFilterOptions) => void;
   onReset: () => void;
-  onExport: () => void;
 }
 
 const DAY_OPTIONS = [
@@ -50,13 +49,13 @@ export function ReportFilters({
   devices,
   onFilterChange,
   onReset,
-  onExport,
 }: ReportFiltersProps) {
   return (
     <div className={styles.filters}>
       <div className={styles.filterGroup}>
         <label>Time Range:</label>
         <select
+          className={styles.select}
           value={filterOptions.days}
           onChange={(e) => onFilterChange({ ...filterOptions, days: Number(e.target.value) })}
         >
@@ -70,6 +69,7 @@ export function ReportFilters({
       <div className={styles.filterGroup}>
         <label>Device:</label>
         <select
+          className={styles.select}
           value={filterOptions.device_id || ''}
           onChange={(e) => onFilterChange({ ...filterOptions, device_id: e.target.value || null })}
         >
@@ -84,6 +84,7 @@ export function ReportFilters({
       <div className={styles.filterGroup}>
         <label>Sensor:</label>
         <select
+          className={styles.select}
           value={filterOptions.sensor || ''}
           onChange={(e) => onFilterChange({ ...filterOptions, sensor: e.target.value || null })}
         >
@@ -97,6 +98,7 @@ export function ReportFilters({
       <div className={styles.filterGroup}>
         <label>Section:</label>
         <select
+          className={styles.select}
           value={filterOptions.section || ''}
           onChange={(e) => onFilterChange({ ...filterOptions, section: e.target.value || null })}
         >
@@ -110,6 +112,7 @@ export function ReportFilters({
       <div className={styles.filterGroup}>
         <label>Status:</label>
         <select
+          className={styles.select}
           value={filterOptions.status || ''}
           onChange={(e) => onFilterChange({ ...filterOptions, status: e.target.value || null })}
         >
@@ -122,9 +125,6 @@ export function ReportFilters({
       </div>
       <button className={styles.btnSecondary} onClick={onReset}>
         Reset Filters
-      </button>
-      <button className={styles.btnPrimary} onClick={onExport}>
-        📥 Export Report
       </button>
     </div>
   );

@@ -1,24 +1,29 @@
-/* Users.module.css */
+/* Users.module.css - Professional Dark Theme */
 
 .container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
+  background: #0a1628;
+  min-height: 100vh;
+  color: #e8ecf1;
 }
 
 .pageHeader {
   margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
 }
 
 .pageHeader h1 {
   font-size: 1.875rem;
   font-weight: 600;
-  color: #111827;
+  color: #ffffff;
   margin-bottom: 0.5rem;
 }
 
 .pageHeader p {
-  color: #6b7280;
+  color: #8b9aae;
   font-size: 0.875rem;
 }
 
@@ -26,14 +31,16 @@
 .error {
   padding: 3rem;
   text-align: center;
-  background: #f9fafb;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #0F2854 0%, #0a1f42 100%);
+  border-radius: 12px;
   margin: 2rem 0;
+  border: 1px solid rgba(73, 136, 196, 0.2);
+  color: #e8ecf1;
 }
 
 .error {
-  background: #fee2e2;
-  color: #991b1b;
+  background: linear-gradient(135deg, #7c1d1d 0%, #4a0f0f 100%);
+  border-color: rgba(220, 38, 38, 0.3);
 }
 
 .error button {
@@ -44,4 +51,10 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.error button:hover {
+  background: #b91c1c;
 }

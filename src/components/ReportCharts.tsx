@@ -16,9 +16,9 @@ const COLORS = ['#1a56db', '#059669', '#d97706', '#dc2626', '#7c3aed', '#0891b2'
 export function ReportCharts({ dailyTrend, sensorStats }: ReportChartsProps) {
   // Simple SVG line chart for daily trend
   const maxReadings = Math.max(...dailyTrend.map((d) => d.total_readings), 1);
-  const chartWidth = 400;
-  const chartHeight = 200;
-  const padding = 20;
+  const chartWidth = 500;
+  const chartHeight = 240;
+  const padding = 30;
 
   const points = dailyTrend.map((d, i) => {
     const x = padding + (i / (dailyTrend.length - 1 || 1)) * (chartWidth - 2 * padding);
@@ -55,20 +55,20 @@ export function ReportCharts({ dailyTrend, sensorStats }: ReportChartsProps) {
                     y1={chartHeight - padding - pct * (chartHeight - 2 * padding)}
                     x2={chartWidth - padding}
                     y2={chartHeight - padding - pct * (chartHeight - 2 * padding)}
-                    stroke="#e5e7eb"
+                    stroke="rgba(73, 136, 196, 0.2)"
                     strokeDasharray="4"
                   />
                 ))}
                 {/* Line */}
                 <polyline
                   fill="none"
-                  stroke="#1a56db"
+                  stroke="#4988C4"
                   strokeWidth="2"
                   points={points}
                 />
                 {/* Area under line */}
                 <polygon
-                  fill="rgba(26, 86, 219, 0.1)"
+                  fill="rgba(73, 136, 196, 0.2)"
                   points={`${padding},${chartHeight - padding} ${points} ${chartWidth - padding},${chartHeight - padding}`}
                 />
                 {/* Data points */}
@@ -81,7 +81,7 @@ export function ReportCharts({ dailyTrend, sensorStats }: ReportChartsProps) {
                       cx={x}
                       cy={y}
                       r="4"
-                      fill="#1a56db"
+                      fill="#4988C4"
                     />
                   );
                 })}
@@ -133,7 +133,7 @@ export function ReportCharts({ dailyTrend, sensorStats }: ReportChartsProps) {
                       />
                     );
                   })}
-                  <circle cx="100" cy="100" r="50" fill="white" />
+                  <circle cx="100" cy="100" r="50" fill="rgba(10, 22, 40, 0.8)" />
                 </svg>
                 <div className={styles.legend}>
                   {sensorStats.map((sensor, i) => (

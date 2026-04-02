@@ -1,4 +1,4 @@
-/* ReportCharts.module.css */
+/* ReportCharts.module.css - Dark Theme */
 
 .chartsGrid {
   display: grid;
@@ -8,21 +8,22 @@
 }
 
 .card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  background: linear-gradient(135deg, #0F2854 0%, #0a1f42 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  border: 1px solid rgba(73, 136, 196, 0.2);
 }
 
 .cardHeader {
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
 }
 
 .cardHeader h2 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #111827;
+  color: #ffffff;
 }
 
 .cardBody {
@@ -31,13 +32,13 @@
 
 .chartDescription {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #8b9aae;
   line-height: 1.5;
   margin-bottom: 1rem;
   padding: 0.75rem;
-  background: #f9fafb;
+  background: rgba(10, 22, 40, 0.6);
   border-radius: 6px;
-  border-left: 3px solid #1a56db;
+  border-left: 3px solid #4988C4;
 }
 
 .chartContainer {
@@ -86,18 +87,18 @@
 }
 
 .legendLabel {
-  color: #374151;
+  color: #e8ecf1;
   text-transform: capitalize;
 }
 
 .legendValue {
-  color: #6b7280;
+  color: #8b9aae;
   font-weight: 500;
   margin-left: auto;
 }
 
 .emptyState {
   text-align: center;
-  color: #9ca3af;
+  color: #8b9aae;
   padding: 2rem;
 }

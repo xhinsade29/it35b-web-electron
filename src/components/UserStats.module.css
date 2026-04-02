@@ -1,4 +1,4 @@
-/* UserStats.module.css */
+/* UserStats.module.css - Dark Theme */
 
 .statsGrid {
   display: grid;
@@ -8,12 +8,13 @@
 }
 
 .statCard {
-  background: white;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #0F2854 0%, #0a1f42 100%);
+  border-radius: 12px;
   padding: 1rem;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   text-align: center;
   border-left: 3px solid #6b7280;
+  border: 1px solid rgba(73, 136, 196, 0.2);
 }
 
 .statCardSuccess {
@@ -25,19 +26,19 @@
 }
 
 .statCardInfo {
-  border-left-color: #3b82f6;
+  border-left-color: #4988C4;
 }
 
 .statCard h3 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: #ffffff;
   margin-bottom: 0.25rem;
 }
 
 .statCard p {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #8b9aae;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }

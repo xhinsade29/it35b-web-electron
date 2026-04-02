@@ -1,16 +1,17 @@
-/* ReportTables.module.css */
+/* ReportTables.module.css - Dark Theme */
 
 .card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  background: linear-gradient(135deg, #0F2854 0%, #0a1f42 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   margin-bottom: 1.5rem;
+  border: 1px solid rgba(73, 136, 196, 0.2);
 }
 
 .cardHeader {
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -19,7 +20,7 @@
 .cardHeader h2 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #111827;
+  color: #ffffff;
 }
 
 .cardBody {
@@ -39,19 +40,23 @@
 .dataTable td {
   padding: 0.75rem 1rem;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
 }
 
 .dataTable th {
-  background: #f9fafb;
+  background: rgba(10, 22, 40, 0.8);
   font-weight: 600;
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: #6b7280;
+  color: #8b9aae;
+}
+
+.dataTable td {
+  color: #e8ecf1;
 }
 
 .dataTable tr:hover {
-  background: #f9fafb;
+  background: rgba(73, 136, 196, 0.1);
 }
 
 .badge {
@@ -63,29 +68,33 @@
 }
 
 .badgeSuccess {
-  background: #d1fae5;
-  color: #065f46;
+  background: rgba(5, 150, 105, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(5, 150, 105, 0.3);
 }
 
 .badgeWarning {
-  background: #fef3c7;
-  color: #92400e;
+  background: rgba(217, 119, 6, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(217, 119, 6, 0.3);
 }
 
 .badgeDanger {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(220, 38, 38, 0.3);
 }
 
 .badgeInfo {
-  background: #dbeafe;
-  color: #1e40af;
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .emptyState {
   text-align: center;
   padding: 3rem;
-  color: #9ca3af;
+  color: #8b9aae;
 }
 
 .emptyStateIcon {

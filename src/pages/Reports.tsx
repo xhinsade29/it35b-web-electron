@@ -1,6 +1,5 @@
 import { useReports } from '../hooks/useReports';
 import { useDashboardSync } from '../hooks/useDashboardSync';
-import { ReportStats } from '../components/ReportStats';
 import { ReportFilters } from '../components/ReportFilters';
 import { ReportCharts } from '../components/ReportCharts';
 import { AlertSummaryTable } from '../components/AlertSummaryTable';
@@ -26,13 +25,11 @@ export function ReportsPage() {
     dailyTrend,
     sectionStats,
     devices,
-    summary,
     loading,
     error,
     filterOptions,
     setFilterOptions,
     refresh,
-    exportCSV,
   } = useReports();
 
   const handleResetFilters = () => {
@@ -43,19 +40,6 @@ export function ReportsPage() {
       section: null,
       status: null,
     });
-  };
-
-  const handleExport = () => {
-    const csvContent = exportCSV();
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `aqua-vision-report-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
   };
 
   if (loading && !sensorStats.length) {
@@ -86,15 +70,18 @@ export function ReportsPage() {
 
       <ThresholdCharts sectionConditions={sectionConditions} />
 
-      <ReportFilters
-        filterOptions={filterOptions}
-        devices={devices}
-        onFilterChange={setFilterOptions}
-        onReset={handleResetFilters}
-        onExport={handleExport}
-      />
+      <div style={{ marginTop: '24px' }}>
+        <ReportFilters
+          filterOptions={filterOptions}
+          devices={devices}
+          onFilterChange={setFilterOptions}
+          onReset={handleResetFilters}
+        />
+      </div>
 
-      <ReportCharts dailyTrend={dailyTrend} sensorStats={sensorStats} />
+      <div style={{ marginTop: '24px' }}>
+        <ReportCharts dailyTrend={dailyTrend} sensorStats={sensorStats} />
+      </div>
 
       <AlertSummaryTable alerts={alertSummary} days={filterOptions.days} />
 

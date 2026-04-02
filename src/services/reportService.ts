@@ -261,6 +261,8 @@ export async function getDailyReadingsTrend(
     return [];
   }
 
+  console.log('Daily trend raw data:', data?.length || 0, 'records');
+
   // Group by date
   const grouped = (data || []).reduce((acc: Record<string, number>, row: any) => {
     const date = new Date(row.recorded_at).toISOString().split('T')[0];
@@ -268,12 +270,15 @@ export async function getDailyReadingsTrend(
     return acc;
   }, {});
 
-  return Object.entries(grouped)
+  const result = Object.entries(grouped)
     .map(([reading_date, total_readings]) => ({
       reading_date,
       total_readings: total_readings as number,
     }))
     .sort((a, b) => a.reading_date.localeCompare(b.reading_date));
+
+  console.log('Daily trend processed:', result);
+  return result;
 }
 
 /**
