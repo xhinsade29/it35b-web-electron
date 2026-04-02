@@ -83,18 +83,20 @@ interface LeafletMapProps {
   onDeviceClick?: (deviceId: string) => void;
 }
 
-// Map bounds setter
-function MapBounds() {
+// Map bounds setter - focuses on device locations
+function MapBounds({ locations }: { locations: MapLocation[] }) {
   const map = useMap();
   
   useEffect(() => {
-    const bounds: [number, number][] = [
-      ...RIVER_PATH,
-      [8.345958, 124.898607], // Start
-      [8.413179, 124.909497], // End
-    ];
-    map.fitBounds(bounds, { padding: [20, 20] });
-  }, [map]);
+    if (locations.length === 0) return;
+    
+    // Create bounds from location coordinates
+    const bounds: [number, number][] = locations.map(l => [l.latitude, l.longitude]);
+    
+    if (bounds.length > 0) {
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+    }
+  }, [map, locations]);
 
   return null;
 }
@@ -129,6 +131,12 @@ export function LeafletMap({ locations, devices, onDeviceClick }: LeafletMapProp
             zoom={13}
             style={{ height: '100%', width: '100%' }}
             zoomControl={false}
+            dragging={false}
+            touchZoom={false}
+            scrollWheelZoom={false}
+            doubleClickZoom={false}
+            boxZoom={false}
+            keyboard={false}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -262,7 +270,7 @@ export function LeafletMap({ locations, devices, onDeviceClick }: LeafletMapProp
               );
             })}
             
-            <MapBounds />
+            <MapBounds locations={locations} />
           </MapContainer>
         </div>
       </div>
