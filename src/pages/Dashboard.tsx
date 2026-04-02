@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import styles from './Dashboard.module.css';
+import styles from '../assets/styles/Dashboard.module.css';
 import { useDashboardSync } from '../hooks/useDashboardSync';
 import { useSimulationEngine } from '../hooks/useSimulation';
 import type { DeviceReading, TimeSeriesChartData } from '../types/dashboard.types';

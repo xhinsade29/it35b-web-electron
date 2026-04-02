@@ -13,7 +13,7 @@ import { useDevices, useLocations } from '../hooks/useDevices';
 import { createDevice, updateDevice, deleteDevice, getDeviceStatusColor } from '../services/deviceService';
 import type { Device, DeviceFormData, DeviceStatus, DeviceCondition, RiverSection } from '../types/device.types';
 import { DEFAULT_RIVER_COORDS } from '../utils/riverUtils';
-import styles from './DeviceManagement.module.css';
+import styles from '../assets/styles/DeviceManagement.module.css';
 
 type ViewMode = 'list' | 'add' | 'edit';
 

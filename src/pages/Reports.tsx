@@ -7,7 +7,7 @@ import { DeviceActivityTable } from '../components/DeviceActivityTable';
 import { RiverSectionTable } from '../components/RiverSectionTable';
 import { SensorStatsTable } from '../components/SensorStatsTable';
 import { ThresholdCharts } from '../components/ThresholdCharts';
-import styles from './Reports.module.css';
+import styles from '../assets/styles/Reports.module.css';
 
 export function ReportsPage() {
   const [syncState] = useDashboardSync(30000);

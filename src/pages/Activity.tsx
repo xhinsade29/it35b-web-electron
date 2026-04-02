@@ -9,7 +9,7 @@ import { MaintenanceLogs } from '../components/MaintenanceLogs';
 import { ActivityStats } from '../components/ActivityStats';
 import { ActivityFilters } from '../components/ActivityFilters';
 import { useActivity } from '../hooks/useActivity';
-import styles from './Activity.module.css';
+import styles from '../assets/styles/Activity.module.css';
 
 export function ActivityPage() {
   const {
