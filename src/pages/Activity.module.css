@@ -1,0 +1,47 @@
+/* Activity.module.css - Main page styles */
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.pageHeader {
+  margin-bottom: 2rem;
+}
+
+.pageHeader h1 {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.pageHeader p {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.loading,
+.error {
+  padding: 3rem;
+  text-align: center;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.error button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}

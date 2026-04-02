@@ -1,0 +1,173 @@
+/* ActivityTimeline.module.css */
+
+.timeline {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  overflow: hidden;
+}
+
+.timelineHeader {
+  padding: 1.25rem;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timelineHeader h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.eventCount {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.timelineBody {
+  padding: 1.25rem;
+}
+
+.timelineItem {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.timelineItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.timelineIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.25rem;
+}
+
+.readingIcon {
+  background: #f3f4f6;
+}
+
+.alertIconLow {
+  background: #fef3c7;
+}
+
+.alertIconHigh {
+  background: #fee2e2;
+}
+
+.alertIconCritical {
+  background: #fecaca;
+}
+
+.timelineContent {
+  flex: 1;
+}
+
+.timelineTitle {
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.timelineDesc {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin-bottom: 0.25rem;
+}
+
+.timelineMeta {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.timelineBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badgeCritical {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.badgeHigh {
+  background: #fed7aa;
+  color: #9a3412;
+}
+
+.badgeLow {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badgeInfo {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem;
+  color: #9ca3af;
+}
+
+.emptyStateIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.changesContainer {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.changeItem {
+  margin: 0.25rem 0;
+  padding: 0.2rem 0;
+}
+
+.changeField {
+  color: #4b5563;
+}
+
+.changeOld {
+  text-decoration: line-through;
+  color: #9ca3af;
+  margin-left: 0.25rem;
+}
+
+.changeArrow {
+  color: #6b7280;
+  margin: 0 0.25rem;
+}
+
+.changeNew {
+  color: #1a56db;
+  font-weight: 500;
+}
+
+.changeRaw {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
