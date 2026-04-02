@@ -202,7 +202,7 @@ export function DeviceReadingsPanel({
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                     {SENSOR_META.map((sensor) => {
                       const data = getSensorChartData(sensor.key);
-                      if (data.length === 0) return null;
+                      const hasData = data.length > 0;
                       const color = sensor.key === 'temperature' ? '#dc2626' : 
                                     sensor.key === 'ph_level' ? '#7c3aed' :
                                     sensor.key === 'turbidity' ? '#059669' :
@@ -215,20 +215,29 @@ export function DeviceReadingsPanel({
                             <span>{sensor.icon}</span>
                             <span>{sensor.label}</span>
                           </div>
-                          <ResponsiveContainer width="100%" height={60}>
-                            <LineChart data={data} margin={{ top: 3, right: 3, left: -15, bottom: 0 }}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(13, 17, 23, 0.05)" />
-                              <XAxis dataKey="hour" tick={{ fontSize: 6, fill: '#8897aa' }} axisLine={false} tickLine={false} interval={5} />
-                              <YAxis tick={{ fontSize: 6, fill: '#8897aa' }} axisLine={false} tickLine={false} domain={[sensor.min - (sensor.max - sensor.min) * 0.2, sensor.max + (sensor.max - sensor.min) * 0.2]} />
-                              <Tooltip 
-                                contentStyle={{ background: 'rgba(13, 17, 23, 0.9)', border: 'none', borderRadius: '4px', fontSize: '8px', color: '#fff', padding: '3px' }}
-                                itemStyle={{ fontSize: '8px' }}
-                              />
-                              <ReferenceLine y={sensor.min} stroke="#dc2626" strokeDasharray="4 4" strokeWidth={1} />
-                              <ReferenceLine y={sensor.max} stroke="#dc2626" strokeDasharray="4 4" strokeWidth={1} />
-                              <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} connectNulls />
-                            </LineChart>
-                          </ResponsiveContainer>
+                          {hasData ? (
+                            <ResponsiveContainer width="100%" height={60}>
+                              <LineChart data={data} margin={{ top: 3, right: 3, left: -15, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(13, 17, 23, 0.05)" />
+                                <XAxis dataKey="hour" tick={{ fontSize: 6, fill: '#8897aa' }} axisLine={false} tickLine={false} interval={5} />
+                                <YAxis tick={{ fontSize: 6, fill: '#8897aa' }} axisLine={false} tickLine={false} domain={[sensor.min - (sensor.max - sensor.min) * 0.2, sensor.max + (sensor.max - sensor.min) * 0.2]} />
+                                <Tooltip 
+                                  contentStyle={{ background: 'rgba(13, 17, 23, 0.9)', border: 'none', borderRadius: '4px', fontSize: '8px', color: '#fff', padding: '3px' }}
+                                  itemStyle={{ fontSize: '8px' }}
+                                />
+                                <ReferenceLine y={sensor.min} stroke="#dc2626" strokeDasharray="4 4" strokeWidth={1} />
+                                <ReferenceLine y={sensor.max} stroke="#dc2626" strokeDasharray="4 4" strokeWidth={1} />
+                                <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} connectNulls />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          ) : (
+                            <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', fontSize: '10px' }}>
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '14px', marginBottom: '2px' }}>📊</div>
+                                <div>No data</div>
+                              </div>
+                            </div>
+                          )}
                           <div style={{ fontSize: '7px', color: '#8897aa', textAlign: 'center', marginTop: '1px' }}>
                             Safe: {sensor.min} – {sensor.max}
                           </div>
