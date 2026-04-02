@@ -1,15 +1,16 @@
 /* ActivityFilters.module.css */
 
 .filters {
-  background: white;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #0F2854 0%, #0a1f42 100%);
+  border-radius: 12px;
   padding: 1rem 1.25rem;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   margin-bottom: 1.5rem;
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
   align-items: center;
+  border: 1px solid rgba(73, 136, 196, 0.2);
 }
 
 .filterGroup {
@@ -20,16 +21,17 @@
 
 .filterGroup label {
   font-size: 0.875rem;
-  color: #4b5563;
+  color: #8b9aae;
   font-weight: 500;
 }
 
 .filterGroup select {
   padding: 0.5rem 0.75rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(73, 136, 196, 0.3);
   border-radius: 8px;
   font-size: 0.875rem;
-  background: white;
+  background: rgba(10, 22, 40, 0.6);
+  color: #e8ecf1;
   cursor: pointer;
 }
 
@@ -40,12 +42,13 @@
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  background: #f3f4f6;
-  color: #374151;
+  background: rgba(10, 22, 40, 0.6);
+  color: #e8ecf1;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  border: 1px solid rgba(73, 136, 196, 0.3);
 }
 
 .btnPrimary {
@@ -55,7 +58,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  background: #1a56db;
+  background: linear-gradient(135deg, #4988C4 0%, #2d6a9f 100%);
   color: white;
   text-decoration: none;
   display: inline-flex;

@@ -1,15 +1,16 @@
 /* ActivityTimeline.module.css */
 
 .timeline {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  background: linear-gradient(135deg, #0F2854 0%, #0a1f42 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  border: 1px solid rgba(73, 136, 196, 0.2);
 }
 
 .timelineHeader {
   padding: 1.25rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -18,12 +19,12 @@
 .timelineHeader h2 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #111827;
+  color: #ffffff;
 }
 
 .eventCount {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #8b9aae;
 }
 
 .timelineBody {
@@ -34,7 +35,7 @@
   display: flex;
   gap: 1rem;
   padding: 1rem 0;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
 }
 
 .timelineItem:last-child {
@@ -54,19 +55,19 @@
 }
 
 .readingIcon {
-  background: #f3f4f6;
+  background: #2f4052;
 }
 
 .alertIconLow {
-  background: #fef3c7;
+  background: #4988C4;
 }
 
 .alertIconHigh {
-  background: #fee2e2;
+  background: #FFC107;
 }
 
 .alertIconCritical {
-  background: #fecaca;
+  background: #FF3737;
 }
 
 .timelineContent {
@@ -75,7 +76,7 @@
 
 .timelineTitle {
   font-weight: 500;
-  color: #111827;
+  color: #e8ecf1;
   margin-bottom: 0.25rem;
   display: flex;
   align-items: center;
@@ -85,13 +86,13 @@
 
 .timelineDesc {
   font-size: 0.875rem;
-  color: #4b5563;
+  color: #8b9aae;
   margin-bottom: 0.25rem;
 }
 
 .timelineMeta {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: #6b7280;
 }
 
 .timelineBadge {
