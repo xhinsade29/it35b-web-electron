@@ -169,6 +169,28 @@ export function DeviceManagement() {
     setFilterOptions(filters);
   }, [setFilterOptions]);
 
+  // Calculate device summary stats
+  const deviceSummary = useMemo(() => {
+    const total = devices.length;
+    const active = devices.filter(d => d.status === 'active').length;
+    const maintenance = devices.filter(d => d.status === 'maintenance').length;
+    const offline = devices.filter(d => d.status === 'offline').length;
+    const inactive = devices.filter(d => d.status === 'inactive').length;
+    const displaced = devices.filter(d => d.device_condition === 'displaced').length;
+    const damaged = devices.filter(d => d.device_condition === 'damaged').length;
+    const malfunctioning = devices.filter(d => d.device_condition === 'malfunctioning').length;
+    
+    const upstream = devices.filter(d => d.river_section === 'upstream').length;
+    const midstream = devices.filter(d => d.river_section === 'midstream').length;
+    const downstream = devices.filter(d => d.river_section === 'downstream').length;
+
+    return {
+      total, active, maintenance, offline, inactive,
+      displaced, damaged, malfunctioning,
+      upstream, midstream, downstream
+    };
+  }, [devices]);
+
   // Get selected device for display
   const displayDevice = selectedDevice ||
     (selectedDeviceId ? devices.find(d => d.device_id === selectedDeviceId) : null);
@@ -201,6 +223,42 @@ export function DeviceManagement() {
       <div className={styles.content}>
         {viewMode === 'list' ? (
           <>
+            {/* Device Summary */}
+            <div className={styles.summarySection}>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryValue}>{deviceSummary.total}</div>
+                <div className={styles.summaryLabel}>Total Devices</div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryValue} style={{ color: '#059669' }}>{deviceSummary.active}</div>
+                <div className={styles.summaryLabel}>Active</div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryValue} style={{ color: '#3b82f6' }}>{deviceSummary.maintenance}</div>
+                <div className={styles.summaryLabel}>Maintenance</div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryValue} style={{ color: '#6b7280' }}>{deviceSummary.offline + deviceSummary.inactive}</div>
+                <div className={styles.summaryLabel}>Offline/Inactive</div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryValue} style={{ color: '#d97706' }}>{deviceSummary.displaced + deviceSummary.damaged + deviceSummary.malfunctioning}</div>
+                <div className={styles.summaryLabel}>Issues</div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryValue} style={{ color: '#059669' }}>{deviceSummary.upstream}</div>
+                <div className={styles.summaryLabel}>Upstream</div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryValue} style={{ color: '#d97706' }}>{deviceSummary.midstream}</div>
+                <div className={styles.summaryLabel}>Midstream</div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryValue} style={{ color: '#dc2626' }}>{deviceSummary.downstream}</div>
+                <div className={styles.summaryLabel}>Downstream</div>
+              </div>
+            </div>
+
             {/* Main Content: Map + Details side by side */}
             <div className={styles.mainContent}>
               {/* Map Section */}
