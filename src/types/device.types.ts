@@ -4,7 +4,7 @@
  */
 
 export type DeviceStatus = 'active' | 'maintenance' | 'inactive' | 'offline' | 'unassigned';
-export type DeviceCondition = 'normal' | 'displaced' | 'damaged' | 'malfunctioning';
+export type DeviceCondition = 'normal' | 'displaced' | 'damaged' | 'malfunctioning' | 'out_of_bound';
 export type RiverSection = 'upstream' | 'midstream' | 'downstream' | 'custom';
 
 export interface Device {

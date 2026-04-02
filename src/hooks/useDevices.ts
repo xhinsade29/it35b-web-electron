@@ -18,6 +18,7 @@ import {
   filterDevices,
   getDeviceStatusColor,
 } from '../services/deviceService';
+import { checkDistanceToRiver } from '../utils/riverUtils';
 import type {
   Device,
   DeviceLocation,
@@ -62,7 +63,17 @@ export function useDevices(): UseDevicesReturn {
     setError(null);
     try {
       const data = await getAllDevices();
-      setDevices(data);
+      // Validate each device's location and mark as out_of_bound if far from river
+      const validatedDevices = data.map(device => {
+        if (device.latitude && device.longitude) {
+          const isNearRiver = checkDistanceToRiver(device.latitude, device.longitude);
+          if (!isNearRiver && device.device_condition !== 'out_of_bound') {
+            return { ...device, device_condition: 'out_of_bound' as DeviceCondition };
+          }
+        }
+        return device;
+      });
+      setDevices(validatedDevices);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch devices');
     } finally {

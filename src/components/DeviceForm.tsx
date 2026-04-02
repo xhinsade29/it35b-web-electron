@@ -188,11 +188,11 @@ export function DeviceForm({
       latitude: lat,
       longitude: lng,
       location_name: locationName,
-      device_condition: isNearRiver ? 'normal' : 'displaced',
+      device_condition: isNearRiver ? 'normal' : 'out_of_bound',
     }));
 
     if (!isNearRiver) {
-      setWarning('⚠️ This location is far from Mangima River. Condition will be set to "Displaced".');
+      setWarning('⚠️ This location is far from Mangima River. Condition will be set to "Out of Bound".');
     } else {
       setWarning(null);
     }
@@ -211,7 +211,7 @@ export function DeviceForm({
     const submitData: DeviceFormData = {
       ...formData,
       device_condition: formData.latitude && formData.longitude 
-        ? (checkDistanceToRiver(formData.latitude, formData.longitude, RIVER_COORDS) ? 'normal' : 'displaced')
+        ? (checkDistanceToRiver(formData.latitude, formData.longitude, RIVER_COORDS) ? 'normal' : 'out_of_bound')
         : 'normal',
     };
     onSave(submitData, device || undefined);
@@ -224,6 +224,7 @@ export function DeviceForm({
         displaced: '#7c3aed',
         damaged: '#1f2937',
         malfunctioning: '#d97706',
+        out_of_bound: '#ef4444',
       };
       return conditionColors[condition] || '#9ca3af';
     }

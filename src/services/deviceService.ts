@@ -756,6 +756,7 @@ export function getDeviceStatusColor(status: string, condition?: string): string
       displaced: '#7c3aed', // Purple
       damaged: '#1f2937', // Dark gray
       malfunctioning: '#d97706', // Orange
+      out_of_bound: '#ef4444', // Red
     };
     return conditionColors[condition] || '#9ca3af';
   }

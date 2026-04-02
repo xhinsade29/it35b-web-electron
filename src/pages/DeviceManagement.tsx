@@ -179,6 +179,7 @@ export function DeviceManagement() {
     const displaced = devices.filter(d => d.device_condition === 'displaced').length;
     const damaged = devices.filter(d => d.device_condition === 'damaged').length;
     const malfunctioning = devices.filter(d => d.device_condition === 'malfunctioning').length;
+    const outOfBound = devices.filter(d => d.device_condition === 'out_of_bound').length;
     
     const upstream = devices.filter(d => d.river_section === 'upstream').length;
     const midstream = devices.filter(d => d.river_section === 'midstream').length;
@@ -186,7 +187,7 @@ export function DeviceManagement() {
 
     return {
       total, active, maintenance, offline, inactive,
-      displaced, damaged, malfunctioning,
+      displaced, damaged, malfunctioning, outOfBound,
       upstream, midstream, downstream
     };
   }, [devices]);
@@ -242,7 +243,7 @@ export function DeviceManagement() {
                 <div className={styles.summaryLabel}>Offline/Inactive</div>
               </div>
               <div className={styles.summaryCard}>
-                <div className={styles.summaryValue} style={{ color: '#d97706' }}>{deviceSummary.displaced + deviceSummary.damaged + deviceSummary.malfunctioning}</div>
+                <div className={styles.summaryValue} style={{ color: '#d97706' }}>{deviceSummary.displaced + deviceSummary.damaged + deviceSummary.malfunctioning + deviceSummary.outOfBound}</div>
                 <div className={styles.summaryLabel}>Issues</div>
               </div>
               <div className={styles.summaryCard}>
