@@ -51,15 +51,17 @@ export function DeviceReadingsChart({ devices, deviceChartData }: DeviceReadings
   if (!devices.length || !deviceChartData) {
     return (
       <div className="card" style={{ 
-        background: '#fff', 
+        background: 'rgba(15, 40, 84, 0.6)', 
+        backdropFilter: 'blur(12px)',
         borderRadius: '12px', 
         padding: '16px',
+        border: '1px solid rgba(73, 136, 196, 0.3)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '300px'
       }}>
-        <div style={{ textAlign: 'center', color: '#8897aa' }}>
+        <div style={{ textAlign: 'center', color: '#8b9aae' }}>
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>📊</div>
           <div>No device data available</div>
         </div>
@@ -74,15 +76,17 @@ export function DeviceReadingsChart({ devices, deviceChartData }: DeviceReadings
   if (activeDevices.length === 0) {
     return (
       <div className="card" style={{ 
-        background: '#fff', 
+        background: 'rgba(15, 40, 84, 0.6)', 
+        backdropFilter: 'blur(12px)',
         borderRadius: '12px', 
         padding: '16px',
+        border: '1px solid rgba(73, 136, 196, 0.3)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '300px'
       }}>
-        <div style={{ textAlign: 'center', color: '#8897aa' }}>
+        <div style={{ textAlign: 'center', color: '#8b9aae' }}>
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>📊</div>
           <div>Waiting for sensor readings...</div>
         </div>
@@ -95,15 +99,17 @@ export function DeviceReadingsChart({ devices, deviceChartData }: DeviceReadings
 
   return (
     <div style={{ 
-      background: '#fff', 
+      background: 'rgba(15, 40, 84, 0.6)', 
+      backdropFilter: 'blur(12px)',
       borderRadius: '12px', 
       padding: '16px',
-      border: '1px solid rgba(13,17,23,0.1)'
+      border: '1px solid rgba(73, 136, 196, 0.3)',
+      boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
     }}>
       <div style={{ 
         fontSize: '14px', 
         fontWeight: 600, 
-        color: '#0d1117', 
+        color: '#ffffff', 
         marginBottom: '12px',
         display: 'flex',
         alignItems: 'center',
@@ -167,16 +173,16 @@ export function DeviceReadingsChart({ devices, deviceChartData }: DeviceReadings
             <div 
               key={sensorKey} 
               style={{ 
-                border: '1px solid rgba(13,17,23,0.08)', 
+                border: '1px solid rgba(73, 136, 196, 0.2)', 
                 borderRadius: '8px', 
                 padding: '8px',
-                background: '#fafafa'
+                background: 'rgba(10, 22, 40, 0.4)'
               }}
             >
               <div style={{ 
                 fontSize: '11px', 
                 fontWeight: 600, 
-                color: '#0d1117',
+                color: '#ffffff',
                 marginBottom: '4px',
                 display: 'flex',
                 alignItems: 'center',
@@ -194,16 +200,16 @@ export function DeviceReadingsChart({ devices, deviceChartData }: DeviceReadings
               {hasData ? (
                 <ResponsiveContainer width="100%" height={100}>
                   <LineChart data={chartData} margin={{ top: 2, right: 2, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="2 2" stroke="rgba(13,17,23,0.05)" />
+                    <CartesianGrid strokeDasharray="2 2" stroke="rgba(73, 136, 196, 0.2)" />
                     <XAxis 
                       dataKey="time" 
-                      tick={{ fontSize: 7, fill: '#8897aa' }} 
+                      tick={{ fontSize: 7, fill: '#8b9aae' }} 
                       axisLine={false} 
                       tickLine={false}
                       interval={Math.floor(chartData.length / 3)}
                     />
                     <YAxis 
-                      tick={{ fontSize: 7, fill: '#8897aa' }} 
+                      tick={{ fontSize: 7, fill: '#8b9aae' }} 
                       axisLine={false} 
                       tickLine={false}
                     />
@@ -255,7 +261,7 @@ export function DeviceReadingsChart({ devices, deviceChartData }: DeviceReadings
         gap: '8px', 
         marginTop: '12px',
         paddingTop: '8px',
-        borderTop: '1px solid rgba(13,17,23,0.08)'
+        borderTop: '1px solid rgba(73, 136, 196, 0.2)'
       }}>
         {activeDevices.map((device, index) => (
           <div 
@@ -265,7 +271,7 @@ export function DeviceReadingsChart({ devices, deviceChartData }: DeviceReadings
               alignItems: 'center', 
               gap: '4px',
               fontSize: '10px',
-              color: '#3d4a5c'
+              color: '#e8ecf1'
             }}
           >
             <span style={{ 
