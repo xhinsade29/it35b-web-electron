@@ -16,7 +16,57 @@ import type {
 } from '../types/reports.types';
 
 /**
- * Get sensor readings statistics with aggregations
+ * Get actual total count of sensor readings (not limited)
+ */
+export async function getTotalReadingsCount(
+  filters: ReportFilterOptions
+): Promise<number> {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - filters.days);
+
+  // Build the base query with proper joins for filtering
+  let query = supabaseAdmin
+    .from('sensor_readings')
+    .select(`
+      reading_id,
+      sensors:sensor_id(
+        sensor_type,
+        device_id,
+        devices:device_id(
+          status,
+          location_id,
+          locations:location_id(river_section)
+        )
+      )
+    `, { count: 'exact', head: true })
+    .gte('recorded_at', cutoffDate.toISOString());
+
+  if (filters.device_id) {
+    query = query.eq('sensors.device_id', filters.device_id);
+  }
+  if (filters.sensor) {
+    query = query.eq('sensors.sensor_type', filters.sensor);
+  }
+  if (filters.section) {
+    query = query.eq('sensors.devices.locations.river_section', filters.section);
+  }
+  if (filters.status) {
+    query = query.eq('sensors.devices.status', filters.status);
+  }
+
+  const { count, error } = await query;
+
+  if (error) {
+    console.error('Error getting readings count:', error);
+    return 0;
+  }
+
+  console.log('[Reports] Actual total readings count:', count);
+  return count || 0;
+}
+
+/**
+ * Get sensor readings statistics with aggregations (no limit)
  */
 export async function getSensorReadingsStats(
   filters: ReportFilterOptions

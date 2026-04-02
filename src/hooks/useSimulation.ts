@@ -301,6 +301,15 @@ export function useSimulationEngine(deviceIds: string[]) {
       const batchResult = await simulateDevicesBatch(devicesData);
       
       console.log('[SIMULATION] Batch result:', batchResult);
+
+      // Broadcast simulation tick to other tabs/components
+      try {
+        const bc = new BroadcastChannel('aqua-vision-simulation');
+        bc.postMessage({ type: 'simulation_tick', timestamp: Date.now() });
+        bc.close();
+      } catch {
+        // BroadcastChannel not supported, ignore
+      }
       
       // Process results
       let alertCount = 0;

@@ -1,9 +1,10 @@
 /**
  * useReports Hook
- * Manages reports data fetching and filtering
+ * Manages reports data fetching and filtering with realtime sync
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { supabaseAdmin } from '../lib/supabase';
 import {
   getSensorReadingsStats,
   getAlertSummary,
@@ -65,6 +66,7 @@ export function useReports(): UseReportsReturn {
     setLoading(true);
     setError(null);
     try {
+      console.log('[Reports] Fetching data at', new Date().toISOString());
       const [
         sensorData,
         alertData,
@@ -79,9 +81,13 @@ export function useReports(): UseReportsReturn {
         getDeviceActivity(filterOptions),
         getDailyReadingsTrend(filterOptions),
         getRiverSectionStats(filterOptions),
-        getDeviceSensorReadings(filterOptions, 100),
+        getDeviceSensorReadings(filterOptions, 10000), // Increased limit to get actual count
         getDevicesForFilter(),
       ]);
+
+      const calculatedTotal = sensorData.reduce((sum, s) => sum + s.total_readings, 0);
+      console.log('[Reports] Sensor stats:', sensorData.length, 'types,', calculatedTotal, 'total readings (filtered)');
+      console.log('[Reports] Device activity:', activityData.length, 'devices,', activityData.reduce((s, x) => s + x.total_readings, 0), 'total readings');
 
       setSensorStats(sensorData);
       setAlertSummary(alertData);
@@ -107,12 +113,116 @@ export function useReports(): UseReportsReturn {
     return exportReportToCSV(summary, deviceActivity, filterOptions);
   }, [sensorStats, alertSummary, deviceActivity, filterOptions]);
 
-  // Calculate summary
-  const summary = calculateReportSummary(sensorStats, alertSummary, deviceActivity);
+  // Calculate summary from already-filtered data (sensorStats has correct filtered counts)
+  const summary: ReportSummary = {
+    total_readings: sensorStats.reduce((sum, s) => sum + s.total_readings, 0),
+    active_devices: deviceActivity.filter((d) => d.total_readings > 0).length,
+    total_devices: deviceActivity.length,
+    total_alerts: alertSummary.reduce((sum, a) => sum + a.total_alerts, 0),
+    sensor_type_count: sensorStats.length,
+  };
 
   // Fetch data when filters change
   useEffect(() => {
     fetchAllData();
+  }, [fetchAllData]);
+
+  // Realtime sync with database + polling fallback
+  useEffect(() => {
+    const channels: ReturnType<typeof supabaseAdmin.channel>[] = [];
+
+    // Subscribe to sensor_readings changes
+    const readingsChannel = supabaseAdmin
+      .channel('reports-sensor-readings')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'sensor_readings' },
+        (payload: { new: Record<string, unknown> }) => {
+          console.log('[Reports] New sensor reading received:', payload);
+          fetchAllData();
+        }
+      )
+      .subscribe((status: string) => {
+        console.log('[Reports] sensor_readings subscription status:', status);
+      });
+    channels.push(readingsChannel);
+
+    // Subscribe to alerts changes
+    const alertsChannel = supabaseAdmin
+      .channel('reports-alerts')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'alerts' },
+        () => {
+          console.log('[Reports] Alert changed, refreshing...');
+          fetchAllData();
+        }
+      )
+      .subscribe();
+    channels.push(alertsChannel);
+
+    // Subscribe to devices changes
+    const devicesChannel = supabaseAdmin
+      .channel('reports-devices')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'devices' },
+        () => {
+          console.log('[Reports] Device changed, refreshing...');
+          fetchAllData();
+        }
+      )
+      .subscribe();
+    channels.push(devicesChannel);
+
+    // Polling fallback - refresh every 5 seconds when visible
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        console.log('[Reports] Polling refresh...');
+        fetchAllData();
+      }
+    }, 5000);
+
+    // Refresh when page becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[Reports] Page visible, refreshing...');
+        fetchAllData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Also refresh on window focus (more reliable in some browsers)
+    const handleFocus = () => {
+      console.log('[Reports] Window focused, refreshing...');
+      fetchAllData();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    // Listen for simulation activity via BroadcastChannel
+    let simChannel: BroadcastChannel | null = null;
+    try {
+      simChannel = new BroadcastChannel('aqua-vision-simulation');
+      simChannel.onmessage = (event) => {
+        if (event.data?.type === 'simulation_tick') {
+          console.log('[Reports] Simulation tick detected, refreshing...');
+          fetchAllData();
+        }
+      };
+    } catch {
+      console.log('[Reports] BroadcastChannel not supported');
+    }
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      channels.forEach(channel => {
+        supabaseAdmin.removeChannel(channel);
+      });
+      clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      simChannel?.close();
+    };
   }, [fetchAllData]);
 
   return {

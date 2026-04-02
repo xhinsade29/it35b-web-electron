@@ -44,8 +44,8 @@ export function RiverSectionTable({ sections }: RiverSectionTableProps) {
                 </tr>
               </thead>
               <tbody>
-                {sections.map((section) => (
-                  <tr key={section.river_section}>
+                {sections.map((section, index) => (
+                  <tr key={`${section.river_section}-${index}`}>
                     <td>{capitalize(section.river_section || 'Unknown')}</td>
                     <td>{section.device_count}</td>
                     <td>{section.total_readings.toLocaleString()}</td>

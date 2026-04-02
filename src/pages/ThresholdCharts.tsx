@@ -29,6 +29,7 @@ interface ThresholdChartsProps {
     water_level?: number | null;
     sediments?: number | null;
   }>;
+  totalReadings?: number;
 }
 
 const SENSORS = [
@@ -40,7 +41,10 @@ const SENSORS = [
   { key: 'sediments', label: 'Sediments', unit: 'mg/L', min: 0, max: 500, color: '#a16207', safeMin: 10, safeMax: 300 },
 ];
 
-export function ThresholdCharts({ sectionConditions }: ThresholdChartsProps) {
+export function ThresholdCharts({ 
+  sectionConditions, 
+  totalReadings: propTotalReadings
+}: ThresholdChartsProps) {
   // Get readings by section
   const allReadings: Record<string, number[]> = {};
   const sectionReadings: Record<string, Record<string, number>> = {
@@ -94,8 +98,9 @@ export function ThresholdCharts({ sectionConditions }: ThresholdChartsProps) {
     };
   });
 
-  // Pie chart data for overall status
-  const totalReadings = Object.values(allReadings).flat().length;
+  // Use prop value if provided, otherwise calculate from sectionConditions
+  const calculatedTotalReadings = Object.values(allReadings).flat().length;
+  const totalReadings = propTotalReadings ?? calculatedTotalReadings;
   let totalNormal = 0, totalWarning = 0, totalCritical = 0;
   
   SENSORS.forEach(sensor => {
@@ -265,7 +270,7 @@ export function ThresholdCharts({ sectionConditions }: ThresholdChartsProps) {
           gap: '20px',
           marginBottom: '20px'
         }}>
-          {/* Stacked Bar + Line Chart Combo */}
+          {/* Column Bar Chart - Readings Distribution by Sensor */}
           <div style={{ 
             background: 'linear-gradient(135deg, #0F2854 0%, #0a1f42 100%)', 
             borderRadius: '12px', 
@@ -276,11 +281,10 @@ export function ThresholdCharts({ sectionConditions }: ThresholdChartsProps) {
               Readings Distribution by Sensor
             </div>
             <p style={{ fontSize: '12px', color: '#8b9aae', marginBottom: '12px', lineHeight: 1.5 }}>
-              Stacked bars show Normal (green), Warning (orange), and Critical (red) readings per sensor. 
-              Purple line indicates average sensor value across all readings.
+              Column bars show Normal (green), Warning (orange), and Critical (red) readings per sensor side by side.
             </p>
             <ResponsiveContainer width="100%" height={220}>
-              <ComposedChart data={distributionData} margin={{ left: 50, right: 30, top: 20, bottom: 60 }}>
+              <BarChart data={distributionData} margin={{ left: 50, right: 30, top: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(73, 136, 196, 0.2)" />
                 <XAxis 
                   dataKey="name" 
@@ -300,11 +304,10 @@ export function ThresholdCharts({ sectionConditions }: ThresholdChartsProps) {
                   allowDecimals={false}
                 />
                 <Tooltip contentStyle={{ background: 'rgba(10, 22, 40, 0.95)', border: '1px solid rgba(73, 136, 196, 0.3)', borderRadius: '8px', color: '#e8ecf1', fontSize: '12px' }} />
-                <Bar dataKey="normal" stackId="a" fill="#059669" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="warning" stackId="a" fill="#f59e0b" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="critical" stackId="a" fill="#dc2626" radius={[3, 3, 0, 0]} />
-                <Line type="monotone" dataKey="avg" stroke="#818cf8" strokeWidth={2} dot={{ fill: '#818cf8', r: 3 }} />
-              </ComposedChart>
+                <Bar dataKey="normal" fill="#059669" radius={[4, 4, 0, 0]} name="Normal" />
+                <Bar dataKey="warning" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Warning" />
+                <Bar dataKey="critical" fill="#dc2626" radius={[4, 4, 0, 0]} name="Critical" />
+              </BarChart>
             </ResponsiveContainer>
           </div>
 
@@ -360,7 +363,7 @@ export function ThresholdCharts({ sectionConditions }: ThresholdChartsProps) {
             </div>
         </div>
 
-        {/* Large Threshold Line Chart */}
+        {/* Large Threshold Line Chart - Moved below Readings Distribution */}
         <div style={{
           background: 'linear-gradient(135deg, #0F2854 0%, #0a1f42 100%)',
           borderRadius: '12px',
@@ -388,79 +391,6 @@ export function ThresholdCharts({ sectionConditions }: ThresholdChartsProps) {
               <Line type="monotone" dataKey="avg" stroke="#7c3aed" strokeWidth={3} dot={{ fill: '#7c3aed', r: 4 }} />
             </ComposedChart>
           </ResponsiveContainer>
-        </div>
-
-        {/* Summary Stats Row */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '16px',
-          marginBottom: '20px'
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #0F2854 0%, #0a1f42 100%)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-            border: '1px solid rgba(73, 136, 196, 0.2)',
-            borderLeft: '4px solid #4988C4'
-          }}>
-            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#ffffff' }}>
-              {totalReadings.toLocaleString()}
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#8b9aae', marginTop: '4px' }}>
-              Total Readings (7d)
-            </div>
-          </div>
-          <div style={{
-            background: 'linear-gradient(135deg, #0F2854 0%, #0a1f42 100%)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-            border: '1px solid rgba(73, 136, 196, 0.2)',
-            borderLeft: '4px solid #34d399'
-          }}>
-            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#34d399' }}>
-              {pieData.reduce((sum, d) => sum + d.value, 0) > 0 ? Math.round((totalNormal / totalReadings) * 100) + '%' : '0%'}
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#8b9aae', marginTop: '4px' }}>
-              Normal Rate
-            </div>
-          </div>
-          <div style={{
-            background: 'linear-gradient(135deg, #0F2854 0%, #0a1f42 100%)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-            border: '1px solid rgba(73, 136, 196, 0.2)',
-            borderLeft: '4px solid #fbbf24'
-          }}>
-            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#fbbf24' }}>
-              {totalWarning + totalCritical}
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#8b9aae', marginTop: '4px' }}>
-              Total Alerts
-            </div>
-          </div>
-          <div style={{
-            background: 'linear-gradient(135deg, #0F2854 0%, #0a1f42 100%)',
-            borderRadius: '12px',
-            padding: '20px',
-            textAlign: 'center',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-            border: '1px solid rgba(73, 136, 196, 0.2)',
-            borderLeft: '4px solid #818cf8'
-          }}>
-            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#818cf8' }}>
-              {SENSORS.length}
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#8b9aae', marginTop: '4px' }}>
-              Sensor Types
-            </div>
-          </div>
         </div>
 
         {/* River Stream Analytics Section */}
