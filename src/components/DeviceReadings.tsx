@@ -1,11 +1,22 @@
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from 'recharts';
 import styles from '../pages/Dashboard.module.css';
-import type { DeviceInfo, DeviceReading } from '../types/dashboard.types';
+import type { DeviceInfo, DeviceReading, ChartData } from '../types/dashboard.types';
 
 interface DeviceReadingsPanelProps {
   devices: DeviceInfo[];
   selectedDeviceId: string | null;
   onSelectDevice: (deviceId: string) => void;
   deviceReading: DeviceReading | null;
+  deviceChartData?: Record<string, ChartData>;
 }
 
 const SENSOR_META = [
@@ -34,8 +45,21 @@ export function DeviceReadingsPanel({
   selectedDeviceId,
   onSelectDevice,
   deviceReading,
+  deviceChartData,
 }: DeviceReadingsPanelProps) {
   const selectedDevice = devices.find(d => d.device_id === selectedDeviceId);
+  const chartData = selectedDeviceId ? deviceChartData?.[selectedDeviceId] : null;
+
+  // Transform chart data for each sensor
+  const getSensorChartData = (sensorKey: string) => {
+    if (!chartData) return [];
+    const hours = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+    const key = sensorKey === 'ph_level' ? 'pH' : sensorKey;
+    return hours.map((hour, index) => ({
+      hour,
+      value: chartData[key as keyof ChartData]?.[index] ?? null,
+    })).filter(d => d.value !== null);
+  };
 
   // Format timestamp
   const formatTimestamp = (ts?: string) => {
@@ -123,47 +147,98 @@ export function DeviceReadingsPanel({
               </div>
             </div>
 
-            {/* Sensor Rows */}
-            {SENSOR_META.map((sensor) => {
-              const value = deviceReading?.[sensor.key as keyof DeviceReading] as number | undefined;
-              const hasValue = value !== null && value !== undefined;
-              const isGood = hasValue ? value >= sensor.min && value <= sensor.max : null;
+            {/* Two Column Layout: Sensor Rows | Charts */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              {/* Left Column - Sensor Rows */}
+              <div>
+                {SENSOR_META.map((sensor) => {
+                  const value = deviceReading?.[sensor.key as keyof DeviceReading] as number | undefined;
+                  const hasValue = value !== null && value !== undefined;
+                  const isGood = hasValue ? value >= sensor.min && value <= sensor.max : null;
 
-              return (
-                <div
-                  key={sensor.key}
-                  className={`${styles.sensorRow} ${isGood === false ? styles.sensorRowOut : ''}`}
-                >
-                  <div className={styles.sensorIcon}>{sensor.icon}</div>
-                  <div className={styles.sensorLabel}>
-                    <div className={styles.sensorName}>{sensor.label}</div>
-                    <div className={styles.sensorRange}>
-                      Safe {sensor.min} – {sensor.max} {sensor.unit}
+                  return (
+                    <div
+                      key={sensor.key}
+                      className={`${styles.sensorRow} ${isGood === false ? styles.sensorRowOut : ''}`}
+                    >
+                      <div className={styles.sensorIcon}>{sensor.icon}</div>
+                      <div className={styles.sensorLabel}>
+                        <div className={styles.sensorName}>{sensor.label}</div>
+                        <div className={styles.sensorRange}>
+                          Safe {sensor.min} – {sensor.max} {sensor.unit}
+                        </div>
+                      </div>
+                      <div
+                        className={styles.sensorVal}
+                        style={{
+                          color: isGood === true ? '#059669' : isGood === false ? '#d97706' : '#8897aa',
+                        }}
+                      >
+                        {hasValue ? value.toFixed(value % 1 === 0 ? 0 : 1) : '—'}
+                        {hasValue && <span className={styles.sensorUnit}>{sensor.unit}</span>}
+                      </div>
+                      <div className={styles.sensorStatus}>
+                        {isGood === true ? (
+                          <span className={`${styles.tag} ${styles.tagGood}`}>✓ Normal</span>
+                        ) : isGood === false ? (
+                          <span className={`${styles.tag} ${styles.tagWarn}`}>
+                            ⚠ {value! < sensor.min ? 'Low' : 'High'}
+                          </span>
+                        ) : (
+                          <span className={`${styles.tag} ${styles.tagMute}`}>— No data</span>
+                        )}
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+
+              {/* Right Column - Individual Sensor Charts */}
+              {selectedDevice && chartData && (
+                <div style={{ padding: '8px', borderLeft: '1px solid rgba(13,17,23,0.07)' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#0d1117', marginBottom: '8px' }}>
+                    📊 Sensor Trends with Thresholds
                   </div>
-                  <div
-                    className={styles.sensorVal}
-                    style={{
-                      color: isGood === true ? '#059669' : isGood === false ? '#d97706' : '#8897aa',
-                    }}
-                  >
-                    {hasValue ? value.toFixed(value % 1 === 0 ? 0 : 1) : '—'}
-                    {hasValue && <span className={styles.sensorUnit}>{sensor.unit}</span>}
-                  </div>
-                  <div className={styles.sensorStatus}>
-                    {isGood === true ? (
-                      <span className={`${styles.tag} ${styles.tagGood}`}>✓ Normal</span>
-                    ) : isGood === false ? (
-                      <span className={`${styles.tag} ${styles.tagWarn}`}>
-                        ⚠ {value! < sensor.min ? 'Low' : 'High'}
-                      </span>
-                    ) : (
-                      <span className={`${styles.tag} ${styles.tagMute}`}>— No data</span>
-                    )}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                    {SENSOR_META.map((sensor) => {
+                      const data = getSensorChartData(sensor.key);
+                      if (data.length === 0) return null;
+                      const color = sensor.key === 'temperature' ? '#dc2626' : 
+                                    sensor.key === 'ph_level' ? '#7c3aed' :
+                                    sensor.key === 'turbidity' ? '#059669' :
+                                    sensor.key === 'dissolved_oxygen' ? '#0891b2' :
+                                    sensor.key === 'water_level' ? '#2563eb' : '#a16207';
+                      
+                      return (
+                        <div key={sensor.key} style={{ border: '1px solid rgba(13,17,23,0.1)', borderRadius: '8px', padding: '6px' }}>
+                          <div style={{ fontSize: '9px', fontWeight: 600, marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            <span>{sensor.icon}</span>
+                            <span>{sensor.label}</span>
+                          </div>
+                          <ResponsiveContainer width="100%" height={60}>
+                            <LineChart data={data} margin={{ top: 3, right: 3, left: -15, bottom: 0 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(13, 17, 23, 0.05)" />
+                              <XAxis dataKey="hour" tick={{ fontSize: 6, fill: '#8897aa' }} axisLine={false} tickLine={false} interval={5} />
+                              <YAxis tick={{ fontSize: 6, fill: '#8897aa' }} axisLine={false} tickLine={false} domain={[sensor.min - (sensor.max - sensor.min) * 0.2, sensor.max + (sensor.max - sensor.min) * 0.2]} />
+                              <Tooltip 
+                                contentStyle={{ background: 'rgba(13, 17, 23, 0.9)', border: 'none', borderRadius: '4px', fontSize: '8px', color: '#fff', padding: '3px' }}
+                                itemStyle={{ fontSize: '8px' }}
+                              />
+                              <ReferenceLine y={sensor.min} stroke="#dc2626" strokeDasharray="4 4" strokeWidth={1} />
+                              <ReferenceLine y={sensor.max} stroke="#dc2626" strokeDasharray="4 4" strokeWidth={1} />
+                              <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} connectNulls />
+                            </LineChart>
+                          </ResponsiveContainer>
+                          <div style={{ fontSize: '7px', color: '#8897aa', textAlign: 'center', marginTop: '1px' }}>
+                            Safe: {sensor.min} – {sensor.max}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              );
-            })}
+              )}
+            </div>
           </div>
         ) : (
           <div className={styles.empty}>

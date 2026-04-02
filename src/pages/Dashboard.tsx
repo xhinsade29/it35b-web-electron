@@ -253,6 +253,7 @@ export function DashboardPage() {
             selectedDeviceId={selectedDeviceId}
             onSelectDevice={setSelectedDeviceId}
             deviceReading={deviceReading}
+            deviceChartData={dashboardData.device_chart_data}
           />
         </div>
 

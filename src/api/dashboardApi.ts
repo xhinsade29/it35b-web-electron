@@ -116,7 +116,6 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
     }));
 
     // Fetch recent sensor readings for charts, sections, and logs
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { data: readingsData, error: readingsError } = await supabase
       .from('sensor_readings')
       .select(`
@@ -124,9 +123,8 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
         recorded_at, 
         sensors!inner(sensor_type, device_id, devices!inner(device_name, location_id, locations!inner(location_name, river_section)))
       `)
-      .gte('recorded_at', twentyFourHoursAgo)
       .order('recorded_at', { ascending: false })
-      .limit(1000);
+      .limit(5000);
     
     if (readingsError) {
       console.error('Readings fetch error:', readingsError);
@@ -137,6 +135,7 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
     const chartData = processChartData(processedReadings);
     const sectionConditions = processSectionConditions(processedReadings);
     const logs = processActivityLogs(processedReadings);
+    const deviceChartData = processDeviceChartData(processedReadings);
 
     // Build map locations with device counts
     const mapLocations = (locationsData || []).map((loc: { 
@@ -174,7 +173,7 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
       logs: logs,
       map_locations: mapLocations,
       chart_data: chartData,
-      device_chart_data: {},
+      device_chart_data: deviceChartData,
       maintenance: [],
       section_conditions: sectionConditions,
     };
@@ -458,6 +457,60 @@ function processSectionConditions(readings: SensorReading[]) {
   });
 
   return sections;
+}
+
+function processDeviceChartData(readings: SensorReading[]) {
+  const defaultArray = Array(24).fill(null);
+  const deviceData: Record<string, {
+    temperature: (number | null)[];
+    pH: (number | null)[];
+    turbidity: (number | null)[];
+    dissolved_oxygen: (number | null)[];
+    water_level: (number | null)[];
+    sediments: (number | null)[];
+  }> = {};
+
+  // Group readings by device and hour
+  const hourlyData: Record<string, Record<string, Record<number, number[]>>> = {};
+
+  readings.forEach((r) => {
+    const deviceId = r.sensors?.device_id;
+    if (!deviceId) return;
+    
+    const hour = new Date(r.recorded_at).getHours();
+    const sensorType = r.sensors?.sensor_type;
+    if (!sensorType) return;
+
+    if (!hourlyData[deviceId]) hourlyData[deviceId] = {};
+    if (!hourlyData[deviceId][sensorType]) hourlyData[deviceId][sensorType] = {};
+    if (!hourlyData[deviceId][sensorType][hour]) hourlyData[deviceId][sensorType][hour] = [];
+    
+    hourlyData[deviceId][sensorType][hour].push(r.value);
+  });
+
+  // Calculate averages for each device
+  Object.entries(hourlyData).forEach(([deviceId, sensors]) => {
+    deviceData[deviceId] = {
+      temperature: [...defaultArray],
+      pH: [...defaultArray],
+      turbidity: [...defaultArray],
+      dissolved_oxygen: [...defaultArray],
+      water_level: [...defaultArray],
+      sediments: [...defaultArray],
+    };
+
+    Object.entries(sensors).forEach(([sensorType, hours]) => {
+      const key = sensorType === 'ph_level' ? 'pH' : sensorType;
+      if (key in deviceData[deviceId]) {
+        Object.entries(hours).forEach(([hour, values]) => {
+          const avg = values.reduce((a, b) => a + b, 0) / values.length;
+          (deviceData[deviceId] as Record<string, (number | null)[]>)[key][parseInt(hour)] = parseFloat(avg.toFixed(2));
+        });
+      }
+    });
+  });
+
+  return deviceData;
 }
 
 function processActivityLogs(readings: SensorReading[]) {
