@@ -84,6 +84,21 @@ export interface ChartData {
   sediments: (number | null)[];
 }
 
+// Time Series Chart Data (for device readings with timestamps)
+export interface TimeSeriesPoint {
+  time: string;
+  value: number;
+}
+
+export interface TimeSeriesChartData {
+  temperature: TimeSeriesPoint[];
+  pH: TimeSeriesPoint[];
+  turbidity: TimeSeriesPoint[];
+  dissolved_oxygen: TimeSeriesPoint[];
+  water_level: TimeSeriesPoint[];
+  sediments: TimeSeriesPoint[];
+}
+
 // Section Conditions
 export interface SectionConditions {
   temperature?: number | null;
@@ -115,7 +130,7 @@ export interface DashboardSyncData {
   logs: SensorReading[];
   map_locations: MapLocation[];
   chart_data: ChartData;
-  device_chart_data: Record<string, ChartData>;
+  device_chart_data: Record<string, TimeSeriesChartData>;
   maintenance: MaintenanceLog[];
   section_conditions: Record<'upstream' | 'midstream' | 'downstream', SectionConditions>;
 }

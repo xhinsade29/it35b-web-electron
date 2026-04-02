@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import styles from './Dashboard.module.css';
 import { useDashboardSync } from '../hooks/useDashboardSync';
 import { useSimulationEngine } from '../hooks/useSimulation';
-import type { DeviceReading } from '../types/dashboard.types';
+import type { DeviceReading, TimeSeriesChartData } from '../types/dashboard.types';
 import { RiverBanner } from '../components/RiverBanner';
 import { KPICards } from '../components/KPICards';
 import { DeviceReadingsPanel } from '../components/DeviceReadings';
@@ -253,7 +253,7 @@ export function DashboardPage() {
             selectedDeviceId={selectedDeviceId}
             onSelectDevice={setSelectedDeviceId}
             deviceReading={deviceReading}
-            deviceChartData={dashboardData.device_chart_data}
+            deviceChartData={dashboardData.device_chart_data as Record<string, TimeSeriesChartData>}
           />
         </div>
 

@@ -9,14 +9,14 @@ import {
   ReferenceLine,
 } from 'recharts';
 import styles from '../pages/Dashboard.module.css';
-import type { DeviceInfo, DeviceReading, ChartData } from '../types/dashboard.types';
+import type { DeviceInfo, DeviceReading, TimeSeriesChartData } from '../types/dashboard.types';
 
 interface DeviceReadingsPanelProps {
   devices: DeviceInfo[];
   selectedDeviceId: string | null;
   onSelectDevice: (deviceId: string) => void;
   deviceReading: DeviceReading | null;
-  deviceChartData?: Record<string, ChartData>;
+  deviceChartData?: Record<string, TimeSeriesChartData>;
 }
 
 const SENSOR_META = [
@@ -50,15 +50,18 @@ export function DeviceReadingsPanel({
   const selectedDevice = devices.find(d => d.device_id === selectedDeviceId);
   const chartData = selectedDeviceId ? deviceChartData?.[selectedDeviceId] : null;
 
-  // Transform chart data for each sensor
+  // Transform chart data for each sensor - now returns time-series data
   const getSensorChartData = (sensorKey: string) => {
     if (!chartData) return [];
-    const hours = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
     const key = sensorKey === 'ph_level' ? 'pH' : sensorKey;
-    return hours.map((hour, index) => ({
-      hour,
-      value: chartData[key as keyof ChartData]?.[index] ?? null,
-    })).filter(d => d.value !== null);
+    const seriesData = chartData[key as keyof TimeSeriesChartData];
+    if (!seriesData || !Array.isArray(seriesData)) return [];
+    
+    // Map to chart format with formatted time labels
+    return seriesData.map((point) => ({
+      time: new Date(point.time).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      value: point.value,
+    }));
   };
 
   // Format timestamp
@@ -219,7 +222,7 @@ export function DeviceReadingsPanel({
                             <ResponsiveContainer width="100%" height={60}>
                               <LineChart data={data} margin={{ top: 3, right: 3, left: -15, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(13, 17, 23, 0.05)" />
-                                <XAxis dataKey="hour" tick={{ fontSize: 6, fill: '#8897aa' }} axisLine={false} tickLine={false} interval={5} />
+                                <XAxis dataKey="time" tick={{ fontSize: 6, fill: '#8897aa' }} axisLine={false} tickLine={false} interval={3} />
                                 <YAxis tick={{ fontSize: 6, fill: '#8897aa' }} axisLine={false} tickLine={false} domain={[sensor.min - (sensor.max - sensor.min) * 0.2, sensor.max + (sensor.max - sensor.min) * 0.2]} />
                                 <Tooltip 
                                   contentStyle={{ background: 'rgba(13, 17, 23, 0.9)', border: 'none', borderRadius: '4px', fontSize: '8px', color: '#fff', padding: '3px' }}

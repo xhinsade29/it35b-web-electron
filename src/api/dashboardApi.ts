@@ -584,68 +584,69 @@ function processSectionConditions(readings: SensorReading[]) {
 }
 
 function processDeviceChartData(readings: SensorReading[], devices: { device_id: string; device_name: string }[]) {
-  const defaultArray = Array(24).fill(null);
-  
-  // Initialize all devices with empty chart data (ensures all devices have entries)
+  // Get last 20 readings per sensor per device (for time-series view)
   const deviceData: Record<string, {
-    temperature: (number | null)[];
-    pH: (number | null)[];
-    turbidity: (number | null)[];
-    dissolved_oxygen: (number | null)[];
-    water_level: (number | null)[];
-    sediments: (number | null)[];
+    temperature: Array<{ time: string; value: number }>;
+    pH: Array<{ time: string; value: number }>;
+    turbidity: Array<{ time: string; value: number }>;
+    dissolved_oxygen: Array<{ time: string; value: number }>;
+    water_level: Array<{ time: string; value: number }>;
+    sediments: Array<{ time: string; value: number }>;
   }> = {};
   
+  // Initialize all devices with empty arrays
   devices.forEach((device) => {
     deviceData[device.device_id] = {
-      temperature: [...defaultArray],
-      pH: [...defaultArray],
-      turbidity: [...defaultArray],
-      dissolved_oxygen: [...defaultArray],
-      water_level: [...defaultArray],
-      sediments: [...defaultArray],
+      temperature: [],
+      pH: [],
+      turbidity: [],
+      dissolved_oxygen: [],
+      water_level: [],
+      sediments: [],
     };
   });
 
-  // Group readings by device and hour
-  const hourlyData: Record<string, Record<string, Record<number, number[]>>> = {};
+  // Group readings by device and sensor
+  const readingsByDevice: Record<string, Record<string, Array<{ time: string; value: number }>>> = {};
 
   readings.forEach((r) => {
     const deviceId = r.sensors?.device_id;
     if (!deviceId) return;
     
-    const hour = new Date(r.recorded_at).getHours();
     const sensorType = r.sensors?.sensor_type;
     if (!sensorType) return;
 
-    if (!hourlyData[deviceId]) hourlyData[deviceId] = {};
-    if (!hourlyData[deviceId][sensorType]) hourlyData[deviceId][sensorType] = {};
-    if (!hourlyData[deviceId][sensorType][hour]) hourlyData[deviceId][sensorType][hour] = [];
+    if (!readingsByDevice[deviceId]) readingsByDevice[deviceId] = {};
+    if (!readingsByDevice[deviceId][sensorType]) readingsByDevice[deviceId][sensorType] = [];
     
-    hourlyData[deviceId][sensorType][hour].push(r.value);
+    readingsByDevice[deviceId][sensorType].push({
+      time: r.recorded_at,
+      value: r.value,
+    });
   });
 
-  // Calculate averages for each device
-  Object.entries(hourlyData).forEach(([deviceId, sensors]) => {
-    // Ensure device exists in deviceData (in case reading references non-existent device)
+  // Get last 20 readings for each sensor, sorted by time
+  Object.entries(readingsByDevice).forEach(([deviceId, sensors]) => {
     if (!deviceData[deviceId]) {
       deviceData[deviceId] = {
-        temperature: [...defaultArray],
-        pH: [...defaultArray],
-        turbidity: [...defaultArray],
-        dissolved_oxygen: [...defaultArray],
-        water_level: [...defaultArray],
-        sediments: [...defaultArray],
+        temperature: [],
+        pH: [],
+        turbidity: [],
+        dissolved_oxygen: [],
+        water_level: [],
+        sediments: [],
       };
     }
 
-    Object.entries(sensors).forEach(([sensorType, hours]) => {
+    Object.entries(sensors).forEach(([sensorType, data]) => {
+      // Sort by time and take last 20
+      const sorted = data
+        .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())
+        .slice(-20);
+      
       const key = sensorType === 'ph_level' ? 'pH' : sensorType;
       if (key in deviceData[deviceId]) {
-        Object.entries(hours).forEach(([hour, values]) => {
-          const avg = values.reduce((a, b) => a + b, 0) / values.length;
-          (deviceData[deviceId] as Record<string, (number | null)[]>)[key][parseInt(hour)] = parseFloat(avg.toFixed(2));
-        });
+        (deviceData[deviceId] as Record<string, Array<{ time: string; value: number }>>)[key] = sorted;
       }
     });
   });
@@ -653,10 +654,9 @@ function processDeviceChartData(readings: SensorReading[], devices: { device_id:
   // Debug logging
   console.log('Device Chart Data Summary:');
   Object.entries(deviceData).forEach(([deviceId, data]) => {
-    const hasData = Object.values(data).some(arr => arr.some(v => v !== null));
+    const hasData = Object.values(data).some(arr => arr.length > 0);
     const sensorCounts = Object.entries(data).map(([key, arr]) => {
-      const count = arr.filter(v => v !== null).length;
-      return count > 0 ? `${key}:${count}` : null;
+      return arr.length > 0 ? `${key}:${arr.length}` : null;
     }).filter(Boolean);
     console.log(`  ${deviceId}: ${hasData ? sensorCounts.join(', ') : 'NO DATA'}`);
   });
