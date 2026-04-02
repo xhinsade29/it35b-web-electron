@@ -1,16 +1,18 @@
 /* ActivityFilters.module.css */
 
 .filters {
-  background: linear-gradient(135deg, #0F2854 0%, #0a1f42 100%);
+  background: rgba(15, 40, 84, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 12px;
   padding: 1rem 1.25rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   margin-bottom: 1.5rem;
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
   align-items: center;
-  border: 1px solid rgba(73, 136, 196, 0.2);
+  border: 1px solid rgba(73, 136, 196, 0.3);
 }
 
 .filterGroup {
@@ -30,7 +32,8 @@
   border: 1px solid rgba(73, 136, 196, 0.3);
   border-radius: 8px;
   font-size: 0.875rem;
-  background: rgba(10, 22, 40, 0.6);
+  background: rgba(10, 22, 40, 0.4);
+  backdrop-filter: blur(8px);
   color: #e8ecf1;
   cursor: pointer;
 }
@@ -42,7 +45,8 @@
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  background: rgba(10, 22, 40, 0.6);
+  background: rgba(10, 22, 40, 0.4);
+  backdrop-filter: blur(8px);
   color: #e8ecf1;
   text-decoration: none;
   display: inline-flex;
@@ -58,7 +62,8 @@
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  background: linear-gradient(135deg, #4988C4 0%, #2d6a9f 100%);
+  background: rgba(73, 136, 196, 0.4);
+  backdrop-filter: blur(8px);
   color: white;
   text-decoration: none;
   display: inline-flex;
