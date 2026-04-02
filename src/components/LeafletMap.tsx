@@ -95,23 +95,14 @@ export function LeafletMap({ devices, onDeviceClick }: LeafletMapProps) {
   const centerLat = (8.345958 + 8.413179) / 2;
   const centerLng = (124.898607 + 124.909497) / 2;
 
-  // Get device color based on status
+  // Get device color based on river_section
   const getDeviceColor = (device: DeviceInfo) => {
-    if (device.device_condition && device.device_condition !== 'normal') {
-      const conditionColors: Record<string, string> = {
-        displaced: '#7c3aed',
-        damaged: '#1f2937',
-        malfunctioning: '#d97706',
-      };
-      return conditionColors[device.device_condition] || '#9ca3af';
-    }
-    
-    const statusColors: Record<string, string> = {
-      active: '#059669',
-      maintenance: '#3b82f6',
-      inactive: '#dc2626',
+    const streamColors: Record<string, string> = {
+      upstream: '#059669',
+      midstream: '#d97706',
+      downstream: '#dc2626',
     };
-    return statusColors[device.status] || '#9ca3af';
+    return streamColors[device.river_section] || '#9ca3af';
   };
 
   return (
