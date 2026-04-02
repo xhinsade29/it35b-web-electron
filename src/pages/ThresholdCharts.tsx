@@ -112,12 +112,6 @@ export function ThresholdCharts({
     });
   });
 
-  const pieData = [
-    { name: 'Normal', value: totalNormal, color: '#059669' },
-    { name: 'Warning', value: totalWarning, color: '#f59e0b' },
-    { name: 'Critical', value: totalCritical, color: '#dc2626' },
-  ].filter(d => d.value > 0);
-
   // Threshold boundary line data
   const thresholdLineData = SENSORS.map(sensor => ({
     name: sensor.label,

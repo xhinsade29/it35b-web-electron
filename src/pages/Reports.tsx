@@ -32,7 +32,6 @@ export function ReportsPage() {
     loading,
     error,
     filterOptions,
-    setFilterOptions,
     refresh,
   } = useReports();
 
