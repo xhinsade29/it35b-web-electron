@@ -32,6 +32,21 @@ const SENSOR_LABELS: Record<string, string> = {
   sediments: 'Sediments',
 };
 
+// Generate distinct colors for any number of devices
+function getDeviceColor(index: number): string {
+  const colors = [
+    '#dc2626', '#2563eb', '#059669', '#d97706', '#7c3aed', 
+    '#0891b2', '#db2777', '#7c2d12', '#166534', '#4338ca',
+    '#9f1239', '#1d4ed8', '#15803d', '#b45309', '#6d28d9',
+    '#0e7490', '#be185d', '#92400e', '#14532d', '#3730a3'
+  ];
+  if (index < colors.length) return colors[index];
+  
+  // Fallback: generate HSL colors for unlimited devices
+  const hue = (index * 137.5) % 360;
+  return `hsl(${hue}, 70%, 45%)`;
+}
+
 export function DeviceReadingsChart({ devices, deviceChartData }: DeviceReadingsChartProps) {
   if (!devices.length || !deviceChartData) {
     return (
@@ -54,8 +69,7 @@ export function DeviceReadingsChart({ devices, deviceChartData }: DeviceReadings
 
   // Get active devices with data
   const activeDevices = devices
-    .filter(d => deviceChartData[d.device_id])
-    .slice(0, 6); // Limit to 6 devices for readability
+    .filter(d => deviceChartData[d.device_id]);
 
   if (activeDevices.length === 0) {
     return (
@@ -208,7 +222,7 @@ export function DeviceReadingsChart({ devices, deviceChartData }: DeviceReadings
                         key={device.device_id}
                         type="monotone"
                         dataKey={device.device_id}
-                        stroke={['#dc2626', '#2563eb', '#059669', '#d97706', '#7c3aed', '#0891b2'][index % 6]}
+                        stroke={getDeviceColor(index)}
                         strokeWidth={1.5}
                         dot={false}
                         connectNulls
@@ -257,7 +271,7 @@ export function DeviceReadingsChart({ devices, deviceChartData }: DeviceReadings
             <span style={{ 
               width: '8px', 
               height: '2px', 
-              background: ['#dc2626', '#2563eb', '#059669', '#d97706', '#7c3aed', '#0891b2'][index % 6]
+              background: getDeviceColor(index)
             }} />
             {device.device_name}
           </div>
