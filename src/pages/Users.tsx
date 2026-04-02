@@ -58,20 +58,26 @@ export function UsersPage() {
         <p>Manage system users, roles and permissions</p>
       </div>
 
-      <UserStats stats={stats} />
+      <div style={{ marginBottom: '24px' }}>
+        <UserStats stats={stats} />
+      </div>
 
-      <UserFilters
-        filters={filters}
-        onFilterChange={setFilters}
-        onAddUser={openAddModal}
-      />
+      <div style={{ marginBottom: '24px' }}>
+        <UserFilters
+          filters={filters}
+          onFilterChange={setFilters}
+          onAddUser={openAddModal}
+        />
+      </div>
 
-      <UserTable
-        users={filteredUsers}
-        onEdit={openEditModal}
-        onDelete={handleDelete}
-        onToggleStatus={handleToggleStatus}
-      />
+      <div style={{ marginBottom: '24px' }}>
+        <UserTable
+          users={filteredUsers}
+          onEdit={openEditModal}
+          onDelete={handleDelete}
+          onToggleStatus={handleToggleStatus}
+        />
+      </div>
 
       <UserForm
         isOpen={isModalOpen}
