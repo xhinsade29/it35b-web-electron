@@ -20,11 +20,15 @@
   font-weight: 600;
   color: #ffffff;
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .pageHeader p {
   color: #8b9aae;
   font-size: 0.875rem;
+  line-height: 1.6;
 }
 
 .loading,

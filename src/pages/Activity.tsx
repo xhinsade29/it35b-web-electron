@@ -64,24 +64,30 @@ export function ActivityPage() {
         <p>View sensor readings, alerts, device activity, and system logs over time</p>
       </div>
 
-      <ActivityStats
-        readingStats={readingStats}
-        alertStats={alertStats}
-        hoursFilter={filterOptions.hours}
-      />
+      <div style={{ marginBottom: '24px' }}>
+        <ActivityStats
+          readingStats={readingStats}
+          alertStats={alertStats}
+          hoursFilter={filterOptions.hours}
+        />
+      </div>
 
-      <ActivityFilters
-        filterOptions={filterOptions}
-        devices={devices}
-        onFilterChange={setFilterOptions}
-        onReset={handleResetFilters}
-      />
+      <div style={{ marginBottom: '24px' }}>
+        <ActivityFilters
+          filterOptions={filterOptions}
+          devices={devices}
+          onFilterChange={setFilterOptions}
+          onReset={handleResetFilters}
+        />
+      </div>
 
-      <ActivityTimeline
-        items={timeline}
-        eventCount={timeline.length}
-        lastSync={lastSync}
-      />
+      <div style={{ marginBottom: '24px' }}>
+        <ActivityTimeline
+          items={timeline}
+          eventCount={timeline.length}
+          lastSync={lastSync}
+        />
+      </div>
 
       <div style={{ marginTop: '24px' }}>
         <MaintenanceLogs logs={maintenanceLogs} />
