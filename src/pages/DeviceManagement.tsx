@@ -47,10 +47,26 @@ function MapBounds({ devices }: { devices: Device[] }) {
 
   useEffect(() => {
     const devicesWithCoords = devices.filter((d) => d.latitude && d.longitude);
-    if (devicesWithCoords.length > 0) {
-      const bounds = devicesWithCoords.map((d) => [d.latitude, d.longitude] as [number, number]);
-      map.fitBounds(bounds, { padding: [50, 50] });
+    
+    console.log(`[MAP] Total devices: ${devices.length}, With coords: ${devicesWithCoords.length}`);
+    
+    // Log each device with coordinates
+    devicesWithCoords.forEach((d, i) => {
+      console.log(`[MAP] Device ${i + 1}: ${d.device_name} - [${d.latitude}, ${d.longitude}]`);
+    });
+    
+    if (devicesWithCoords.length === 0) {
+      console.log('[MAP] No devices with coordinates yet');
+      return;
     }
+    
+    const bounds = devicesWithCoords.map((d) => [d.latitude, d.longitude] as [number, number]);
+    console.log('[MAP] Fitting bounds to', bounds.length, 'devices');
+    
+    // Delay fitBounds to ensure map is ready
+    setTimeout(() => {
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: false });
+    }, 100);
   }, [devices, map]);
 
   return null;
@@ -217,38 +233,42 @@ export function DeviceManagement() {
                     weight={4}
                     opacity={0.85}
                   />
-                  {devices.filter(d => d.latitude && d.longitude).map((device) => {
-                    const isSelected = device.device_id === selectedDeviceId;
-                    const color = getDeviceStatusColor(device.status, device.device_condition);
-                    return (
-                      <CircleMarker
-                        key={device.device_id}
-                        center={[device.latitude!, device.longitude!]}
-                        radius={isSelected ? 14 : 10}
-                        fillColor={color}
-                        color="#fff"
-                        weight={isSelected ? 3 : 2}
-                        fillOpacity={isSelected ? 1.0 : 0.9}
-                        eventHandlers={{
-                          click: () => handleSelectDevice(device.device_id),
-                        }}
-                      >
-                        <Popup>
-                          <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', minWidth: '150px' }}>
-                            <strong style={{ fontSize: 'var(--text-sm)', display: 'block', marginBottom: '4px' }}>{device.device_name}</strong>
-                            <div>Status: <span style={{ color }}>{device.status}</span></div>
-                            {device.device_condition !== 'normal' && (
-                              <div style={{ color: '#d97706' }}>⚠️ {device.device_condition}</div>
-                            )}
-                            {device.location_name && <div>Location: {device.location_name}</div>}
-                            <div style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-                              {device.latitude?.toFixed(5)}°N, {device.longitude?.toFixed(5)}°E
+                  {(() => {
+                    const devicesWithCoords = devices.filter(d => d.latitude && d.longitude);
+                    console.log(`[MAP] Rendering ${devicesWithCoords.length} CircleMarkers`);
+                    return devicesWithCoords.map((device) => {
+                      const isSelected = device.device_id === selectedDeviceId;
+                      const color = getDeviceStatusColor(device.status, device.device_condition);
+                      return (
+                        <CircleMarker
+                          key={device.device_id}
+                          center={[device.latitude!, device.longitude!]}
+                          radius={isSelected ? 14 : 10}
+                          fillColor={color}
+                          color="#fff"
+                          weight={isSelected ? 3 : 2}
+                          fillOpacity={isSelected ? 1.0 : 0.9}
+                          eventHandlers={{
+                            click: () => handleSelectDevice(device.device_id),
+                          }}
+                        >
+                          <Popup>
+                            <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', minWidth: '150px' }}>
+                              <strong style={{ fontSize: 'var(--text-sm)', display: 'block', marginBottom: '4px' }}>{device.device_name}</strong>
+                              <div>Status: <span style={{ color }}>{device.status}</span></div>
+                              {device.device_condition !== 'normal' && (
+                                <div style={{ color: '#d97706' }}>⚠️ {device.device_condition}</div>
+                              )}
+                              {device.location_name && <div>Location: {device.location_name}</div>}
+                              <div style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                                {device.latitude?.toFixed(5)}°N, {device.longitude?.toFixed(5)}°E
+                              </div>
                             </div>
-                          </div>
-                        </Popup>
-                      </CircleMarker>
-                    );
-                  })}
+                          </Popup>
+                        </CircleMarker>
+                      );
+                    });
+                  })()}
                   <MapBounds devices={devices} />
                 </MapContainer>
               </div>
