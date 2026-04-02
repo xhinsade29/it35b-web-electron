@@ -74,14 +74,14 @@ export interface MapLocation {
   device_id?: string;
 }
 
-// Chart Data (24 hour trend)
+// Chart Data (time-series trend)
 export interface ChartData {
-  temperature: (number | null)[];
-  pH: (number | null)[];
-  turbidity: (number | null)[];
-  dissolved_oxygen: (number | null)[];
-  water_level: (number | null)[];
-  sediments: (number | null)[];
+  temperature: Array<{ time: string; value: number }>;
+  pH: Array<{ time: string; value: number }>;
+  turbidity: Array<{ time: string; value: number }>;
+  dissolved_oxygen: Array<{ time: string; value: number }>;
+  water_level: Array<{ time: string; value: number }>;
+  sediments: Array<{ time: string; value: number }>;
 }
 
 // Time Series Chart Data (for device readings with timestamps)

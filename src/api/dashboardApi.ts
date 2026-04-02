@@ -3,7 +3,8 @@ import type {
   DashboardSyncData, 
   SimulationResponse,
   MonitorState,
-  Alert
+  Alert,
+  ChartData
 } from '../types/dashboard.types';
 
 // =====================================================
@@ -488,46 +489,54 @@ interface SensorReading {
   };
 }
 
-function processChartData(readings: SensorReading[]) {
-  const defaultArray = Array(24).fill(null);
-  const chartData = {
-    temperature: [...defaultArray],
-    pH: [...defaultArray],
-    turbidity: [...defaultArray],
-    dissolved_oxygen: [...defaultArray],
-    water_level: [...defaultArray],
-    sediments: [...defaultArray],
+function processChartData(readings: SensorReading[]): ChartData {
+  // Return last 50 readings as time-series data instead of hourly buckets
+  const chartData: ChartData = {
+    temperature: [],
+    pH: [],
+    turbidity: [],
+    dissolved_oxygen: [],
+    water_level: [],
+    sediments: [],
   };
 
-  // Group by hour and calculate average
-  const hourlyData: Record<string, Record<number, number[]>> = {
-    temperature: {},
-    ph_level: {},
-    turbidity: {},
-    dissolved_oxygen: {},
-    water_level: {},
-    sediments: {},
+  console.log('[CHART] Processing', readings.length, 'readings for time-series trends');
+
+  // Group readings by sensor type
+  const readingsBySensor: Record<string, Array<{ time: string; value: number }>> = {
+    temperature: [],
+    ph_level: [],
+    turbidity: [],
+    dissolved_oxygen: [],
+    water_level: [],
+    sediments: [],
   };
 
   readings.forEach((r) => {
-    const hour = new Date(r.recorded_at).getHours();
     const sensorType = r.sensors?.sensor_type;
-    if (sensorType && hourlyData[sensorType]) {
-      if (!hourlyData[sensorType][hour]) hourlyData[sensorType][hour] = [];
-      hourlyData[sensorType][hour].push(r.value);
-    }
-  });
-
-  // Calculate averages
-  Object.entries(hourlyData).forEach(([sensorType, hours]) => {
-    const key = sensorType === 'ph_level' ? 'pH' : sensorType;
-    if (key in chartData) {
-      Object.entries(hours).forEach(([hour, values]) => {
-        const avg = values.reduce((a, b) => a + b, 0) / values.length;
-        chartData[key as keyof typeof chartData][parseInt(hour)] = parseFloat(avg.toFixed(2));
+    if (sensorType && readingsBySensor[sensorType]) {
+      readingsBySensor[sensorType].push({
+        time: r.recorded_at,
+        value: r.value,
       });
     }
   });
+
+  // Sort by time and take last 50 for each sensor
+  Object.entries(readingsBySensor).forEach(([sensorType, data]) => {
+    const sorted = data
+      .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())
+      .slice(-50);
+    
+    const key = sensorType === 'ph_level' ? 'pH' : sensorType;
+    chartData[key as keyof ChartData] = sorted;
+  });
+
+  // Debug: log data counts
+  const dataCounts = Object.entries(chartData).map(([key, arr]: [string, Array<{ time: string; value: number }>]) => {
+    return `${key}:${arr.length}`;
+  });
+  console.log('[CHART] Time-series data points:', dataCounts.join(', '));
 
   return chartData;
 }
