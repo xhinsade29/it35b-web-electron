@@ -178,11 +178,11 @@ export function DashboardPage() {
             </div>
             <div className={styles.cardBody} style={{ padding: '12px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
-                <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                <div style={{ background: '#0F2854', border: '1px solid rgba(73, 136, 196, 0.3)', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Readings</div>
                   <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '1.5rem', fontWeight: 500, color: '#7c3aed', marginTop: '4px' }}>{tickCount}</div>
                 </div>
-                <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                <div style={{ background: '#0F2854', border: '1px solid rgba(73, 136, 196, 0.3)', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Alerts</div>
                   <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '1.5rem', fontWeight: 500, color: simAlertCount > 0 ? '#dc2626' : '#059669', marginTop: '4px' }}>{simAlertCount}</div>
                 </div>
@@ -218,7 +218,7 @@ export function DashboardPage() {
                   ■ Stop
                 </button>
               </div>
-              <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '8px', marginBottom: '12px' }}>
+              <div style={{ background: '#0F2854', border: '1px solid rgba(73, 136, 196, 0.3)', padding: '10px', borderRadius: '8px', marginBottom: '12px' }}>
                 <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Last Device</div>
                 <div style={{ fontSize: '11px', color: '#3d4a5c', fontFamily: 'JetBrains Mono, monospace', marginTop: '4px' }}>
                   {lastDeviceName || '—'}
