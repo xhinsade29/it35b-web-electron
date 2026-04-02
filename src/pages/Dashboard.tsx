@@ -204,18 +204,69 @@ export function DashboardPage() {
                   className={styles.btnPrimary}
                   onClick={handleStart}
                   disabled={isRunning || dashboardData.devices.length === 0}
-                  style={{ height: '30px', padding: '0 14px', fontSize: '11px', fontWeight: 600 }}
+                  style={{
+                    height: '32px',
+                    padding: '0 16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease',
+                    boxShadow: isRunning || dashboardData.devices.length === 0 ? 'none' : '0 4px 12px rgba(73, 136, 196, 0.4)',
+                    cursor: isRunning || dashboardData.devices.length === 0 ? 'not-allowed' : 'pointer',
+                    opacity: isRunning || dashboardData.devices.length === 0 ? 0.6 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isRunning && dashboardData.devices.length > 0) {
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(73, 136, 196, 0.5)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = isRunning || dashboardData.devices.length === 0 ? 'none' : '0 4px 12px rgba(73, 136, 196, 0.4)';
+                  }}
                 >
-                  ▶ Start
+                  <span style={{ fontSize: '10px' }}>▶</span> Start
                 </button>
                 <button
                   className={styles.btnOutline}
                   type="button"
                   onClick={() => { console.log('Stop clicked, isRunning:', isRunning); stop(); }}
                   disabled={!isRunning}
-                  style={{ height: '30px', padding: '0 14px', fontSize: '11px', fontWeight: 600, opacity: isRunning ? 1 : 0.45, cursor: isRunning ? 'pointer' : 'not-allowed' }}
+                  style={{
+                    height: '32px',
+                    padding: '0 16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: isRunning ? 'rgba(248, 113, 113, 0.15)' : 'rgba(10, 22, 40, 0.4)',
+                    border: isRunning ? '1px solid rgba(248, 113, 113, 0.5)' : '1px solid rgba(73, 136, 196, 0.3)',
+                    color: isRunning ? '#f87171' : '#8b9aae',
+                    transition: 'all 0.2s ease',
+                    cursor: isRunning ? 'pointer' : 'not-allowed',
+                    opacity: isRunning ? 1 : 0.5,
+                    boxShadow: isRunning ? '0 4px 12px rgba(248, 113, 113, 0.3)' : 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isRunning) {
+                      e.currentTarget.style.background = 'rgba(248, 113, 113, 0.25)';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(248, 113, 113, 0.4)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = isRunning ? 'rgba(248, 113, 113, 0.15)' : 'rgba(10, 22, 40, 0.4)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = isRunning ? '0 4px 12px rgba(248, 113, 113, 0.3)' : 'none';
+                  }}
                 >
-                  ■ Stop
+                  <span style={{ fontSize: '10px' }}>■</span> Stop
                 </button>
               </div>
               <div style={{ background: '#0F2854', border: '1px solid rgba(73, 136, 196, 0.3)', padding: '10px', borderRadius: '8px', marginBottom: '12px' }}>
