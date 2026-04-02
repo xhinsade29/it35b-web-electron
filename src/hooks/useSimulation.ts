@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { simulateDevice, saveMonitorState } from '../api/dashboardApi';
+import { simulateDevicesBatch, simulateDevice, saveMonitorState, ensureAllDeviceSensors } from '../api/dashboardApi';
 import { useDashboardSync } from './useDashboardSync';
 import type { SimulationResponse } from '../types/dashboard.types';
 
@@ -179,10 +179,12 @@ export function useSimulationEngine(deviceIds: string[]) {
       return;
     }
 
-    const promises = deviceIds.map(async (deviceId) => {
-      const mode = deviceModesRef.current[deviceId] || 'normal';
-      
-      const readings: Record<string, number> = {
+    console.log(`[SIMULATION] Starting batch tick for ${deviceIds.length} devices`);
+
+    // Prepare all device data first
+    const devicesData = deviceIds.map(deviceId => {
+      return {
+        device_id: deviceId,
         temperature: getNextValue(deviceId, 'temperature'),
         ph_level: getNextValue(deviceId, 'ph_level'),
         turbidity: getNextValue(deviceId, 'turbidity'),
@@ -190,9 +192,24 @@ export function useSimulationEngine(deviceIds: string[]) {
         water_level: getNextValue(deviceId, 'water_level'),
         sediments: getNextValue(deviceId, 'sediments')
       };
+    });
 
-      try {
-        const result: SimulationResponse = await simulateDevice(deviceId, readings);
+    console.log('[SIMULATION] Batch data prepared:', devicesData);
+
+    try {
+      // Send all devices in a single batch API call
+      const batchResult = await simulateDevicesBatch(devicesData);
+      
+      console.log('[SIMULATION] Batch result:', batchResult);
+      
+      // Process results
+      let alertCount = 0;
+      let lastSuccess: SimulationResponse | null = null;
+      
+      batchResult.results.forEach((result, index) => {
+        const deviceId = devicesData[index].device_id;
+        const mode = deviceModesRef.current[deviceId] || 'normal';
+        const readings = devicesData[index];
         
         if (!result.success) {
           addLog({
@@ -202,52 +219,68 @@ export function useSimulationEngine(deviceIds: string[]) {
             message: `Error: ${result.reading_id}`,
             type: 'error'
           });
-          return null;
+          return;
         }
-
+        
+        lastSuccess = result;
+        
         // Log alerts
         if (result.alerts_created && result.alerts_created.length > 0) {
           result.alerts_created.forEach(alert => {
+            const alertMessage = `${alert.sensor_type}: ${alert.value} (threshold: ${alert.threshold})`;
             addLog({
               deviceId,
               deviceName: result.device_name,
               mode,
-              message: `⚠ ALERT [${alert.type.toUpperCase()}] ${alert.message}`,
+              message: `⚠ ALERT [${alert.type.toUpperCase()}] ${alertMessage}`,
               type: 'alert'
             });
           });
-
-          setState(prev => ({
-            ...prev,
-            alertCount: prev.alertCount + result.alerts_created.length
-          }));
+          alertCount += result.alerts_created.length;
         }
-
+        
         // Log success
+        const { device_id: _deviceId, ...sensorReadings } = readings;
+        const deviceReadings = sensorReadings as Record<string, number>;
         addLog({
           deviceId,
           deviceName: result.device_name,
           mode,
-          message: `✓ #${result.reading_id} ${result.device_name} [${mode.toUpperCase()}] — T:${readings.temperature} pH:${readings.ph_level} Tu:${readings.turbidity} DO:${readings.dissolved_oxygen} Lv:${readings.water_level} Sed:${readings.sediments}`,
+          message: `✓ #${result.reading_id} ${result.device_name} [${mode.toUpperCase()}] — T:${deviceReadings.temperature} pH:${deviceReadings.ph_level} Tu:${deviceReadings.turbidity} DO:${deviceReadings.dissolved_oxygen} Lv:${deviceReadings.water_level} Sed:${deviceReadings.sediments}`,
           type: 'success',
-          readings
+          readings: deviceReadings
         });
-
-        return result;
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        addLog({
-          deviceId,
-          deviceName: 'Unknown',
-          mode,
-          message: `Fetch error: ${errorMessage}`,
-          type: 'error'
-        });
-        return null;
+      });
+      
+      // Update alert count
+      if (alertCount > 0) {
+        setState(prev => ({
+          ...prev,
+          alertCount: prev.alertCount + alertCount
+        }));
       }
-    });
-
-    const results = await Promise.all(promises);
+      
+      // Update last device info
+      if (lastSuccess) {
+        const success = lastSuccess as SimulationResponse;
+        setState(prev => ({
+          ...prev,
+          lastDeviceId: success.device_id,
+          lastDeviceName: success.device_name
+        }));
+      }
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('[SIMULATION] Batch error:', err);
+      addLog({
+        deviceId: '',
+        deviceName: 'System',
+        mode: 'normal',
+        message: `Batch error: ${errorMessage}`,
+        type: 'error'
+      });
+    }
     
     // Guard: don't update state if simulation was stopped during execution
     if (!isRunningRef.current) {
@@ -255,13 +288,10 @@ export function useSimulationEngine(deviceIds: string[]) {
       return;
     }
     
-    const lastSuccess = results.filter(r => r && r.success).pop();
-
+    // Increment tick count
     setState(prev => ({
       ...prev,
-      tickCount: prev.tickCount + 1,
-      lastDeviceId: lastSuccess?.device_id,
-      lastDeviceName: lastSuccess?.device_name
+      tickCount: prev.tickCount + 1
     }));
 
     // Refresh dashboard data only if still running and enough time has passed
@@ -279,7 +309,7 @@ export function useSimulationEngine(deviceIds: string[]) {
   }, [deviceIds, state.mode, state.interval, getNextValue, addLog, dashboardActions]);
 
   // Simple interval-based simulation with proper cleanup
-  const start = useCallback((mode?: SimulationMode, interval?: number) => {
+  const start = useCallback(async (mode?: SimulationMode, interval?: number) => {
     const simMode = mode || state.mode;
     const simInterval = interval || state.interval;
 
@@ -289,6 +319,10 @@ export function useSimulationEngine(deviceIds: string[]) {
       timerRef.current = null;
     }
     isRunningRef.current = false;
+
+    // Ensure all devices have required sensors BEFORE starting
+    console.log('[SIMULATION] Checking sensors for all devices...');
+    await ensureAllDeviceSensors(deviceIds);
 
     // Small delay to ensure any pending async operations complete
     setTimeout(() => {

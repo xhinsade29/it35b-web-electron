@@ -7,9 +7,83 @@ import type {
 } from '../types/dashboard.types';
 
 // =====================================================
-// Dashboard API Layer
-// Replaces PHP endpoints: fetch, simulate, monitor_state
+// Sensor Management
 // =====================================================
+
+const REQUIRED_SENSORS: Array<{ sensor_type: string; unit: string; min: number; max: number }> = [
+  { sensor_type: 'temperature', unit: '°C', min: 20, max: 35 },
+  { sensor_type: 'ph_level', unit: 'pH', min: 6.5, max: 8.5 },
+  { sensor_type: 'turbidity', unit: 'NTU', min: 0, max: 50 },
+  { sensor_type: 'dissolved_oxygen', unit: 'mg/L', min: 5, max: 14 },
+  { sensor_type: 'water_level', unit: 'm', min: 0.5, max: 3.0 },
+  { sensor_type: 'sediments', unit: 'mg/L', min: 0, max: 500 },
+];
+
+/**
+ * Ensure a device has all required sensors, creating any that are missing
+ */
+export async function ensureDeviceSensors(deviceId: string): Promise<boolean> {
+  try {
+    // Fetch existing sensors for this device
+    const { data: existingSensors, error } = await supabase
+      .from('sensors')
+      .select('sensor_type')
+      .eq('device_id', deviceId);
+    
+    if (error) {
+      console.error(`Error fetching sensors for device ${deviceId}:`, error);
+      return false;
+    }
+    
+    const existingTypes = new Set(existingSensors?.map((s: { sensor_type: string }) => s.sensor_type) || []);
+    const missingSensors = REQUIRED_SENSORS.filter(s => !existingTypes.has(s.sensor_type));
+    
+    if (missingSensors.length === 0) {
+      console.log(`Device ${deviceId} has all required sensors`);
+      return true;
+    }
+    
+    console.log(`Device ${deviceId} missing sensors:`, missingSensors.map(s => s.sensor_type));
+    
+    // Create missing sensors
+    const sensorsToCreate = missingSensors.map(s => ({
+      device_id: deviceId,
+      sensor_type: s.sensor_type,
+      unit: s.unit,
+      min_threshold: s.min,
+      max_threshold: s.max,
+    }));
+    
+    const { error: insertError } = await supabase
+      .from('sensors')
+      .insert(sensorsToCreate);
+    
+    if (insertError) {
+      console.error(`Error creating sensors for device ${deviceId}:`, insertError);
+      return false;
+    }
+    
+    console.log(`Created ${missingSensors.length} sensors for device ${deviceId}`);
+    return true;
+  } catch (err) {
+    console.error(`ensureDeviceSensors error for ${deviceId}:`, err);
+    return false;
+  }
+}
+
+/**
+ * Ensure ALL devices have all required sensors
+ */
+export async function ensureAllDeviceSensors(deviceIds: string[]): Promise<void> {
+  console.log(`Ensuring all ${deviceIds.length} devices have required sensors...`);
+  
+  const results = await Promise.all(
+    deviceIds.map(id => ensureDeviceSensors(id))
+  );
+  
+  const successCount = results.filter(r => r).length;
+  console.log(`Sensor check complete: ${successCount}/${deviceIds.length} devices ready`);
+}
 
 /**
  * Fetch complete dashboard data
@@ -227,6 +301,42 @@ export async function simulateDevice(
     readings: data.readings || [],
     alerts_created: data.alerts_created || [],
     timestamp: data.timestamp
+  };
+}
+
+/**
+ * Simulate sensor readings for multiple devices in a single batch
+ * Ensures all devices are inserted with the same timestamp
+ */
+export async function simulateDevicesBatch(
+  devicesData: Array<{
+    device_id: string;
+    temperature?: number;
+    ph_level?: number;
+    turbidity?: number;
+    dissolved_oxygen?: number;
+    water_level?: number;
+    sediments?: number;
+  }>
+): Promise<{ success: boolean; results: SimulationResponse[]; errors: string[] }> {
+  const { data, error } = await supabase
+    .rpc('dashboard_simulate_batch', {
+      p_devices_data: devicesData
+    });
+
+  if (error) {
+    console.error('Batch simulation error:', error);
+    throw new Error(`Batch simulation failed: ${error.message}`);
+  }
+
+  if (!data || !data.success) {
+    throw new Error(data?.error || 'Batch simulation failed');
+  }
+
+  return {
+    success: data.success,
+    results: data.results || [],
+    errors: data.errors || []
   };
 }
 

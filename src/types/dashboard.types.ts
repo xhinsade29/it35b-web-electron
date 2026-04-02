@@ -134,9 +134,9 @@ export interface SimulationResponse {
   }>;
   alerts_created: {
     type: string;
-    message: string;
     sensor_type: string;
     value: number;
+    threshold: number;
   }[];
   timestamp: string;
   sync?: DashboardSyncData;
