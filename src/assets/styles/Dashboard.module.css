@@ -7,71 +7,34 @@
    Design Tokens - CSS Custom Properties
    -------------------------------------------------------------------------- */
 :root {
-  /* Primary Colors */
-  --color-primary: #1a56db;
-  --color-primary-dark: #1e40af;
-  --color-primary-light: #eff4ff;
+  /* Primary Colors - Dark Theme */
+  --color-primary: #4988C4;
+  --color-primary-dark: #3d7ab0;
+  --color-primary-light: rgba(73, 136, 196, 0.2);
   
-  /* Semantic Colors */
-  --color-success: #059669;
-  --color-success-bg: #d1fae5;
-  --color-warning: #d97706;
-  --color-warning-bg: #fef3c7;
-  --color-danger: #dc2626;
-  --color-danger-bg: #fee2e2;
-  --color-info: #0891b2;
+  /* Semantic Colors - Dark Theme */
+  --color-success: #34d399;
+  --color-success-bg: rgba(5, 150, 105, 0.2);
+  --color-warning: #fbbf24;
+  --color-warning-bg: rgba(217, 119, 6, 0.2);
+  --color-danger: #f87171;
+  --color-danger-bg: rgba(220, 38, 38, 0.2);
+  --color-info: #60a5fa;
   
-  /* Neutral Colors */
-  --color-bg: #ffffff;
-  --color-bg-secondary: #f9fafb;
-  --color-bg-tertiary: #f3f4f6;
-  --color-text-primary: #0d1117;
-  --color-text-secondary: #3d4a5c;
-  --color-text-muted: #8897aa;
-  --color-border: rgba(13, 17, 23, 0.07);
-  --color-border-strong: rgba(13, 17, 23, 0.12);
+  /* Neutral Colors - Dark Theme */
+  --color-bg: #0a1628;
+  --color-bg-secondary: #0F2854;
+  --color-bg-tertiary: rgba(10, 22, 40, 0.6);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #e8ecf1;
+  --color-text-muted: #8b9aae;
+  --color-border: rgba(73, 136, 196, 0.2);
+  --color-border-strong: rgba(73, 136, 196, 0.3);
   
-  /* Typography Scale */
-  --font-display: 'Space Grotesk', serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  
-  --text-xs: 0.625rem;    /* 10px */
-  --text-sm: 0.75rem;     /* 12px */
-  --text-base: 0.8125rem; /* 13px */
-  --text-md: 0.875rem;    /* 14px */
-  --text-lg: 1rem;        /* 16px */
-  --text-xl: 1.125rem;    /* 18px */
-  --text-2xl: 1.25rem;    /* 20px */
-  --text-3xl: 1.5rem;     /* 24px */
-  
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  
-  /* Spacing Scale (8px base) */
-  --space-1: 0.25rem;   /* 4px */
-  --space-2: 0.5rem;    /* 8px */
-  --space-3: 0.75rem;   /* 12px */
-  --space-4: 1rem;      /* 16px */
-  --space-5: 1.25rem;   /* 20px */
-  --space-6: 1.5rem;    /* 24px */
-  --space-8: 2rem;      /* 32px */
-  --space-10: 2.5rem;   /* 40px */
-  --space-12: 3rem;     /* 48px */
-  --space-16: 4rem;     /* 64px */
-  
-  /* Border Radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(13, 17, 23, 0.04);
-  --shadow-md: 0 1px 2px rgba(13, 17, 23, 0.04), 0 4px 16px rgba(13, 17, 23, 0.06);
-  --shadow-lg: 0 4px 6px rgba(13, 17, 23, 0.05), 0 10px 40px rgba(13, 17, 23, 0.08);
+  /* Glassmorphism Shadows */
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --shadow-lg: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
   
   /* Layout */
   --sidebar-width: 240px;
@@ -215,12 +178,9 @@
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--space-5);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: var(--space-4) var(--space-6);
   margin-bottom: var(--space-6);
-  box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
 }
@@ -306,18 +266,15 @@
 }
 
 .kpi {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-4) var(--space-5);
-  box-shadow: var(--shadow-md);
   position: relative;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .kpi:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
 .kpiLabel {
@@ -380,16 +337,18 @@
 
 /* Cards */
 .card {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  background: rgba(15, 40, 84, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(73, 136, 196, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
   overflow: hidden;
   transition: box-shadow var(--transition-fast);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
 .cardHeader {
@@ -397,8 +356,8 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg);
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
+  background: rgba(15, 40, 84, 0.4);
 }
 
 .cardTitle {
@@ -417,16 +376,22 @@
 /* Device Panel */
 .devicePanel {
   min-height: 400px;
+  background: rgba(10, 22, 40, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(73, 136, 196, 0.2);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 .deviceSelector {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid rgba(13, 17, 23, 0.12);
+  border: 1px solid rgba(73, 136, 196, 0.3);
   border-radius: 8px;
   font-size: 13px;
-  color: #0d1117;
-  background: #ffffff;
+  color: #e8ecf1;
+  background: rgba(10, 22, 40, 0.4);
+  backdrop-filter: blur(8px);
   margin-bottom: 16px;
 }
 
@@ -441,8 +406,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #f9fafb;
-  border-bottom: 1px solid rgba(13, 17, 23, 0.07);
+  background: rgba(15, 40, 84, 0.4);
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
 }
 
 .devName {
@@ -497,12 +462,12 @@
 .sensorName {
   font-size: 13px;
   font-weight: 500;
-  color: #0d1117;
+  color: #e8ecf1;
 }
 
 .sensorRange {
   font-size: 10px;
-  color: #8897aa;
+  color: #8b9aae;
 }
 
 .sensorVal {
@@ -510,11 +475,12 @@
   font-size: 14px;
   font-weight: 500;
   text-align: right;
+  color: #ffffff;
 }
 
 .sensorUnit {
   font-size: 11px;
-  color: #8897aa;
+  color: #8b9aae;
   font-weight: 400;
   margin-left: 4px;
 }
@@ -568,8 +534,9 @@
   padding: var(--space-3);
   border-radius: var(--radius-md);
   margin-bottom: var(--space-2);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  background: rgba(15, 40, 84, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(73, 136, 196, 0.2);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
@@ -637,10 +604,12 @@
 }
 
 .wcSection {
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
   transition: box-shadow var(--transition-fast);
+  background: rgba(15, 40, 84, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(73, 136, 196, 0.2);
 }
 
 .wcSection:hover {
@@ -700,10 +669,12 @@
 .simSelect {
   flex: 1;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid rgba(73, 136, 196, 0.3);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
-  background: var(--color-bg);
+  background: rgba(10, 22, 40, 0.4);
+  backdrop-filter: blur(8px);
+  color: #e8ecf1;
   transition: border-color var(--transition-fast);
 }
 
@@ -715,13 +686,15 @@
 .simLog {
   height: 120px;
   overflow-y: auto;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+  background: rgba(10, 22, 40, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(73, 136, 196, 0.2);
   border-radius: var(--radius-md);
   padding: var(--space-2);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   line-height: 1.5;
+  color: #e8ecf1;
 }
 
 /* Map Legend */
@@ -731,8 +704,8 @@
   gap: var(--space-4);
   flex-wrap: wrap;
   padding: var(--space-2) var(--space-4);
-  border-top: 1px solid var(--color-border);
-  background: var(--color-bg-secondary);
+  border-top: 1px solid rgba(73, 136, 196, 0.2);
+  background: rgba(15, 40, 84, 0.4);
 }
 
 .leg {
@@ -968,16 +941,15 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
+  background: rgba(10, 22, 40, 0.6);
   border-radius: var(--radius-sm);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-text-muted);
+  background: rgba(73, 136, 196, 0.4);
   border-radius: var(--radius-sm);
-  opacity: 0.5;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-secondary);
+  background: rgba(73, 136, 196, 0.6);
 }
