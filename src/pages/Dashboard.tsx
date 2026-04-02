@@ -11,7 +11,7 @@ import { AlertsPanel } from '../components/AlertsPanel';
 import { TrendCharts } from '../components/TrendCharts';
 import { WaterConditions } from '../components/WaterConditions';
 import { LeafletMap } from '../components/LeafletMap';
-import { ActivityLogs } from '../components/ActivityLogs';
+import { SystemActivityLogs } from '../components/SystemActivityLogs';
 
 export function DashboardPage() {
   const [{ data, loading, error, lastSync }] = useDashboardSync(10000);
@@ -274,9 +274,12 @@ export function DashboardPage() {
           <TrendCharts chartData={dashboardData.chart_data} />
         </div>
 
-        {/* Bottom Grid - Activity Logs */}
-        <div className={styles.gridBottom}>
-          <ActivityLogs logs={dashboardData.logs} />
+        {/* System Activity Logs - Full Width */}
+        <div style={{ marginBottom: '16px' }}>
+          <SystemActivityLogs 
+            simulationLogs={simulationLogs}
+            alerts={dashboardData.alerts}
+          />
         </div>
       </div>
     </div>

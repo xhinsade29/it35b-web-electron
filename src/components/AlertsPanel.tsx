@@ -53,8 +53,8 @@ export function AlertsPanel({ alerts, alertCount }: AlertsPanelProps) {
             <p style={{ fontSize: '11px', margin: 0 }}>No active alerts</p>
           </div>
         ) : (
-          <div style={{ maxHeight: '140px', overflowY: 'auto' }}>
-            {alerts.slice(0, 5).map((alert) => (
+          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            {alerts.slice(0, 10).map((alert) => (
               <div key={alert.alert_id} className={styles.alertItem} style={{ padding: '6px', marginBottom: '4px' }}>
                 <div
                   className={`${styles.alertIc} ${getSeverityClass(alert.alert_type)}`}
