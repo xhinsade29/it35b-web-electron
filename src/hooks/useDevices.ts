@@ -63,11 +63,13 @@ export function useDevices(): UseDevicesReturn {
     setError(null);
     try {
       const data = await getAllDevices();
-      // Validate each device's location and mark as out_of_bound if far from river
+      // Validate each device's location and mark as out_of_bound only if currently normal
       const validatedDevices = data.map(device => {
         if (device.latitude && device.longitude) {
           const isNearRiver = checkDistanceToRiver(device.latitude, device.longitude);
-          if (!isNearRiver && device.device_condition !== 'out_of_bound') {
+          // Only set to out_of_bound if condition is currently normal
+          // Don't override manually set conditions like 'displaced'
+          if (!isNearRiver && device.device_condition === 'normal') {
             return { ...device, device_condition: 'out_of_bound' as DeviceCondition };
           }
         }

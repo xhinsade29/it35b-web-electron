@@ -8,7 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { Device, DeviceFormData, DeviceStatus } from '../types/device.types';
+import type { Device, DeviceFormData, DeviceStatus, DeviceCondition } from '../types/device.types';
 import { useDeviceHistory } from '../hooks/useDevices';
 import { checkDistanceToRiver, detectRiverSection } from '../utils/riverUtils';
 import styles from './DeviceForm.module.css';
@@ -95,6 +95,13 @@ const STATUS_OPTIONS: { value: DeviceStatus; label: string }[] = [
   { value: 'inactive', label: 'Inactive' },
   { value: 'offline', label: 'Offline' },
   { value: 'unassigned', label: 'Unassigned' },
+];
+
+const CONDITION_OPTIONS: { value: DeviceCondition; label: string }[] = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'displaced', label: 'Displaced' },
+  { value: 'damaged', label: 'Damaged' },
+  { value: 'malfunctioning', label: 'Malfunctioning' },
 ];
 
 
@@ -386,6 +393,22 @@ export function DeviceForm({
               disabled={isSubmitting}
             >
               {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Device Condition</label>
+            <select
+              className={styles.select}
+              value={formData.device_condition || 'normal'}
+              onChange={(e) => setFormData((prev) => ({ ...prev, device_condition: e.target.value as DeviceCondition }))}
+              disabled={isSubmitting}
+            >
+              {CONDITION_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
