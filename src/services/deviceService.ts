@@ -243,21 +243,50 @@ export async function deleteDevice(deviceId: string): Promise<void> {
  * Get all locations
  */
 export async function getAllLocations(): Promise<DeviceLocation[]> {
-  const { data, error } = await supabase
+  // First, get all locations
+  const { data: locations, error: locError } = await supabase
     .from('locations')
-    .select(`
-      *,
-      devices!left(count),
-      devices!left(status)
-    `)
+    .select('*')
     .order('location_name');
 
-  if (error) {
-    console.error('Error fetching locations:', error);
+  if (locError) {
+    console.error('Error fetching locations:', locError);
     throw new Error('Failed to fetch locations');
   }
 
-  return (data || []).map(transformLocationFromDB);
+  // Get device counts for each location
+  const { data: devices, error: devError } = await supabase
+    .from('devices')
+    .select('location_id, status');
+
+  if (devError) {
+    console.error('Error fetching device counts:', devError);
+  }
+
+  // Calculate counts per location
+  const locationStats: Record<string, { total: number; active: number; maint: number }> = {};
+  
+  (devices || []).forEach((d: { location_id: string; status: string }) => {
+    if (!locationStats[d.location_id]) {
+      locationStats[d.location_id] = { total: 0, active: 0, maint: 0 };
+    }
+    locationStats[d.location_id].total++;
+    if (d.status === 'active') locationStats[d.location_id].active++;
+    if (d.status === 'maintenance') locationStats[d.location_id].maint++;
+  });
+
+  // Combine locations with stats
+  return (locations || []).map((loc: any) => ({
+    location_id: loc.location_id,
+    location_name: loc.location_name,
+    river_section: loc.river_section,
+    latitude: loc.latitude,
+    longitude: loc.longitude,
+    description: loc.description,
+    total_devices: locationStats[loc.location_id]?.total || 0,
+    active_devices: locationStats[loc.location_id]?.active || 0,
+    maint_devices: locationStats[loc.location_id]?.maint || 0,
+  }));
 }
 
 /**
@@ -337,7 +366,7 @@ export async function getDeviceReadings(deviceId: string): Promise<DeviceReading
       .from('sensor_readings')
       .select('value')
       .eq('sensor_id', sensor.sensor_id)
-      .order('timestamp', { ascending: false })
+      .order('recorded_at', { ascending: false })
       .limit(1)
       .single();
 

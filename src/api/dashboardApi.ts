@@ -114,18 +114,30 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
       console.error('Locations fetch error:', locationsError);
     }
 
-    // Create location lookup
-    const locationMap = new Map<string, { location_name?: string; river_section?: string }>();
-    locationsData?.forEach((loc: { location_id: string; location_name?: string; river_section?: string }) => {
+    // Create location lookup with coordinates
+    const locationMap = new Map<string, { 
+      location_name?: string; 
+      river_section?: string;
+      latitude?: number;
+      longitude?: number;
+    }>();
+    locationsData?.forEach((loc: { 
+      location_id: string; 
+      location_name?: string; 
+      river_section?: string;
+      latitude?: number;
+      longitude?: number;
+    }) => {
       locationMap.set(loc.location_id, loc);
     });
 
-    // Transform devices with location data
+    // Transform devices with location data and coordinates
     const transformedDevices = (devicesData || []).map((d: { 
       device_id: string; 
       device_name: string; 
       location_id?: string;
       status: string;
+      device_condition?: string;
       last_active?: string;
     }) => {
       const location = d.location_id ? locationMap.get(d.location_id) : null;
@@ -136,6 +148,9 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
         location_name: location?.location_name || 'Unknown',
         river_section: location?.river_section || 'upstream',
         status: d.status,
+        device_condition: d.device_condition || 'normal',
+        lat: location?.latitude,
+        lng: location?.longitude,
         last_active: d.last_active,
       };
     });

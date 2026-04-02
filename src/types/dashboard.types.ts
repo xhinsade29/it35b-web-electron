@@ -23,6 +23,9 @@ export interface DeviceInfo {
   location_name: string;
   river_section: 'upstream' | 'midstream' | 'downstream';
   status: 'active' | 'inactive' | 'maintenance' | 'offline' | 'unassigned';
+  device_condition?: 'normal' | 'displaced' | 'damaged' | 'malfunctioning';
+  lat?: number;
+  lng?: number;
   last_active?: string;
 }
 

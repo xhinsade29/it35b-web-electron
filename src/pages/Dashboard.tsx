@@ -149,7 +149,6 @@ export function DashboardPage() {
           </div>
           <div>
             <LeafletMap
-              locations={dashboardData.map_locations}
               devices={dashboardData.devices}
               onDeviceClick={setSelectedDeviceId}
             />

@@ -4,12 +4,12 @@
  * Migrated from PHP device.php
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, useMap } from 'react-leaflet';
 import { DeviceList } from '../components/DeviceList';
 import { DeviceForm } from '../components/DeviceForm';
 import { DeviceDetails } from '../components/DeviceDetails';
-import { useDevices } from '../hooks/useDevices';
+import { useDevices, useLocations } from '../hooks/useDevices';
 import { createDevice, updateDevice, deleteDevice, getDeviceStatusColor } from '../services/deviceService';
 import type { Device, DeviceFormData, DeviceStatus, DeviceCondition, RiverSection } from '../types/device.types';
 import styles from './DeviceManagement.module.css';
@@ -41,6 +41,13 @@ const RIVER_COORDS: [number, number][] = [
 
 const DEFAULT_CENTER: [number, number] = [8.369297, 124.876785];
 
+// Section colors for legend
+const SECTION_COLORS: Record<string, string> = {
+  upstream: '#059669',
+  midstream: '#d97706',
+  downstream: '#dc2626',
+};
+
 // Auto-fit map bounds to show all devices
 function MapBounds({ devices }: { devices: Device[] }) {
   const map = useMap();
@@ -48,20 +55,9 @@ function MapBounds({ devices }: { devices: Device[] }) {
   useEffect(() => {
     const devicesWithCoords = devices.filter((d) => d.latitude && d.longitude);
     
-    console.log(`[MAP] Total devices: ${devices.length}, With coords: ${devicesWithCoords.length}`);
-    
-    // Log each device with coordinates
-    devicesWithCoords.forEach((d, i) => {
-      console.log(`[MAP] Device ${i + 1}: ${d.device_name} - [${d.latitude}, ${d.longitude}]`);
-    });
-    
-    if (devicesWithCoords.length === 0) {
-      console.log('[MAP] No devices with coordinates yet');
-      return;
-    }
+    if (devicesWithCoords.length === 0) return;
     
     const bounds = devicesWithCoords.map((d) => [d.latitude, d.longitude] as [number, number]);
-    console.log('[MAP] Fitting bounds to', bounds.length, 'devices');
     
     // Delay fitBounds to ensure map is ready
     setTimeout(() => {
@@ -86,6 +82,32 @@ export function DeviceManagement() {
     setFilterOptions,
     refresh: refreshDevices,
   } = useDevices();
+
+  const { locations } = useLocations();
+
+  // Group devices by location (sync with Dashboard approach)
+  const locationDevices = useMemo(() => {
+    const map = new Map<string, Device[]>();
+    locations.forEach(loc => map.set(loc.location_id, []));
+    devices.forEach(device => {
+      if (device.location_id) {
+        const list = map.get(device.location_id) || [];
+        list.push(device);
+        map.set(device.location_id, list);
+      }
+    });
+    return map;
+  }, [devices, locations]);
+
+  // Get marker color based on location status
+  const getMarkerColor = (location: typeof locations[0]) => {
+    const locDevices = locationDevices.get(location.location_id) || [];
+    const activeCount = locDevices.filter(d => d.status === 'active').length;
+    if (activeCount === 0 && locDevices.length > 0) {
+      return '#9ca3af'; // Gray for offline
+    }
+    return SECTION_COLORS[location.river_section] || '#3b82f6';
+  };
 
   // Handle device selection
   const handleSelectDevice = useCallback((deviceId: string) => {
@@ -233,12 +255,15 @@ export function DeviceManagement() {
                     weight={4}
                     opacity={0.85}
                   />
+                  {/* Individual device markers */}
                   {(() => {
                     const devicesWithCoords = devices.filter(d => d.latitude && d.longitude);
-                    console.log(`[MAP] Rendering ${devicesWithCoords.length} CircleMarkers`);
+                    console.log(`[MAP] Rendering ${devicesWithCoords.length} device markers`);
+                    
                     return devicesWithCoords.map((device) => {
                       const isSelected = device.device_id === selectedDeviceId;
                       const color = getDeviceStatusColor(device.status, device.device_condition);
+                      
                       return (
                         <CircleMarker
                           key={device.device_id}
@@ -254,7 +279,9 @@ export function DeviceManagement() {
                         >
                           <Popup>
                             <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', minWidth: '150px' }}>
-                              <strong style={{ fontSize: 'var(--text-sm)', display: 'block', marginBottom: '4px' }}>{device.device_name}</strong>
+                              <strong style={{ fontSize: 'var(--text-sm)', display: 'block', marginBottom: '4px' }}>
+                                {device.device_name}
+                              </strong>
                               <div>Status: <span style={{ color }}>{device.status}</span></div>
                               {device.device_condition !== 'normal' && (
                                 <div style={{ color: '#d97706' }}>⚠️ {device.device_condition}</div>

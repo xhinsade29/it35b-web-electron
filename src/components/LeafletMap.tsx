@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import styles from '../pages/Dashboard.module.css';
-import type { MapLocation, DeviceInfo } from '../types/dashboard.types';
+import type { DeviceInfo } from '../types/dashboard.types';
 
 // Mangima River path coordinates (simplified from PHP)
 const RIVER_PATH: [number, number][] = [
@@ -65,58 +65,53 @@ const RIVER_PATH: [number, number][] = [
   [8.413179, 124.909497],
 ];
 
-const SECTION_COLORS: Record<string, string> = {
-  upstream: '#059669',
-  midstream: '#d97706',
-  downstream: '#dc2626',
-};
-
-const SECTION_LABELS: Record<string, string> = {
-  upstream: 'Upstream',
-  midstream: 'Midstream',
-  downstream: 'Downstream',
-};
-
 interface LeafletMapProps {
-  locations: MapLocation[];
   devices: DeviceInfo[];
   onDeviceClick?: (deviceId: string) => void;
 }
 
 // Map bounds setter - focuses on device locations
-function MapBounds({ locations }: { locations: MapLocation[] }) {
+function MapBounds({ devices }: { devices: DeviceInfo[] }) {
   const map = useMap();
   
   useEffect(() => {
-    if (locations.length === 0) return;
+    const devicesWithCoords = devices.filter((d): d is typeof d & { lat: number; lng: number } => 
+      typeof d.lat === 'number' && typeof d.lng === 'number'
+    );
+    if (devicesWithCoords.length === 0) return;
     
-    // Create bounds from location coordinates
-    const bounds: [number, number][] = locations.map(l => [l.latitude, l.longitude]);
+    const bounds: [number, number][] = devicesWithCoords.map(d => [d.lat, d.lng]);
     
     if (bounds.length > 0) {
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
-  }, [map, locations]);
+  }, [map, devices]);
 
   return null;
 }
 
-export function LeafletMap({ locations, devices, onDeviceClick }: LeafletMapProps) {
+export function LeafletMap({ devices, onDeviceClick }: LeafletMapProps) {
   // Calculate center point
   const centerLat = (8.345958 + 8.413179) / 2;
   const centerLng = (124.898607 + 124.909497) / 2;
 
-  // Get devices for a location
-  const getLocationDevices = (locationId: string) => {
-    return devices.filter((d) => d.location_id === locationId);
-  };
-
-  // Get marker color based on location status
-  const getMarkerColor = (location: MapLocation) => {
-    if (location.active_devices === 0 && location.total_devices > 0) {
-      return '#9ca3af'; // Gray for offline
+  // Get device color based on status
+  const getDeviceColor = (device: DeviceInfo) => {
+    if (device.device_condition && device.device_condition !== 'normal') {
+      const conditionColors: Record<string, string> = {
+        displaced: '#7c3aed',
+        damaged: '#1f2937',
+        malfunctioning: '#d97706',
+      };
+      return conditionColors[device.device_condition] || '#9ca3af';
     }
-    return SECTION_COLORS[location.river_section] || '#3b82f6';
+    
+    const statusColors: Record<string, string> = {
+      active: '#059669',
+      maintenance: '#3b82f6',
+      inactive: '#dc2626',
+    };
+    return statusColors[device.status] || '#9ca3af';
   };
 
   return (
@@ -174,28 +169,24 @@ export function LeafletMap({ locations, devices, onDeviceClick }: LeafletMapProp
               <Popup><b>Mouth:</b> River Outlet</Popup>
             </CircleMarker>
             
-            {/* Location markers */}
-            {locations.map((location) => {
-              const locationDevices = getLocationDevices(location.location_id);
-              const markerColor = getMarkerColor(location);
+            {/* Device markers */}
+            {devices.map((device) => {
+              if (!device.lat || !device.lng) return null;
+              const color = getDeviceColor(device);
               
               return (
                 <CircleMarker
-                  key={location.location_id}
-                  center={[location.latitude, location.longitude]}
+                  key={device.device_id}
+                  center={[device.lat, device.lng]}
                   radius={10}
                   pathOptions={{
-                    fillColor: markerColor,
+                    fillColor: color,
                     color: '#fff',
                     weight: 2.5,
                     fillOpacity: 0.95,
                   }}
                   eventHandlers={{
-                    click: () => {
-                      if (locationDevices.length > 0 && onDeviceClick) {
-                        onDeviceClick(locationDevices[0].device_id);
-                      }
-                    },
+                    click: () => onDeviceClick?.(device.device_id),
                   }}
                 >
                   <Popup>
@@ -206,63 +197,26 @@ export function LeafletMap({ locations, devices, onDeviceClick }: LeafletMapProp
                             width: '8px',
                             height: '8px',
                             borderRadius: '50%',
-                            background: SECTION_COLORS[location.river_section] || '#3b82f6',
+                            background: color,
                           }}
                         />
                         <div style={{ fontSize: '13px', fontWeight: 600, color: '#0d1117' }}>
-                          {SECTION_LABELS[location.river_section] || location.river_section}
+                          {device.device_name}
                         </div>
                       </div>
                       <div style={{ fontSize: '11px', color: '#3d4a5c', marginBottom: '4px' }}>
-                        {location.location_name}
+                        {device.location_name}
                       </div>
-                      
-                      {/* Device list */}
-                      {locationDevices.length > 0 ? (
-                        <div style={{ margin: '8px 0', paddingTop: '8px', borderTop: '1px solid #f0f0f0' }}>
-                          <div style={{ fontSize: '10px', fontWeight: 600, color: '#0d1117', marginBottom: '4px' }}>
-                            Devices ({locationDevices.length})
-                          </div>
-                          {locationDevices.map((device) => {
-                            const statusColor =
-                              device.status === 'active'
-                                ? '#059669'
-                                : device.status === 'maintenance'
-                                ? '#3b82f6'
-                                : '#9ca3af';
-                            return (
-                              <div
-                                key={device.device_id}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                  padding: '4px 8px',
-                                  borderRadius: '4px',
-                                  background: '#f9fafb',
-                                  marginBottom: '2px',
-                                  cursor: 'pointer',
-                                }}
-                                onClick={() => onDeviceClick?.(device.device_id)}
-                              >
-                                <span style={{ fontSize: '11px', color: '#0d1117' }}>
-                                  {device.device_name}
-                                </span>
-                                <span style={{ fontSize: '10px', color: statusColor, fontWeight: 600 }}>
-                                  {device.status === 'active' ? 'Active' : device.status}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div style={{ margin: '8px 0', fontSize: '11px', color: '#9ca3af' }}>
-                          No devices assigned
+                      <div style={{ fontSize: '10px', color: '#0d1117', marginTop: '4px' }}>
+                        Status: <span style={{ color }}>{device.status}</span>
+                      </div>
+                      {device.device_condition && device.device_condition !== 'normal' && (
+                        <div style={{ fontSize: '10px', color: '#d97706', marginTop: '2px' }}>
+                          ⚠️ {device.device_condition}
                         </div>
                       )}
-                      
                       <div style={{ fontSize: '10px', color: '#8897aa', marginTop: '6px', textAlign: 'center' }}>
-                        {location.latitude.toFixed(5)}°N · {location.longitude.toFixed(5)}°E
+                        {device.lat.toFixed(5)}°N · {device.lng.toFixed(5)}°E
                       </div>
                     </div>
                   </Popup>
@@ -270,7 +224,7 @@ export function LeafletMap({ locations, devices, onDeviceClick }: LeafletMapProp
               );
             })}
             
-            <MapBounds locations={locations} />
+            <MapBounds devices={devices} />
           </MapContainer>
         </div>
       </div>
