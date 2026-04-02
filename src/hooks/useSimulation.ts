@@ -298,12 +298,16 @@ export function useSimulationEngine(deviceIds: string[]) {
     if (isRunningRef.current) {
       const now = Date.now();
       const timeSinceLastRefresh = now - lastRefreshRef.current;
-      const refreshInterval = Math.max(15000, state.interval * 2);
+      const refreshInterval = Math.max(8000, state.interval * 1.5);
       
       if (timeSinceLastRefresh >= refreshInterval) {
         lastRefreshRef.current = now;
-        // Fire and forget - don't block simulation
-        dashboardActions.refresh().catch(() => {});
+        // Wait 2 seconds for data to be committed, then refresh
+        setTimeout(() => {
+          if (isRunningRef.current) {
+            dashboardActions.refresh().catch(() => {});
+          }
+        }, 2000);
       }
     }
   }, [deviceIds, state.mode, state.interval, getNextValue, addLog, dashboardActions]);

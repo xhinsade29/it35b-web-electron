@@ -45,26 +45,23 @@ export async function ensureDeviceSensors(deviceId: string): Promise<boolean> {
     
     console.log(`Device ${deviceId} missing sensors:`, missingSensors.map(s => s.sensor_type));
     
-    // Create missing sensors
-    const sensorsToCreate = missingSensors.map(s => ({
-      device_id: deviceId,
-      sensor_type: s.sensor_type,
-      unit: s.unit,
-      min_threshold: s.min,
-      max_threshold: s.max,
-    }));
+    // Create missing sensors using RPC function (bypasses RLS)
+    const { data, error: rpcError } = await supabase
+      .rpc('dashboard_ensure_device_sensors', {
+        p_device_id: deviceId
+      });
     
-    const { error: insertError } = await supabase
-      .from('sensors')
-      .insert(sensorsToCreate);
-    
-    if (insertError) {
-      console.error(`Error creating sensors for device ${deviceId}:`, insertError);
+    if (rpcError) {
+      console.error(`Error creating sensors for device ${deviceId}:`, rpcError);
       return false;
     }
     
-    console.log(`Created ${missingSensors.length} sensors for device ${deviceId}`);
-    return true;
+    if (data && data.success) {
+      console.log(`Created ${data.created_count} sensors for device ${deviceId}`);
+      return true;
+    }
+    
+    return false;
   } catch (err) {
     console.error(`ensureDeviceSensors error for ${deviceId}:`, err);
     return false;
@@ -190,6 +187,8 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
     }));
 
     // Fetch recent sensor readings for charts, sections, and logs
+    // Add timestamp to bypass Supabase cache
+    const cacheBuster = Date.now();
     const { data: readingsData, error: readingsError } = await supabase
       .from('sensor_readings')
       .select(`
@@ -204,12 +203,15 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
       console.error('Readings fetch error:', readingsError);
     }
 
+    console.log('[FETCH] Raw readings sample (cacheBuster:', cacheBuster, '):', readingsData?.slice(0, 3));
+
     // Process the readings data
     const processedReadings = readingsData || [];
     const chartData = processChartData(processedReadings);
     const sectionConditions = processSectionConditions(processedReadings);
     const logs = processActivityLogs(processedReadings);
     const deviceChartData = processDeviceChartData(processedReadings, transformedDevices);
+    const deviceReadings = processDeviceReadings(processedReadings);
 
     // Build map locations with device counts
     const mapLocations = (locationsData || []).map((loc: { 
@@ -242,7 +244,7 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
       alert_count: alert_count,
       dev_counts: devCounts,
       devices: transformedDevices,
-      device_readings: {},
+      device_readings: deviceReadings,
       alerts: transformedAlerts,
       logs: logs,
       map_locations: mapLocations,
@@ -537,6 +539,8 @@ function processSectionConditions(readings: SensorReading[]) {
     downstream: {} as Record<string, number>,
   };
 
+  console.log('[SECTION] Processing', readings.length, 'readings for section conditions');
+
   // Get latest reading per sensor per section
   const latestReadings: Record<string, Record<string, { value: number; time: number }>> = {
     upstream: {},
@@ -547,15 +551,24 @@ function processSectionConditions(readings: SensorReading[]) {
   readings.forEach((r) => {
     const section = r.sensors?.devices?.locations?.river_section || 'upstream';
     const sensorType = r.sensors?.sensor_type;
-    if (sensorType && latestReadings[section as keyof typeof latestReadings]) {
-      const time = new Date(r.recorded_at).getTime();
-      const existing = latestReadings[section as keyof typeof latestReadings][sensorType];
-      if (!existing || time > existing.time) {
-        latestReadings[section as keyof typeof latestReadings][sensorType] = {
-          value: r.value,
-          time,
-        };
-      }
+    
+    if (!sensorType) {
+      console.log('[SECTION] Skipping reading - no sensor type:', r);
+      return;
+    }
+    
+    if (!latestReadings[section as keyof typeof latestReadings]) {
+      console.log('[SECTION] Unknown section:', section);
+      return;
+    }
+    
+    const time = new Date(r.recorded_at).getTime();
+    const existing = latestReadings[section as keyof typeof latestReadings][sensorType];
+    if (!existing || time > existing.time) {
+      latestReadings[section as keyof typeof latestReadings][sensorType] = {
+        value: r.value,
+        time,
+      };
     }
   });
 
@@ -566,6 +579,7 @@ function processSectionConditions(readings: SensorReading[]) {
     });
   });
 
+  console.log('[SECTION] Final section conditions:', sections);
   return sections;
 }
 
@@ -648,6 +662,55 @@ function processDeviceChartData(readings: SensorReading[], devices: { device_id:
   });
 
   return deviceData;
+}
+
+function processDeviceReadings(readings: SensorReading[]) {
+  // Get latest reading per sensor per device
+  const latestReadings: Record<string, Record<string, { value: number; recorded_at: string }>> = {};
+
+  readings.forEach((r) => {
+    const deviceId = r.sensors?.device_id;
+    const sensorType = r.sensors?.sensor_type;
+    if (!deviceId || !sensorType) return;
+
+    if (!latestReadings[deviceId]) {
+      latestReadings[deviceId] = {};
+    }
+
+    const time = new Date(r.recorded_at).getTime();
+    const existing = latestReadings[deviceId][sensorType];
+    if (!existing || time > new Date(existing.recorded_at).getTime()) {
+      latestReadings[deviceId][sensorType] = {
+        value: r.value,
+        recorded_at: r.recorded_at,
+      };
+    }
+  });
+
+  // Convert to DeviceReading format
+  const deviceReadings: Record<string, {
+    temperature?: number;
+    ph_level?: number;
+    turbidity?: number;
+    dissolved_oxygen?: number;
+    water_level?: number;
+    sediments?: number;
+    recorded_at?: string;
+  }> = {};
+
+  Object.entries(latestReadings).forEach(([deviceId, sensors]) => {
+    deviceReadings[deviceId] = {
+      temperature: sensors.temperature?.value,
+      ph_level: sensors.ph_level?.value,
+      turbidity: sensors.turbidity?.value,
+      dissolved_oxygen: sensors.dissolved_oxygen?.value,
+      water_level: sensors.water_level?.value,
+      sediments: sensors.sediments?.value,
+      recorded_at: Object.values(sensors)[0]?.recorded_at,
+    };
+  });
+
+  return deviceReadings;
 }
 
 function processActivityLogs(readings: SensorReading[]) {
