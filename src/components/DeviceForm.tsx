@@ -215,11 +215,14 @@ export function DeviceForm({
   // Handle submit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Only auto-set condition for new devices placed via map (no manual condition set)
+    // If user manually selected a condition, preserve it
+    const needsAutoCondition = !formData.device_condition && formData.latitude && formData.longitude;
     const submitData: DeviceFormData = {
       ...formData,
-      device_condition: formData.latitude && formData.longitude 
-        ? (checkDistanceToRiver(formData.latitude, formData.longitude, RIVER_COORDS) ? 'normal' : 'out_of_bound')
-        : 'normal',
+      device_condition: needsAutoCondition
+        ? (checkDistanceToRiver(formData.latitude!, formData.longitude!, RIVER_COORDS) ? 'normal' : 'out_of_bound')
+        : (formData.device_condition || 'normal'),
     };
     onSave(submitData, device || undefined);
   };

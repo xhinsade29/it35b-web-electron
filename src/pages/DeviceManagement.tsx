@@ -62,6 +62,7 @@ export function DeviceManagement() {
     filterOptions,
     setFilterOptions,
     refresh: refreshDevices,
+    setDevices,
   } = useDevices();
 
   const { locations } = useLocations();
@@ -126,19 +127,26 @@ export function DeviceManagement() {
   const handleSave = useCallback(async (formData: DeviceFormData, originalDevice?: Device) => {
     setIsSubmitting(true);
     try {
-      let success = false;
+      let updatedDevice: Device | null = null;
 
       if (viewMode === 'add') {
-        const newDevice = await createDevice(formData);
-        success = !!newDevice;
+        updatedDevice = await createDevice(formData);
       } else if (viewMode === 'edit' && selectedDeviceId && originalDevice) {
-        const updated = await updateDevice(selectedDeviceId, formData, originalDevice);
-        success = !!updated;
+        updatedDevice = await updateDevice(selectedDeviceId, formData, originalDevice);
       }
 
-      if (success) {
+      if (updatedDevice) {
+        // Optimistically update local state for instant map refresh
+        setDevices((prev: Device[]) => {
+          if (viewMode === 'add') {
+            return [...prev, updatedDevice!];
+          }
+          return prev.map((d: Device) => d.device_id === updatedDevice!.device_id ? updatedDevice! : d);
+        });
+        
         setViewMode('list');
         setSelectedDeviceId(null);
+        // Background refresh to sync with server
         refreshDevices();
       }
     } catch (err) {
@@ -306,7 +314,7 @@ export function DeviceManagement() {
                       
                       return (
                         <CircleMarker
-                          key={device.device_id}
+                          key={`${device.device_id}-${device.latitude}-${device.longitude}`}
                           center={[device.latitude!, device.longitude!]}
                           radius={isSelected ? 14 : 10}
                           fillColor={color}

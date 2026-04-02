@@ -44,6 +44,7 @@ interface UseDevicesReturn {
   filterOptions: DeviceFilterOptions;
   setFilterOptions: (options: DeviceFilterOptions) => void;
   refresh: () => void;
+  setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
 }
 
 export function useDevices(): UseDevicesReturn {
@@ -101,6 +102,7 @@ export function useDevices(): UseDevicesReturn {
     filterOptions,
     setFilterOptions,
     refresh: fetchDevices,
+    setDevices,
   };
 }
 
