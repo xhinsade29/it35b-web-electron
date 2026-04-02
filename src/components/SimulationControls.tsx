@@ -159,11 +159,11 @@ export function SimulationControls({
 
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
-          <div style={{ background: 'rgba(15, 40, 84, 0.8)', border: '1px solid rgba(73, 136, 196, 0.3)', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+          <div style={{ background: '#0F2854', border: '1px solid rgba(73, 136, 196, 0.4)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
             <div style={{ fontSize: '10px', color: '#8b9aae', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Readings</div>
             <div style={{ fontSize: '18px', fontWeight: 600, color: '#ffffff' }}>{count}</div>
           </div>
-          <div style={{ background: 'rgba(15, 40, 84, 0.8)', border: '1px solid rgba(73, 136, 196, 0.3)', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+          <div style={{ background: '#0F2854', border: '1px solid rgba(73, 136, 196, 0.4)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
             <div style={{ fontSize: '10px', color: '#8b9aae', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Alerts</div>
             <div style={{ fontSize: '18px', fontWeight: 600, color: alertCount > 0 ? '#f87171' : '#34d399' }}>
               {alertCount}
