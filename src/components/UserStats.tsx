@@ -4,7 +4,7 @@
  */
 
 import type { UserStats } from '../types/user.types';
-import styles from './UserStats.module.css';
+import styles from '../assets/styles/UserStats.module.css';
 
 interface UserStatsProps {
   stats: UserStats;

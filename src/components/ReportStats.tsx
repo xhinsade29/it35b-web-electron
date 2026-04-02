@@ -4,7 +4,7 @@
  */
 
 import type { ReportSummary } from '../types/reports.types';
-import styles from './ReportStats.module.css';
+import styles from '../assets/styles/ReportStats.module.css';
 
 interface ReportStatsProps {
   summary: ReportSummary;

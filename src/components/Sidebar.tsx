@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import styles from './Sidebar.module.css';
+import styles from '../assets/styles/Sidebar.module.css';
 import { monitorNavItems, adminNavItems, type NavItem } from './navData';
 import logo from '/logo.png';
 

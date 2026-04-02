@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import type { Device, DeviceStatus, DeviceCondition, RiverSection } from '../types/device.types';
 import { getDeviceStatusColor } from '../services/deviceService';
-import styles from './DeviceList.module.css';
+import styles from '../assets/styles/DeviceList.module.css';
 
 interface DeviceListProps {
   devices: Device[];

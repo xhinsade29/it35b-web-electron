@@ -4,7 +4,7 @@
  */
 
 import type { UserFilters, UserRole } from '../types/user.types';
-import styles from './UserFilters.module.css';
+import styles from '../assets/styles/UserFilters.module.css';
 
 interface UserFiltersProps {
   filters: UserFilters;

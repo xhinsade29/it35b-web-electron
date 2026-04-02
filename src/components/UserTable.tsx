@@ -4,7 +4,7 @@
  */
 
 import type { User } from '../types/user.types';
-import styles from './UserTable.module.css';
+import styles from '../assets/styles/UserTable.module.css';
 
 interface UserTableProps {
   users: User[];

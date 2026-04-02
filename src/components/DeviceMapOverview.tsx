@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, useMap } from 'react-leaflet';
 import type { Device } from '../types/device.types';
 import { getDeviceStatusColor } from '../services/deviceService';
-import styles from './DeviceMapOverview.module.css';
+import styles from '../assets/styles/DeviceMapOverview.module.css';
 
 const RIVER_COORDS: [number, number][] = [
   [8.345958, 124.898607], [8.346955, 124.899036], [8.347603, 124.898081],

@@ -4,7 +4,7 @@
  */
 
 import type { TimelineItem } from '../types/activity.types';
-import styles from './ActivityTimeline.module.css';
+import styles from '../assets/styles/ActivityTimeline.module.css';
 
 interface ActivityTimelineProps {
   items: TimelineItem[];

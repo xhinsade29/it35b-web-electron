@@ -4,7 +4,7 @@
  */
 
 import type { AlertStats, ReadingStats } from '../types/activity.types';
-import styles from './ActivityStats.module.css';
+import styles from '../assets/styles/ActivityStats.module.css';
 
 interface ActivityStatsProps {
   readingStats: ReadingStats;

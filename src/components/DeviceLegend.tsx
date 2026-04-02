@@ -3,7 +3,7 @@
  * Shows color coding for device status and conditions
  */
 
-import styles from './DeviceLegend.module.css';
+import styles from '../assets/styles/DeviceLegend.module.css';
 
 export function DeviceLegend() {
   return (

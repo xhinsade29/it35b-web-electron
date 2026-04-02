@@ -4,7 +4,7 @@
  */
 
 import type { DailyTrend, SensorStats } from '../types/reports.types';
-import styles from './ReportCharts.module.css';
+import styles from '../assets/styles/ReportCharts.module.css';
 
 interface ReportChartsProps {
   dailyTrend: DailyTrend[];

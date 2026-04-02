@@ -4,7 +4,7 @@
  */
 
 import type { ActivityFilterOptions } from '../types/activity.types';
-import styles from './ActivityFilters.module.css';
+import styles from '../assets/styles/ActivityFilters.module.css';
 
 interface ActivityFiltersProps {
   filterOptions: ActivityFilterOptions;

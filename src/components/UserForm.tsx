@@ -4,7 +4,7 @@
  */
 
 import type { UserFormData, UserRole, ValidationErrors } from '../types/user.types';
-import styles from './UserForm.module.css';
+import styles from '../assets/styles/UserForm.module.css';
 
 interface UserFormProps {
   isOpen: boolean;

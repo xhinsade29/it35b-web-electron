@@ -6,7 +6,7 @@
 
 import { useDeviceReadings } from '../hooks/useDevices';
 import type { Device } from '../types/device.types';
-import styles from './DeviceDetails.module.css';
+import styles from '../assets/styles/DeviceDetails.module.css';
 
 interface DeviceDetailsProps {
   device: Device;

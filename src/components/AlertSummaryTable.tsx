@@ -3,7 +3,7 @@
  */
 
 import type { AlertSummary } from '../types/reports.types';
-import styles from './ReportTables.module.css';
+import styles from '../assets/styles/ReportTables.module.css';
 
 interface AlertSummaryTableProps {
   alerts: AlertSummary[];

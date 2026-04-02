@@ -4,7 +4,7 @@
  */
 
 import type { ReportFilterOptions } from '../types/reports.types';
-import styles from './ReportFilters.module.css';
+import styles from '../assets/styles/ReportFilters.module.css';
 
 interface ReportFiltersProps {
   filterOptions: ReportFilterOptions;

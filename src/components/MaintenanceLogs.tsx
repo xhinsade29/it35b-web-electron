@@ -4,7 +4,7 @@
  */
 
 import type { MaintenanceLog } from '../types/activity.types';
-import styles from './MaintenanceLogs.module.css';
+import styles from '../assets/styles/MaintenanceLogs.module.css';
 
 interface MaintenanceLogsProps {
   logs: MaintenanceLog[];
