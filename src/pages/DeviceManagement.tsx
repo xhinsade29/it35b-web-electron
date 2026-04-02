@@ -109,17 +109,19 @@ export function DeviceManagement() {
   }, []);
 
   // Handle delete device - use deviceId directly from the device being deleted
-  const handleDelete = useCallback(async (device: Device) => {
-    if (confirm(`Are you sure you want to delete ${device.device_name}?`)) {
-      try {
-        await deleteDevice(device.device_id);
-        refreshDevices();
-        if (selectedDeviceId === device.device_id) {
-          setSelectedDeviceId(null);
-        }
-      } catch (err) {
-        alert(err instanceof Error ? err.message : 'Failed to delete device');
+  const handleDelete = useCallback(async (
+    device: Device,
+    onProgress?: (deleted: number, totalSensors: number, currentSensor: number) => void
+  ) => {
+    try {
+      await deleteDevice(device.device_id, onProgress);
+      refreshDevices();
+      if (selectedDeviceId === device.device_id) {
+        setSelectedDeviceId(null);
       }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete device');
+      throw err;
     }
   }, [refreshDevices, selectedDeviceId]);
 

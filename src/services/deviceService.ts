@@ -211,28 +211,73 @@ export async function updateDevice(
 }
 
 /**
- * Delete device with cascade delete using RPC
+ * Delete device - batch delete readings via RPC, then CASCADE for rest
  */
-export async function deleteDevice(deviceId: string): Promise<void> {
-  // Use RPC for efficient server-side cascade delete
-  const { error } = await supabaseAdmin.rpc('delete_device_cascade', {
-    p_device_id: deviceId
-  });
+export async function deleteDevice(
+  deviceId: string,
+  onProgress?: (deleted: number, totalSensors: number, currentSensor: number) => void
+): Promise<void> {
+  // Step 1: Get all sensor IDs for this device
+  const { data: sensors, error: sensorError } = await supabaseAdmin
+    .from('sensors')
+    .select('sensor_id')
+    .eq('device_id', deviceId);
 
-  if (error) {
-    console.error('Error deleting device:', error);
-    // Fallback to direct delete if RPC doesn't exist
-    const { error: directError } = await supabaseAdmin
-      .from('devices')
-      .delete()
-      .eq('device_id', deviceId);
-    
-    if (directError) {
-      throw new Error(`Failed to delete device: ${directError.message || 'Database timeout - FK cascade too slow'}`);
+  if (sensorError) {
+    throw new Error(`Failed to get sensors: ${sensorError.message}`);
+  }
+
+  const totalSensors = sensors?.length || 0;
+  let totalDeleted = 0;
+
+  // Step 2: Batch delete readings for each sensor using RPC (avoids timeout)
+  if (sensors && sensors.length > 0) {
+    for (let i = 0; i < sensors.length; i++) {
+      const sensor = sensors[i];
+      let deleted = 1;
+      let attempts = 0;
+      const maxAttempts = 200; // Safety limit
+
+      while (deleted > 0 && attempts < maxAttempts) {
+        const { data: count, error: rpcError } = await supabaseAdmin.rpc(
+          'delete_sensor_readings_batch',
+          { p_sensor_id: sensor.sensor_id, p_limit: 500 }
+        );
+
+        if (rpcError) {
+          console.error(`RPC error for sensor ${sensor.sensor_id}:`, rpcError);
+          break;
+        }
+
+        deleted = count || 0;
+        totalDeleted += deleted;
+        attempts++;
+
+        // Report progress
+        if (onProgress) {
+          onProgress(totalDeleted, totalSensors, i + 1);
+        }
+
+        // Small delay between batches
+        if (deleted > 0) {
+          await new Promise((r) => setTimeout(r, 5));
+        }
+      }
     }
   }
 
-  await logActivity('DEVICE_DELETE', `Deleted device ID: ${deviceId}`);
+  // Step 3: Delete device - CASCADE will handle sensors (now fast with no readings)
+  const { error: deviceError } = await supabaseAdmin
+    .from('devices')
+    .delete()
+    .eq('device_id', deviceId);
+
+  if (deviceError) {
+    throw new Error(`Failed to delete device: ${deviceError.message}`);
+  }
+
+  // Log the deletion (fire and forget)
+  logActivity('DEVICE_DELETE', `Deleted device ID: ${deviceId}`).catch(console.error);
 }
 
 // ============================================================================

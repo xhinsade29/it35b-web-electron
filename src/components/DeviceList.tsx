@@ -12,7 +12,7 @@ interface DeviceListProps {
   devices: Device[];
   loading: boolean;
   onEdit: (device: Device) => void;
-  onDelete: (device: Device) => void;
+  onDelete: (device: Device, onProgress?: (deleted: number, totalSensors: number, currentSensor: number) => void) => Promise<void>;
   filters: {
     status: DeviceStatus | 'all';
     condition: DeviceCondition | 'all';
@@ -60,14 +60,24 @@ export function DeviceList({
   onFilterChange,
 }: DeviceListProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<Device | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteProgress, setDeleteProgress] = useState({ deleted: 0, totalSensors: 0, currentSensor: 0 });
 
   const handleDeleteClick = (device: Device) => {
     setDeleteConfirm(device);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteConfirm) {
-      onDelete(deleteConfirm);
+      setIsDeleting(true);
+      setDeleteProgress({ deleted: 0, totalSensors: 0, currentSensor: 0 });
+      
+      // Pass progress callback to onDelete
+      await onDelete(deleteConfirm, (deleted, totalSensors, currentSensor) => {
+        setDeleteProgress({ deleted, totalSensors, currentSensor });
+      });
+      
+      setIsDeleting(false);
       setDeleteConfirm(null);
     }
   };
@@ -337,7 +347,7 @@ export function DeviceList({
       </div>
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirm && (
+      {deleteConfirm && !isDeleting && (
         <div className={styles.modalOverlay} onClick={() => setDeleteConfirm(null)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>Confirm Delete</h3>
@@ -356,6 +366,34 @@ export function DeviceList({
               <button className={styles.btnDanger} onClick={confirmDelete}>
                 Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deleting Progress Modal */}
+      {isDeleting && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3 className={styles.modalTitle}>Deleting Device...</h3>
+            <div className={styles.progressContainer}>
+              <div className={styles.progressBar}>
+                <div 
+                  className={styles.progressFill} 
+                  style={{ 
+                    width: deleteProgress.totalSensors > 0 
+                      ? `${(deleteProgress.currentSensor / deleteProgress.totalSensors) * 100}%` 
+                      : '0%' 
+                  }}
+                />
+              </div>
+              <p className={styles.progressText}>
+                Processing sensor {deleteProgress.currentSensor} of {deleteProgress.totalSensors}
+              </p>
+              <p className={styles.progressSubtext}>
+                Deleted {deleteProgress.deleted.toLocaleString()} readings so far...
+              </p>
+              <p className={styles.progressHint}>This may take a moment for devices with many readings</p>
             </div>
           </div>
         </div>
