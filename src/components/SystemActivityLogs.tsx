@@ -87,8 +87,8 @@ export function SystemActivityLogs({ simulationLogs, alerts }: SystemActivityLog
                   alignItems: 'flex-start',
                   gap: '12px',
                   padding: '10px 12px',
-                  borderBottom: '1px solid rgba(13,17,23,0.06)',
-                  background: index % 2 === 0 ? '#fafafa' : '#fff',
+                  borderBottom: '1px solid rgba(73, 136, 196, 0.2)',
+                  background: index % 2 === 0 ? 'rgba(15, 40, 84, 0.4)' : 'rgba(10, 22, 40, 0.3)',
                 }}
               >
                 <span style={{ fontSize: '14px' }}>{getActivityIcon(activity.type)}</span>

@@ -69,7 +69,7 @@ export function LeafletMap({ devices, onDeviceClick }: LeafletMapProps) {
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
             
             {/* River path */}
@@ -124,7 +124,7 @@ export function LeafletMap({ devices, onDeviceClick }: LeafletMapProps) {
                   }}
                 >
                   <Popup>
-                    <div style={{ fontFamily: 'Instrument Sans, sans-serif', minWidth: '200px' }}>
+                    <div style={{ fontFamily: 'Instrument Sans, sans-serif', minWidth: '200px', background: 'rgba(15, 40, 84, 0.95)', padding: '12px', borderRadius: '8px', color: '#fff' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                         <div
                           style={{
@@ -134,22 +134,22 @@ export function LeafletMap({ devices, onDeviceClick }: LeafletMapProps) {
                             background: color,
                           }}
                         />
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#0d1117' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
                           {device.device_name}
                         </div>
                       </div>
-                      <div style={{ fontSize: '11px', color: '#3d4a5c', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '11px', color: '#8b9aae', marginBottom: '4px' }}>
                         {device.location_name}
                       </div>
-                      <div style={{ fontSize: '10px', color: '#0d1117', marginTop: '4px' }}>
+                      <div style={{ fontSize: '10px', color: '#e8ecf1', marginTop: '4px' }}>
                         Status: <span style={{ color }}>{device.status}</span>
                       </div>
                       {device.device_condition && device.device_condition !== 'normal' && (
-                        <div style={{ fontSize: '10px', color: '#d97706', marginTop: '2px' }}>
+                        <div style={{ fontSize: '10px', color: '#fbbf24', marginTop: '2px' }}>
                           ⚠️ {device.device_condition}
                         </div>
                       )}
-                      <div style={{ fontSize: '10px', color: '#8897aa', marginTop: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '6px', textAlign: 'center' }}>
                         {device.lat.toFixed(5)}°N · {device.lng.toFixed(5)}°E
                       </div>
                     </div>

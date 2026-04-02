@@ -101,7 +101,7 @@ export function SimulationControls({
 
         {/* Device Selection */}
         <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#0d1117', marginBottom: '6px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: '#e8ecf1', marginBottom: '6px' }}>
             Devices ({selectedDevices.length}/{devices.length} selected)
           </div>
           <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
@@ -112,7 +112,7 @@ export function SimulationControls({
               None
             </button>
           </div>
-          <div style={{ maxHeight: '100px', overflowY: 'auto', border: '1px solid rgba(13,17,23,0.07)', borderRadius: '8px', padding: '8px' }}>
+          <div style={{ maxHeight: '100px', overflowY: 'auto', border: '1px solid rgba(73, 136, 196, 0.2)', borderRadius: '8px', padding: '8px', background: 'rgba(10, 22, 40, 0.3)' }}>
             {devices.map((device) => (
               <label
                 key={device.device_id}
@@ -159,20 +159,20 @@ export function SimulationControls({
 
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
-          <div style={{ background: '#f9fafb', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
-            <div style={{ fontSize: '18px', fontWeight: 600, color: '#0d1117' }}>{count}</div>
-            <div style={{ fontSize: '10px', color: '#8897aa' }}>Readings</div>
+          <div style={{ background: 'rgba(15, 40, 84, 0.4)', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+            <div style={{ fontSize: '18px', fontWeight: 600, color: '#ffffff' }}>{count}</div>
+            <div style={{ fontSize: '10px', color: '#8b9aae' }}>Readings</div>
           </div>
-          <div style={{ background: '#f9fafb', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
-            <div style={{ fontSize: '18px', fontWeight: 600, color: alertCount > 0 ? '#dc2626' : '#059669' }}>
+          <div style={{ background: 'rgba(15, 40, 84, 0.4)', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+            <div style={{ fontSize: '18px', fontWeight: 600, color: alertCount > 0 ? '#f87171' : '#34d399' }}>
               {alertCount}
             </div>
-            <div style={{ fontSize: '10px', color: '#8897aa' }}>Alerts</div>
+            <div style={{ fontSize: '10px', color: '#8b9aae' }}>Alerts</div>
           </div>
         </div>
 
         {lastDevice && (
-          <div style={{ fontSize: '11px', color: '#3d4a5c', marginBottom: '8px' }}>
+          <div style={{ fontSize: '11px', color: '#8b9aae', marginBottom: '8px' }}>
             Last: {lastDevice.split('\n')[0]}
           </div>
         )}
