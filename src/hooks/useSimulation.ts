@@ -6,9 +6,26 @@ import type { SimulationResponse } from '../types/dashboard.types';
 // =====================================================
 // Simulation Engine Hook
 // Replaces PHP simulation engine (MODES, _initDs, _next, _sendTick)
+// Note: Simulation persists across page navigation until explicitly stopped
 // =====================================================
 
 export type SimulationMode = 'normal' | 'flood' | 'pollution' | 'drought';
+
+// LocalStorage keys for persistent simulation state
+const SIM_STORAGE_KEY = 'aqua-vision-simulation-state';
+const SIM_STORAGE_LOGS = 'aqua-vision-simulation-logs';
+
+interface PersistedSimulationState {
+  isRunning: boolean;
+  mode: SimulationMode;
+  interval: number;
+  tickCount: number;
+  alertCount: number;
+  deviceIds: string[];
+  lastDeviceId?: string;
+  lastDeviceName?: string;
+  startedAt?: string;
+}
 
 interface SensorConfig {
   base: number;
@@ -25,6 +42,11 @@ interface ModeConfig {
   water_level: SensorConfig;
   sediments: SensorConfig;
 }
+
+// Global timer reference that persists across hook instances
+// This allows the simulation to continue even when component unmounts
+let globalTimerRef: number | null = null;
+let globalIsRunning = false;
 
 // Mode configurations matching PHP MODES
 const MODE_CONFIGS: Record<SimulationMode, ModeConfig> = {
@@ -85,23 +107,89 @@ interface SimulationState {
 }
 
 export function useSimulationEngine(deviceIds: string[]) {
+  // Load persisted state on init
+  const loadPersistedState = (): Partial<SimulationState> => {
+    try {
+      const saved = localStorage.getItem(SIM_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as PersistedSimulationState;
+        return {
+          isRunning: parsed.isRunning,
+          mode: parsed.mode,
+          interval: parsed.interval,
+          tickCount: parsed.tickCount,
+          alertCount: parsed.alertCount,
+          lastDeviceId: parsed.lastDeviceId,
+          lastDeviceName: parsed.lastDeviceName,
+        };
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    return {};
+  };
+
+  const loadPersistedLogs = (): SimulationLog[] => {
+    try {
+      const saved = localStorage.getItem(SIM_STORAGE_LOGS);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    return [];
+  };
+
+  const persisted = loadPersistedState();
+
   const [state, setState] = useState<SimulationState>({
-    isRunning: false,
-    mode: 'normal',
-    interval: 5000,
-    tickCount: 0,
-    alertCount: 0,
-    logs: []
+    isRunning: persisted.isRunning || false,
+    mode: persisted.mode || 'normal',
+    interval: persisted.interval || 5000,
+    tickCount: persisted.tickCount || 0,
+    alertCount: persisted.alertCount || 0,
+    logs: loadPersistedLogs(),
+    lastDeviceId: persisted.lastDeviceId,
+    lastDeviceName: persisted.lastDeviceName,
   });
 
   // Device-specific modes (distributed round-robin)
   const deviceModesRef = useRef<Record<string, SimulationMode>>({});
   const deviceStatesRef = useRef<Record<string, Record<string, number>>>({});
-  const timerRef = useRef<number | null>(null);
-  const isRunningRef = useRef(false);
+  // Use global timer reference so simulation persists across component unmount
+  const timerRef = useRef<number | null>(globalTimerRef);
+  const isRunningRef = useRef(globalIsRunning);
   const lastRefreshRef = useRef<number>(0);
+  const deviceIdsRef = useRef<string[]>(deviceIds);
 
   const [dashboardState, dashboardActions] = useDashboardSync();
+
+  // Persist state to localStorage whenever it changes
+  const persistState = useCallback((newState: SimulationState, devIds: string[]) => {
+    try {
+      const toSave: PersistedSimulationState = {
+        isRunning: newState.isRunning,
+        mode: newState.mode,
+        interval: newState.interval,
+        tickCount: newState.tickCount,
+        alertCount: newState.alertCount,
+        deviceIds: devIds,
+        lastDeviceId: newState.lastDeviceId,
+        lastDeviceName: newState.lastDeviceName,
+        startedAt: newState.logs.find(l => l.message.includes('Started'))?.timestamp || new Date().toISOString(),
+      };
+      localStorage.setItem(SIM_STORAGE_KEY, JSON.stringify(toSave));
+      localStorage.setItem(SIM_STORAGE_LOGS, JSON.stringify(newState.logs.slice(-80)));
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
+  // Update global refs when deviceIds change
+  useEffect(() => {
+    deviceIdsRef.current = deviceIds;
+  }, [deviceIds]);
 
   // Initialize device modes (distributed round-robin like PHP)
   const assignDeviceModes = useCallback(() => {
@@ -154,21 +242,33 @@ export function useSimulationEngine(deviceIds: string[]) {
       timestamp: new Date().toISOString()
     };
     
-    setState(prev => ({
-      ...prev,
-      logs: [...prev.logs.slice(-79), entry] // Keep last 80 logs
-    }));
+    setState(prev => {
+      const newState = {
+        ...prev,
+        logs: [...prev.logs.slice(-79), entry] // Keep last 80 logs
+      };
+      // Persist logs immediately
+      try {
+        localStorage.setItem(SIM_STORAGE_LOGS, JSON.stringify(newState.logs));
+      } catch {
+        // Ignore storage errors
+      }
+      return newState;
+    });
   }, []);
 
   // Execute a simulation tick for all devices
   const executeTick = useCallback(async () => {
     // Guard: don't execute if simulation has been stopped
-    if (!isRunningRef.current) {
+    if (!globalIsRunning) {
       console.log('executeTick: skipped - not running');
       return;
     }
 
-    if (deviceIds.length === 0) {
+    // Use current device IDs from ref
+    const currentDeviceIds = deviceIdsRef.current;
+
+    if (currentDeviceIds.length === 0) {
       addLog({
         deviceId: '',
         deviceName: 'System',
@@ -179,10 +279,10 @@ export function useSimulationEngine(deviceIds: string[]) {
       return;
     }
 
-    console.log(`[SIMULATION] Starting batch tick for ${deviceIds.length} devices`);
+    console.log(`[SIMULATION] Starting batch tick for ${currentDeviceIds.length} devices`);
 
     // Prepare all device data first
-    const devicesData = deviceIds.map(deviceId => {
+    const devicesData = currentDeviceIds.map(deviceId => {
       return {
         device_id: deviceId,
         temperature: getNextValue(deviceId, 'temperature'),
@@ -254,20 +354,28 @@ export function useSimulationEngine(deviceIds: string[]) {
       
       // Update alert count
       if (alertCount > 0) {
-        setState(prev => ({
-          ...prev,
-          alertCount: prev.alertCount + alertCount
-        }));
+        setState(prev => {
+          const newState = {
+            ...prev,
+            alertCount: prev.alertCount + alertCount
+          };
+          persistState(newState, deviceIdsRef.current);
+          return newState;
+        });
       }
       
       // Update last device info
       if (lastSuccess) {
         const success = lastSuccess as SimulationResponse;
-        setState(prev => ({
-          ...prev,
-          lastDeviceId: success.device_id,
-          lastDeviceName: success.device_name
-        }));
+        setState(prev => {
+          const newState = {
+            ...prev,
+            lastDeviceId: success.device_id,
+            lastDeviceName: success.device_name
+          };
+          persistState(newState, deviceIdsRef.current);
+          return newState;
+        });
       }
       
     } catch (err) {
@@ -283,19 +391,23 @@ export function useSimulationEngine(deviceIds: string[]) {
     }
     
     // Guard: don't update state if simulation was stopped during execution
-    if (!isRunningRef.current) {
+    if (!globalIsRunning) {
       console.log('executeTick: stopped during execution');
       return;
     }
     
     // Increment tick count
-    setState(prev => ({
-      ...prev,
-      tickCount: prev.tickCount + 1
-    }));
+    setState(prev => {
+      const newState = {
+        ...prev,
+        tickCount: prev.tickCount + 1
+      };
+      persistState(newState, deviceIdsRef.current);
+      return newState;
+    });
 
     // Refresh dashboard data only if still running and enough time has passed
-    if (isRunningRef.current) {
+    if (globalIsRunning) {
       const now = Date.now();
       const timeSinceLastRefresh = now - lastRefreshRef.current;
       const refreshInterval = Math.max(8000, state.interval * 1.5);
@@ -304,13 +416,13 @@ export function useSimulationEngine(deviceIds: string[]) {
         lastRefreshRef.current = now;
         // Wait 2 seconds for data to be committed, then refresh
         setTimeout(() => {
-          if (isRunningRef.current) {
+          if (globalIsRunning) {
             dashboardActions.refresh().catch(() => {});
           }
         }, 2000);
       }
     }
-  }, [deviceIds, state.mode, state.interval, getNextValue, addLog, dashboardActions]);
+  }, [state.mode, state.interval, getNextValue, addLog, dashboardActions]);
 
   // Simple interval-based simulation with proper cleanup
   const start = useCallback(async (mode?: SimulationMode, interval?: number) => {
@@ -318,26 +430,27 @@ export function useSimulationEngine(deviceIds: string[]) {
     const simInterval = interval || state.interval;
 
     // Stop any existing simulation first
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    if (globalTimerRef) {
+      clearInterval(globalTimerRef);
+      globalTimerRef = null;
     }
-    isRunningRef.current = false;
+    globalIsRunning = false;
 
     // Ensure all devices have required sensors BEFORE starting
     console.log('[SIMULATION] Checking sensors for all devices...');
-    await ensureAllDeviceSensors(deviceIds);
+    await ensureAllDeviceSensors(deviceIdsRef.current);
 
     // Small delay to ensure any pending async operations complete
     setTimeout(() => {
       // Reset state
+      globalIsRunning = true;
       isRunningRef.current = true;
       
       // Assign modes to devices
       assignDeviceModes();
 
       // Initialize states
-      deviceIds.forEach(id => {
+      deviceIdsRef.current.forEach(id => {
         const deviceMode = deviceModesRef.current[id] || simMode;
         initDeviceState(id, deviceMode);
       });
@@ -350,13 +463,17 @@ export function useSimulationEngine(deviceIds: string[]) {
         type: 'success'
       });
 
-      // Set state
-      setState(prev => ({
-        ...prev,
-        isRunning: true,
-        mode: simMode,
-        interval: simInterval
-      }));
+      // Set state and persist
+      setState(prev => {
+        const newState = {
+          ...prev,
+          isRunning: true,
+          mode: simMode,
+          interval: simInterval
+        };
+        persistState(newState, deviceIdsRef.current);
+        return newState;
+      });
 
       // Save state to server (fire-and-forget)
       saveMonitorState({
@@ -371,40 +488,49 @@ export function useSimulationEngine(deviceIds: string[]) {
       executeTick();
 
       // Set up interval for subsequent ticks
-      timerRef.current = window.setInterval(() => {
-        if (!isRunningRef.current) {
+      globalTimerRef = window.setInterval(() => {
+        if (!globalIsRunning) {
           console.log('Interval: simulation not running, clearing');
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
+          if (globalTimerRef) {
+            clearInterval(globalTimerRef);
+            globalTimerRef = null;
           }
           return;
         }
         executeTick();
       }, simInterval);
+      
+      // Sync the local ref
+      timerRef.current = globalTimerRef;
     }, 100);
-  }, [state.mode, state.interval, assignDeviceModes, initDeviceState, deviceIds, addLog, executeTick]);
+  }, [state.mode, state.interval, assignDeviceModes, initDeviceState, addLog, executeTick, persistState]);
 
   // Stop simulation
   const stop = useCallback(() => {
     console.log('STOP called - clearing interval and setting flags');
     
     // Clear the interval first
-    if (timerRef.current !== null) {
-      clearInterval(timerRef.current);
+    if (globalTimerRef !== null) {
+      clearInterval(globalTimerRef);
+      globalTimerRef = null;
       timerRef.current = null;
       console.log('Interval cleared');
     }
     
-    // Set running flag false
+    // Set running flags false
+    globalIsRunning = false;
     isRunningRef.current = false;
     
-    // Update state immediately
-    setState(prev => ({
-      ...prev,
-      isRunning: false,
-      tickCount: prev.tickCount
-    }));
+    // Update state immediately and persist
+    setState(prev => {
+      const newState = {
+        ...prev,
+        isRunning: false,
+        tickCount: prev.tickCount
+      };
+      persistState(newState, deviceIdsRef.current);
+      return newState;
+    });
     
     console.log('Simulation stopped');
 
@@ -448,80 +574,168 @@ export function useSimulationEngine(deviceIds: string[]) {
         console.error('Failed to save summary:', err);
       }
     })();
-  }, [state.mode, state.interval, state.tickCount, state.alertCount, state.lastDeviceId, state.lastDeviceName, state.logs, addLog]);
+    
+    // Clear persisted state
+    try {
+      localStorage.removeItem(SIM_STORAGE_KEY);
+      localStorage.removeItem(SIM_STORAGE_LOGS);
+    } catch {
+      // Ignore storage errors
+    }
+  }, [state.mode, state.interval, state.tickCount, state.alertCount, state.lastDeviceId, state.lastDeviceName, state.logs, addLog, persistState]);
 
   // Update mode (restart if running)
   const setMode = useCallback((mode: SimulationMode) => {
-    setState(prev => ({ ...prev, mode }));
+    setState(prev => {
+      const newState = { ...prev, mode };
+      persistState(newState, deviceIdsRef.current);
+      return newState;
+    });
     
-    if (isRunningRef.current && timerRef.current) {
+    if (globalIsRunning && globalTimerRef) {
       // Restart with new mode
       start(mode, state.interval);
     }
-  }, [start, state.interval]);
+  }, [start, state.interval, persistState]);
 
   // Update interval (restart if running)
   const setInterval = useCallback((interval: number) => {
-    setState(prev => ({ ...prev, interval }));
+    setState(prev => {
+      const newState = { ...prev, interval };
+      persistState(newState, deviceIdsRef.current);
+      return newState;
+    });
     
-    if (isRunningRef.current && timerRef.current) {
+    if (globalIsRunning && globalTimerRef) {
       // Restart with new interval
       start(state.mode, interval);
     }
-  }, [start, state.mode]);
+  }, [start, state.mode, persistState]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount - DO NOT STOP SIMULATION
+  // This allows simulation to continue running when user navigates away
   useEffect(() => {
     return () => {
-      console.log('Unmounting - stopping simulation');
-      isRunningRef.current = false;
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      // Only sync the refs, don't stop the simulation
+      timerRef.current = globalTimerRef;
+      isRunningRef.current = globalIsRunning;
+      console.log('Unmounting - simulation continues in background');
     };
   }, []);
 
-  // Load saved state on mount - but DON'T auto-start
+  // Load saved state on mount - check localStorage and server state
+  // This runs ONCE on mount and uses refs to access current values
   useEffect(() => {
-    const loadSavedState = async () => {
-      try {
-        const { loadMonitorState } = await import('../api/dashboardApi');
-        const result = await loadMonitorState();
-        
-        if (result.ok && result.state) {
-          // Just load the settings, don't auto-start
-          setState(prev => ({
-            ...prev,
-            mode: result.state?.mode || 'normal',
-            interval: result.state?.interval || 5000
-          }));
-          
-          // If it was running, log that it was stopped
-          if (result.state.running) {
-            addLog({
-              deviceId: '',
-              deviceName: 'System',
-              mode: result.state?.mode || 'normal',
-              message: `Previous simulation was stopped. Press ▶ Start to begin.`,
-              type: 'success'
-            });
+    // Small delay to ensure deviceIds are loaded
+    const initTimeout = setTimeout(() => {
+      const loadSavedState = async () => {
+        try {
+          // First check if simulation is already running via global timer
+          if (globalIsRunning && globalTimerRef) {
+            console.log('[SIMULATION] Already running globally, taking over timer');
             
-            // Update server state to stopped
-            saveMonitorState({
-              running: false,
+            // Clear old timer and restart with current instance's functions
+            clearInterval(globalTimerRef);
+            globalTimerRef = null;
+            
+            // Load persisted state to get current settings
+            let savedMode: SimulationMode = 'normal';
+            let savedInterval = 5000;
+            try {
+              const saved = localStorage.getItem(SIM_STORAGE_KEY);
+              if (saved) {
+                const parsed = JSON.parse(saved) as PersistedSimulationState;
+                savedMode = parsed.mode || 'normal';
+                savedInterval = parsed.interval || 5000;
+              }
+            } catch {
+              // Ignore
+            }
+            
+            // Sync state and restart timer with current instance
+            setState(prev => ({
+              ...prev,
+              isRunning: true,
+              mode: savedMode,
+              interval: savedInterval
+            }));
+            
+            // Restart timer with current executeTick
+            globalTimerRef = window.setInterval(() => {
+              if (!globalIsRunning) {
+                clearInterval(globalTimerRef!);
+                globalTimerRef = null;
+                return;
+              }
+              executeTick();
+            }, savedInterval);
+            
+            timerRef.current = globalTimerRef;
+            return;
+          }
+
+          // Check localStorage for persisted state
+          try {
+            const saved = localStorage.getItem(SIM_STORAGE_KEY);
+            if (saved) {
+              const parsed = JSON.parse(saved) as PersistedSimulationState;
+              // Only auto-restart if we have current devices AND saved state says running
+              if (parsed.isRunning && deviceIdsRef.current.length > 0) {
+                console.log('[SIMULATION] Resuming from localStorage');
+                
+                // Restore state first
+                setState(prev => ({
+                  ...prev,
+                  isRunning: true,
+                  mode: parsed.mode || 'normal',
+                  interval: parsed.interval || 5000,
+                  tickCount: parsed.tickCount || 0,
+                  alertCount: parsed.alertCount || 0,
+                  lastDeviceId: parsed.lastDeviceId,
+                  lastDeviceName: parsed.lastDeviceName
+                }));
+                
+                // Auto-start the simulation with current device IDs (not saved ones)
+                start(parsed.mode || 'normal', parsed.interval || 5000);
+                return;
+              }
+            }
+          } catch {
+            // Ignore localStorage errors
+          }
+
+          // Check server state (legacy) - only if no localStorage state
+          const { loadMonitorState } = await import('../api/dashboardApi');
+          const result = await loadMonitorState();
+          
+          if (result.ok && result.state) {
+            // Just load the settings
+            setState(prev => ({
+              ...prev,
               mode: result.state?.mode || 'normal',
               interval: result.state?.interval || 5000
-            }).catch(() => {});
+            }));
+            
+            // If server says it was running, note that it stopped
+            if (result.state.running) {
+              // Update server state to stopped
+              saveMonitorState({
+                running: false,
+                mode: result.state?.mode || 'normal',
+                interval: result.state?.interval || 5000
+              }).catch(() => {});
+            }
           }
+        } catch (err) {
+          console.error('Failed to load monitor state:', err);
         }
-      } catch (err) {
-        console.error('Failed to load monitor state:', err);
-      }
-    };
+      };
 
-    loadSavedState();
-  }, [addLog]);
+      loadSavedState();
+    }, 1000); // Wait 1 second for devices to load
+
+    return () => clearTimeout(initTimeout);
+  }, []);
 
   return {
     // State
