@@ -103,14 +103,29 @@ export function checkDistanceToRiver(
 }
 
 /**
- * Detect river section based on longitude
+ * Detect river section based on position along the river path sequence
  */
-export function detectRiverSection(lng: number): 'upstream' | 'midstream' | 'downstream' {
-  const midstreamStart = 124.88090215;
-  const midstreamEnd = 124.90021711625761;
+export function detectRiverSection(lat: number, lng: number): 'upstream' | 'midstream' | 'downstream' {
+  // Find the closest point on the river path
+  let minDistance = Infinity;
+  let closestIndex = 0;
 
-  if (lng < midstreamStart) return 'upstream';
-  if (lng >= midstreamStart && lng <= midstreamEnd) return 'midstream';
+  for (let i = 0; i < DEFAULT_RIVER_COORDS.length; i++) {
+    const [riverLat, riverLng] = DEFAULT_RIVER_COORDS[i];
+    const distance = calculateDistance(lat, lng, riverLat, riverLng);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestIndex = i;
+    }
+  }
+
+  // Divide river path into thirds based on index
+  const totalPoints = DEFAULT_RIVER_COORDS.length;
+  const upstreamEnd = Math.floor(totalPoints / 3);
+  const midstreamEnd = Math.floor((totalPoints * 2) / 3);
+
+  if (closestIndex < upstreamEnd) return 'upstream';
+  if (closestIndex < midstreamEnd) return 'midstream';
   return 'downstream';
 }
 

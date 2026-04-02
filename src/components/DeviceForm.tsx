@@ -180,7 +180,7 @@ export function DeviceForm({
     setMarkerPosition([lat, lng]);
 
     const isNearRiver = checkDistanceToRiver(lat, lng, RIVER_COORDS);
-    const section = detectRiverSection(lng);
+    const section = detectRiverSection(lat, lng);
     const locationName = `${section.charAt(0).toUpperCase() + section.slice(1)} Section`;
 
     setFormData((prev) => ({
