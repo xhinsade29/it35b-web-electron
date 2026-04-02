@@ -623,8 +623,8 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
  * Detect river section based on longitude
  */
 function detectRiverSection(lng: number): RiverSection {
-  const midstreamStart = 124.876785;
-  const midstreamEnd = 124.903068;
+  const midstreamStart = 124.88090215;
+  const midstreamEnd = 124.90021711625761;
 
   if (lng < midstreamStart) return 'upstream';
   if (lng >= midstreamStart && lng <= midstreamEnd) return 'midstream';

@@ -106,8 +106,8 @@ export function checkDistanceToRiver(
  * Detect river section based on longitude
  */
 export function detectRiverSection(lng: number): 'upstream' | 'midstream' | 'downstream' {
-  const midstreamStart = 124.876785;
-  const midstreamEnd = 124.903068;
+  const midstreamStart = 124.88090215;
+  const midstreamEnd = 124.90021711625761;
 
   if (lng < midstreamStart) return 'upstream';
   if (lng >= midstreamStart && lng <= midstreamEnd) return 'midstream';
