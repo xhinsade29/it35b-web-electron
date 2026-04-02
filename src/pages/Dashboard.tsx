@@ -252,7 +252,12 @@ export function DashboardPage() {
           />
         </div>
 
-        {/* Device Readings - Now below the map */}
+        {/* Water Conditions by Section */}
+        <div style={{ marginBottom: '16px' }}>
+          <WaterConditions sectionConditions={dashboardData.section_conditions} />
+        </div>
+
+        {/* Device Readings */}
         <div style={{ marginBottom: '16px' }}>
           <DeviceReadingsPanel
             devices={dashboardData.devices}
@@ -269,11 +274,8 @@ export function DashboardPage() {
           <TrendCharts chartData={dashboardData.chart_data} />
         </div>
 
-        {/* Bottom Grid - Water Conditions & Activity Logs */}
+        {/* Bottom Grid - Activity Logs */}
         <div className={styles.gridBottom}>
-          <WaterConditions
-            sectionConditions={dashboardData.section_conditions}
-          />
           <ActivityLogs logs={dashboardData.logs} />
         </div>
       </div>
