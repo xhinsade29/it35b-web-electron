@@ -66,7 +66,6 @@ export function ActivityFilters({
       <button className={styles.btnSecondary} onClick={onReset}>
         Reset Filters
       </button>
-      <button className={styles.btnPrimary}>📥 Export CSV</button>
     </div>
   );
 }
