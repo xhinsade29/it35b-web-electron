@@ -1,23 +1,13 @@
 import { useReports } from '../hooks/useReports';
-import { useDashboardSync } from '../hooks/useDashboardSync';
 import { ReportFilters } from '../components/ReportFilters';
 import { ReportCharts } from '../components/ReportCharts';
 import { AlertSummaryTable } from '../components/AlertSummaryTable';
 import { DeviceActivityTable } from '../components/DeviceActivityTable';
 import { RiverSectionTable } from '../components/RiverSectionTable';
 import { SensorStatsTable } from '../components/SensorStatsTable';
-import { ThresholdCharts } from '../components/ThresholdCharts';
 import styles from '../assets/styles/Reports.module.css';
 
 export function ReportsPage() {
-  const [syncState] = useDashboardSync(30000);
-  const dashboardData = syncState.data;
-  const sectionConditions = dashboardData?.section_conditions || {
-    upstream: {},
-    midstream: {},
-    downstream: {},
-  };
-
   const {
     sensorStats,
     alertSummary,
@@ -67,8 +57,6 @@ export function ReportsPage() {
         <h1>📊 Reports & Analytics</h1>
         <p>Comprehensive water quality analysis and system performance reports</p>
       </div>
-
-      <ThresholdCharts sectionConditions={sectionConditions} />
 
       <div style={{ marginTop: '24px' }}>
         <ReportFilters
