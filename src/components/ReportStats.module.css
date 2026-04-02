@@ -1,0 +1,41 @@
+/* ReportStats.module.css */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: white;
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  border-left: 3px solid #1a56db;
+}
+
+.statCardSuccess {
+  border-left-color: #059669;
+}
+
+.statCardInfo {
+  border-left-color: #3b82f6;
+}
+
+.statCardWarning {
+  border-left-color: #d97706;
+}
+
+.statCard h3 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.statCard p {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

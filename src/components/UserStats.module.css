@@ -1,0 +1,43 @@
+/* UserStats.module.css */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.statCard {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  text-align: center;
+  border-left: 3px solid #6b7280;
+}
+
+.statCardSuccess {
+  border-left-color: #059669;
+}
+
+.statCardDanger {
+  border-left-color: #dc2626;
+}
+
+.statCardInfo {
+  border-left-color: #3b82f6;
+}
+
+.statCard h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.statCard p {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
