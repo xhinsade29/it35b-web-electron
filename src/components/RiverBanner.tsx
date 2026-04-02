@@ -22,18 +22,18 @@ export function RiverBanner({
   // Determine status color and emoji
   const statusConfig = {
     Normal: {
-      color: '#059669',
-      bg: '#d1fae5',
+      color: '#34d399',
+      bg: 'rgba(5, 150, 105, 0.2)',
       emoji: '✅',
     },
     Moderate: {
-      color: '#d97706',
-      bg: '#fef3c7',
+      color: '#fbbf24',
+      bg: 'rgba(217, 119, 6, 0.2)',
       emoji: '⚠️',
     },
     Critical: {
-      color: '#dc2626',
-      bg: '#fee2e2',
+      color: '#f87171',
+      bg: 'rgba(220, 38, 38, 0.2)',
       emoji: '🚨',
     },
   };

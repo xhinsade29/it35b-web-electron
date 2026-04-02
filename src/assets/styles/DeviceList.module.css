@@ -49,7 +49,7 @@
   background: rgba(15, 40, 84, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(73, 136, 196, 0.3);
+  border: 1px solid rgba(100, 160, 220, 0.5);
   border-radius: var(--radius-lg);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
@@ -62,7 +62,7 @@
 .searchInput {
   width: 100%;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid rgba(73, 136, 196, 0.3);
+  border: 1px solid rgba(100, 160, 220, 0.5);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   background: rgba(10, 22, 40, 0.4);
@@ -73,7 +73,7 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: rgba(100, 160, 220, 0.8);
   background: rgba(10, 22, 40, 0.6);
 }
 
@@ -84,7 +84,7 @@
 .select {
   width: 100%;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid rgba(73, 136, 196, 0.3);
+  border: 1px solid rgba(100, 160, 220, 0.5);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   background: rgba(10, 22, 40, 0.4);
@@ -96,7 +96,7 @@
 
 .select:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: rgba(100, 160, 220, 0.8);
   background: rgba(10, 22, 40, 0.6);
 }
 
@@ -108,7 +108,7 @@
 
 .tableContainer {
   overflow-x: auto;
-  border: 1px solid rgba(73, 136, 196, 0.3);
+  border: 1px solid rgba(100, 160, 220, 0.5);
   border-radius: var(--radius-lg);
   background: rgba(15, 40, 84, 0.4);
   backdrop-filter: blur(12px);
@@ -305,7 +305,7 @@
   background: rgba(15, 40, 84, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(73, 136, 196, 0.3);
+  border: 1px solid rgba(100, 160, 220, 0.5);
   border-radius: var(--radius-xl);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
@@ -344,10 +344,10 @@
 }
 
 .modal {
-  background: rgba(15, 40, 84, 0.9);
+  background: rgba(15, 40, 84, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(73, 136, 196, 0.4);
+  border: 1px solid rgba(100, 160, 220, 0.6);
   border-radius: var(--radius-xl);
   padding: var(--space-6);
   max-width: 400px;

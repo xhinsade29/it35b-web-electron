@@ -66,7 +66,7 @@
   background: rgba(15, 40, 84, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(73, 136, 196, 0.3);
+  border: 1px solid rgba(100, 160, 220, 0.5);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   text-align: center;
@@ -77,7 +77,7 @@
 .summaryCard:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  border-color: rgba(73, 136, 196, 0.5);
+  border-color: rgba(100, 160, 220, 0.7);
 }
 
 .summaryValue {
@@ -112,7 +112,7 @@
   background: rgba(15, 40, 84, 0.4);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(73, 136, 196, 0.3);
+  border: 1px solid rgba(100, 160, 220, 0.5);
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -128,7 +128,7 @@
   background: rgba(15, 40, 84, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(73, 136, 196, 0.3);
+  border: 1px solid rgba(100, 160, 220, 0.5);
   border-radius: var(--radius-xl);
   overflow: hidden;
   display: flex;
@@ -153,7 +153,7 @@
 .deviceDropdown {
   width: 100%;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid rgba(73, 136, 196, 0.3);
+  border: 1px solid rgba(100, 160, 220, 0.5);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   background: rgba(10, 22, 40, 0.4);
@@ -165,7 +165,7 @@
 
 .deviceDropdown:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: rgba(100, 160, 220, 0.8);
   background: rgba(10, 22, 40, 0.6);
 }
 
@@ -189,7 +189,7 @@
   background: rgba(15, 40, 84, 0.4);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(73, 136, 196, 0.3);
+  border: 1px solid rgba(100, 160, 220, 0.5);
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
