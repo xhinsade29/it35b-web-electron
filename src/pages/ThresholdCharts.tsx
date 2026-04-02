@@ -18,7 +18,7 @@ import {
   ReferenceArea,
   ReferenceLine,
 } from 'recharts';
-import styles from '../pages/Dashboard.module.css';
+import styles from '../assets/styles/Dashboard.module.css';
 
 interface ThresholdChartsProps {
   sectionConditions: Record<string, {

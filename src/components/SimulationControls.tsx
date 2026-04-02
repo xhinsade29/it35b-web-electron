@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import styles from '../pages/Dashboard.module.css';
+import styles from '../assets/styles/Dashboard.module.css';
 
 interface SimulationControlsProps {
   devices: Array<{ device_id: string; device_name: string }>;

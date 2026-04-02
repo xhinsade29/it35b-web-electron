@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import styles from '../pages/Dashboard.module.css';
+import styles from '../assets/styles/Dashboard.module.css';
 import type { ChartData } from '../types/dashboard.types';
 
 interface TrendChartsProps {

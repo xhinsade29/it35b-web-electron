@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import styles from '../pages/Dashboard.module.css';
+import styles from "../assets/styles/Dashboard.module.css";
 import type { DeviceInfo } from '../types/dashboard.types';
 import { DEFAULT_RIVER_COORDS } from '../utils/riverUtils';
 
