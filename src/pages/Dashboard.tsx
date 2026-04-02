@@ -137,118 +137,117 @@ export function DashboardPage() {
           warnCount={dashboardData.warn_count}
         />
 
-        {/* Main Grid - Map/Simulation row, Device Panel */}
-        <div className={styles.gridMain}>
-          {/* Left Column - Map with integrated simulation */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardTitle}>
-                <span>📍 Monitoring Locations — Active Devices</span>
-                <span className={`${styles.tag} ${isRunning ? styles.tagGood : styles.tagMute}`} style={{ marginLeft: '8px' }}>
-                  ● {isRunning ? 'Running' : 'Stopped'}
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <select
-                  className={styles.simSelect}
-                  value={simInterval}
-                  onChange={(e) => setSimInterval(Number(e.target.value))}
-                  disabled={isRunning}
-                  style={{ width: '80px' }}
-                >
-                  <option value={5000}>5 s</option>
-                  <option value={10000}>10 s</option>
-                  <option value={30000}>30 s</option>
-                  <option value={60000}>1 min</option>
-                </select>
-                <span className={`${styles.tag} ${styles.tagInfo}`} style={{ fontSize: '11px' }}>
-                  Mixed Modes
-                </span>
-                <button
-                  className={styles.btnPrimary}
-                  onClick={handleStart}
-                  disabled={isRunning || dashboardData.devices.length === 0}
-                  style={{ height: '30px', padding: '0 14px', fontSize: '11px', fontWeight: 600 }}
-                >
-                  ▶ Start
-                </button>
-                <button
-                  className={styles.btnOutline}
-                  type="button"
-                  onClick={() => { console.log('Stop clicked, isRunning:', isRunning); stop(); }}
-                  disabled={!isRunning}
-                  style={{ height: '30px', padding: '0 14px', fontSize: '11px', fontWeight: 600, opacity: isRunning ? 1 : 0.45, cursor: isRunning ? 'pointer' : 'not-allowed' }}
-                >
-                  ■ Stop
-                </button>
+        {/* Main Grid - Map/Simulation row */}
+        <div className={styles.card} style={{ marginBottom: '16px' }}>
+          <div className={styles.cardHeader}>
+            <div className={styles.cardTitle}>
+              <span>📍 Monitoring Locations — Active Devices</span>
+              <span className={`${styles.tag} ${isRunning ? styles.tagGood : styles.tagMute}`} style={{ marginLeft: '8px' }}>
+                ● {isRunning ? 'Running' : 'Stopped'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <select
+                className={styles.simSelect}
+                value={simInterval}
+                onChange={(e) => setSimInterval(Number(e.target.value))}
+                disabled={isRunning}
+                style={{ width: '80px' }}
+              >
+                <option value={5000}>5 s</option>
+                <option value={10000}>10 s</option>
+                <option value={30000}>30 s</option>
+                <option value={60000}>1 min</option>
+              </select>
+              <span className={`${styles.tag} ${styles.tagInfo}`} style={{ fontSize: '11px' }}>
+                Mixed Modes
+              </span>
+              <button
+                className={styles.btnPrimary}
+                onClick={handleStart}
+                disabled={isRunning || dashboardData.devices.length === 0}
+                style={{ height: '30px', padding: '0 14px', fontSize: '11px', fontWeight: 600 }}
+              >
+                ▶ Start
+              </button>
+              <button
+                className={styles.btnOutline}
+                type="button"
+                onClick={() => { console.log('Stop clicked, isRunning:', isRunning); stop(); }}
+                disabled={!isRunning}
+                style={{ height: '30px', padding: '0 14px', fontSize: '11px', fontWeight: 600, opacity: isRunning ? 1 : 0.45, cursor: isRunning ? 'pointer' : 'not-allowed' }}
+              >
+                ■ Stop
+              </button>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr minmax(280px, 1fr)', gap: '0' }}>
+            <div>
+              <LeafletMap
+                locations={dashboardData.map_locations}
+                devices={dashboardData.devices}
+                onDeviceClick={setSelectedDeviceId}
+              />
+              <div className={styles.mapLegend}>
+                <div className={styles.leg}>
+                  <span className={styles.legDot} style={{ background: '#059669' }}></span>
+                  Upstream
+                </div>
+                <div className={styles.leg}>
+                  <span className={styles.legDot} style={{ background: '#d97706' }}></span>
+                  Midstream
+                </div>
+                <div className={styles.leg}>
+                  <span className={styles.legDot} style={{ background: '#dc2626' }}></span>
+                  Downstream
+                </div>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr minmax(280px, 1fr)', gap: '0' }}>
-              <div>
-                <LeafletMap
-                  locations={dashboardData.map_locations}
-                  devices={dashboardData.devices}
-                  onDeviceClick={setSelectedDeviceId}
-                />
-                <div className={styles.mapLegend}>
-                  <div className={styles.leg}>
-                    <span className={styles.legDot} style={{ background: '#059669' }}></span>
-                    Upstream
+            <div style={{ display: 'flex', flexDirection: 'column', padding: '12px', borderLeft: '1px solid rgba(13,17,23,0.07)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+                <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Readings</div>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '1.5rem', fontWeight: 500, color: '#7c3aed', marginTop: '4px' }}>{tickCount}</div>
+                </div>
+                <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Alerts</div>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '1.5rem', fontWeight: 500, color: simAlertCount > 0 ? '#dc2626' : '#059669', marginTop: '4px' }}>{simAlertCount}</div>
+                </div>
+                <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '8px', gridColumn: 'span 2' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Last Read</div>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#0d1117', marginTop: '4px' }}>
+                    {lastDeviceName ? new Date().toLocaleTimeString('en-PH', { hour12: false }) : '—'}
                   </div>
-                  <div className={styles.leg}>
-                    <span className={styles.legDot} style={{ background: '#d97706' }}></span>
-                    Midstream
-                  </div>
-                  <div className={styles.leg}>
-                    <span className={styles.legDot} style={{ background: '#dc2626' }}></span>
-                    Downstream
+                </div>
+                <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '8px', gridColumn: 'span 2' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Device</div>
+                  <div style={{ fontSize: '11px', color: '#3d4a5c', fontFamily: 'JetBrains Mono, monospace', marginTop: '4px', lineHeight: '1.5' }}>
+                    {lastDeviceName || '—'}
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', padding: '12px', borderLeft: '1px solid rgba(13,17,23,0.07)' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
-                  <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Readings</div>
-                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '1.5rem', fontWeight: 500, color: '#7c3aed', marginTop: '4px' }}>{tickCount}</div>
-                  </div>
-                  <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Alerts</div>
-                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '1.5rem', fontWeight: 500, color: simAlertCount > 0 ? '#dc2626' : '#059669', marginTop: '4px' }}>{simAlertCount}</div>
-                  </div>
-                  <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '8px', gridColumn: 'span 2' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Last Read</div>
-                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: '#0d1117', marginTop: '4px' }}>
-                      {lastDeviceName ? new Date().toLocaleTimeString('en-PH', { hour12: false }) : '—'}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '0' }}>
+                <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Simulation Log</div>
+                <div 
+                  className={styles.simLog}
+                  ref={(el) => {
+                    if (el) el.scrollTop = el.scrollHeight;
+                  }}
+                >
+                  <div style={{ color: '#9ca3af', fontStyle: 'italic', marginBottom: '8px' }}>Press ▶ Start to begin simulation</div>
+                  {simulationLogs.map((log, index) => (
+                    <div key={log.id || index} style={{ color: log.type === 'error' ? '#dc2626' : log.type === 'alert' ? '#d97706' : '#3d4a5c', padding: '2px 0', fontSize: '11px' }}>
+                      [{new Date(log.timestamp).toLocaleTimeString('en-PH', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}] {log.message}
                     </div>
-                  </div>
-                  <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '8px', gridColumn: 'span 2' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Device</div>
-                    <div style={{ fontSize: '11px', color: '#3d4a5c', fontFamily: 'JetBrains Mono, monospace', marginTop: '4px', lineHeight: '1.5' }}>
-                      {lastDeviceName || '—'}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '0' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#8897aa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Simulation Log</div>
-                  <div 
-                    className={styles.simLog}
-                    ref={(el) => {
-                      if (el) el.scrollTop = el.scrollHeight;
-                    }}
-                  >
-                    <div style={{ color: '#9ca3af', fontStyle: 'italic', marginBottom: '8px' }}>Press ▶ Start to begin simulation</div>
-                    {simulationLogs.map((log, index) => (
-                      <div key={log.id || index} style={{ color: log.type === 'error' ? '#dc2626' : log.type === 'alert' ? '#d97706' : '#3d4a5c', padding: '2px 0', fontSize: '11px' }}>
-                        [{new Date(log.timestamp).toLocaleTimeString('en-PH', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}] {log.message}
-                      </div>
-                    ))}
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right Column - Device Readings */}
+        {/* Device Readings - Now below the map */}
+        <div style={{ marginBottom: '16px' }}>
           <DeviceReadingsPanel
             devices={dashboardData.devices}
             selectedDeviceId={selectedDeviceId}

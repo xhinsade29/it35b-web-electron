@@ -152,18 +152,18 @@ export function LeafletMap({ locations, devices, onDeviceClick }: LeafletMapProp
             {/* Start and End markers */}
             <CircleMarker
               center={[8.345958, 124.898607]}
-              radius={12}
-              pathOptions={{ fillColor: '#059669', color: '#fff', weight: 2, fillOpacity: 0.95 }}
+              radius={14}
+              pathOptions={{ fillColor: '#16a34a', color: '#fff', weight: 3, fillOpacity: 1 }}
             >
-              <Popup>Start: Mangima River Origin</Popup>
+              <Popup><b>Source:</b> Mangima River Origin</Popup>
             </CircleMarker>
             
             <CircleMarker
               center={[8.413179, 124.909497]}
-              radius={12}
-              pathOptions={{ fillColor: '#dc2626', color: '#fff', weight: 2, fillOpacity: 0.95 }}
+              radius={14}
+              pathOptions={{ fillColor: '#ea580c', color: '#fff', weight: 3, fillOpacity: 1 }}
             >
-              <Popup>End: River Outlet/Mouth</Popup>
+              <Popup><b>Mouth:</b> River Outlet</Popup>
             </CircleMarker>
             
             {/* Location markers */}

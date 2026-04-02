@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Device, DeviceFormData, DeviceStatus } from '../types/device.types';
@@ -273,6 +273,23 @@ export function DeviceForm({
                   weight={4}
                   opacity={0.85}
                 />
+
+                {/* Start and End markers */}
+                <CircleMarker
+                  center={[8.345862, 124.898846]}
+                  radius={14}
+                  pathOptions={{ fillColor: '#16a34a', color: '#fff', weight: 3, fillOpacity: 1 }}
+                >
+                  <Popup><b>Source:</b> Mangima River Origin</Popup>
+                </CircleMarker>
+                
+                <CircleMarker
+                  center={[8.413179, 124.909497]}
+                  radius={14}
+                  pathOptions={{ fillColor: '#ea580c', color: '#fff', weight: 3, fillOpacity: 1 }}
+                >
+                  <Popup><b>Mouth:</b> River Outlet</Popup>
+                </CircleMarker>
 
                 {/* Existing devices */}
                 {existingDevices.map((existingDevice) => {
