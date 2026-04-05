@@ -47,6 +47,7 @@ interface UseReportsReturn {
 export function useReports(): UseReportsReturn {
   const [sensorStats, setSensorStats] = useState<SensorStats[]>([]);
   const [alertSummary, setAlertSummary] = useState<AlertSummary[]>([]);
+  const [actualAlertTotal, setActualAlertTotal] = useState<number>(0);
   const [deviceActivity, setDeviceActivity] = useState<DeviceActivity[]>([]);
   const [dailyTrend, setDailyTrend] = useState<DailyTrend[]>([]);
   const [sectionStats, setSectionStats] = useState<SectionStats[]>([]);
@@ -69,7 +70,7 @@ export function useReports(): UseReportsReturn {
       console.log('[Reports] Fetching data at', new Date().toISOString());
       const [
         sensorData,
-        alertData,
+        alertResult,
         activityData,
         trendData,
         sectionData,
@@ -81,16 +82,22 @@ export function useReports(): UseReportsReturn {
         getDeviceActivity(filterOptions),
         getDailyReadingsTrend(filterOptions),
         getRiverSectionStats(filterOptions),
-        getDeviceSensorReadings(filterOptions, 10000000), // No limit - fetch all data
+        getDeviceSensorReadings(filterOptions, 10000000),
         getDevicesForFilter(),
       ]);
 
+      const alertData = alertResult.summary;
+      const actualAlerts = alertResult.actualTotal;
+
       const calculatedTotal = sensorData.reduce((sum, s) => sum + s.total_readings, 0);
+      const totalAlerts = alertData.reduce((sum, a) => sum + a.total_alerts, 0);
       console.log('[Reports] Sensor stats:', sensorData.length, 'types,', calculatedTotal, 'total readings (filtered)');
       console.log('[Reports] Device activity:', activityData.length, 'devices,', activityData.reduce((s, x) => s + x.total_readings, 0), 'total readings');
+      console.log('[Reports] Alert summary:', alertData.length, 'types,', totalAlerts, 'fetched alerts,', actualAlerts, 'actual total alerts');
 
       setSensorStats(sensorData);
       setAlertSummary(alertData);
+      setActualAlertTotal(actualAlerts);
       setDeviceActivity(activityData);
       setDailyTrend(trendData);
       setSectionStats(sectionData);
@@ -113,13 +120,13 @@ export function useReports(): UseReportsReturn {
     return exportReportToCSV(summary, deviceActivity, filterOptions);
   }, [sensorStats, alertSummary, deviceActivity, filterOptions]);
 
-  // Calculate summary using actual deviceActivity total (not limited by sensorStats)
+  // Calculate summary using actual deviceActivity total and actualAlertTotal
   const actualTotalReadings = deviceActivity.reduce((sum, d) => sum + d.total_readings, 0);
   const summary: ReportSummary = {
     total_readings: actualTotalReadings || sensorStats.reduce((sum, s) => sum + s.total_readings, 0),
     active_devices: deviceActivity.filter((d) => d.total_readings > 0).length,
     total_devices: deviceActivity.length,
-    total_alerts: alertSummary.reduce((sum, a) => sum + a.total_alerts, 0),
+    total_alerts: actualAlertTotal || alertSummary.reduce((sum, a) => sum + a.total_alerts, 0),
     sensor_type_count: sensorStats.length,
   };
 

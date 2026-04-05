@@ -8,7 +8,6 @@ import { DeviceActivityTable } from '../components/DeviceActivityTable';
 import { RiverSectionTable } from '../components/RiverSectionTable';
 import { SensorStatsTable } from '../components/SensorStatsTable';
 import { ReadingsSummaryTable } from '../components/ReadingsSummaryTable';
-import { ReportsLoadingModal } from '../components/ReportsLoadingModal';
 import styles from '../assets/styles/Reports.module.css';
 
 export function ReportsPage() {
@@ -29,50 +28,10 @@ export function ReportsPage() {
     sectionStats,
     deviceReadings,
     summary,
-    loading,
     error,
     filterOptions,
     refresh,
   } = useReports();
-
-  if (loading) {
-    // Calculate loading progress based on data fetched
-    const totalSteps = 7;
-    let completedSteps = 0;
-    if (sensorStats.length > 0) completedSteps++;
-    if (alertSummary.length > 0) completedSteps++;
-    if (deviceActivity.length > 0) completedSteps++;
-    if (dailyTrend.length > 0) completedSteps++;
-    if (sectionStats.length > 0) completedSteps++;
-    if (deviceReadings.length > 0) completedSteps++;
-    if (summary.total_readings > 0) completedSteps++;
-    
-    const progress = Math.round((completedSteps / totalSteps) * 100);
-    
-    // Get all three totals like console logs show
-    const sensorTotal = sensorStats.reduce((s, x) => s + x.total_readings, 0);
-    const deviceTotal = deviceActivity.reduce((s, x) => s + x.total_readings, 0);
-    const actualTotal = summary.total_readings;
-    
-    // Build message showing all totals
-    const parts = [];
-    if (sensorTotal > 0) parts.push(`Sensor: ${sensorTotal.toLocaleString()}`);
-    if (deviceTotal > 0) parts.push(`Device: ${deviceTotal.toLocaleString()}`);
-    if (actualTotal > 0) parts.push(`Total: ${actualTotal.toLocaleString()}`);
-    
-    const message = parts.length > 0 
-      ? `Fetched: ${parts.join(' | ')} readings`
-      : 'Fetching data from database...';
-    
-    return (
-      <div className={styles.container}>
-        <ReportsLoadingModal
-          message={message}
-          progress={progress}
-        />
-      </div>
-    );
-  }
 
   if (error && !sensorStats.length) {
     return (

@@ -144,28 +144,41 @@ export async function getSensorReadingsStats(
 /**
  * Get alert summary by type
  */
-export async function getAlertSummary(days: number): Promise<AlertSummary[]> {
+export async function getAlertSummary(days: number): Promise<{ summary: AlertSummary[]; actualTotal: number }> {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - days);
 
+  // First get the actual count (no row limit)
+  const { count: totalCount, error: countError } = await supabaseAdmin
+    .from('alerts')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', cutoffDate.toISOString());
+
+  if (countError) {
+    console.error('Error fetching alert count:', countError);
+  }
+
+  // Then fetch the data (may be limited to 1000 by Supabase)
   const { data, error } = await supabaseAdmin
     .from('alerts')
     .select('alert_type, status')
-    .gte('created_at', cutoffDate.toISOString());
+    .gte('created_at', cutoffDate.toISOString())
+    .limit(100000);
 
   if (error) {
     console.error('Error fetching alert summary:', error);
-    return [];
+    return { summary: [], actualTotal: 0 };
   }
 
   const alerts = data || [];
+  console.log('[Database] Total alerts count:', totalCount || 'unknown', '| Fetched rows:', alerts.length);
   const grouped = alerts.reduce((acc: Record<string, any[]>, alert: any) => {
     if (!acc[alert.alert_type]) acc[alert.alert_type] = [];
     acc[alert.alert_type].push(alert);
     return acc;
   }, {});
 
-  return Object.entries(grouped).map(([alert_type, items]) => {
+  const summary = Object.entries(grouped).map(([alert_type, items]) => {
     const alertItems = items as { status: string }[];
     return {
       alert_type,
@@ -175,6 +188,8 @@ export async function getAlertSummary(days: number): Promise<AlertSummary[]> {
       acknowledged_alerts: alertItems.filter((a) => a.status === 'acknowledged').length,
     };
   });
+
+  return { summary, actualTotal: totalCount || alerts.length };
 }
 
 /**

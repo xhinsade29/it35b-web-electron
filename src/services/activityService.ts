@@ -9,7 +9,6 @@ import type {
   AlertStats,
   ReadingStats,
   MaintenanceLog,
-  ActivityFilterOptions,
   SyncResponse,
 } from '../types/activity.types';
 

@@ -9,7 +9,7 @@ import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, useMap } from '
 import { DeviceList } from '../components/DeviceList';
 import { DeviceForm } from '../components/DeviceForm';
 import { DeviceDetails } from '../components/DeviceDetails';
-import { useDevices, useLocations } from '../hooks/useDevices';
+import { useDevices } from '../hooks/useDevices';
 import { createDevice, updateDevice, deleteDevice, getDeviceStatusColor } from '../services/deviceService';
 import type { Device, DeviceFormData, DeviceStatus, DeviceCondition, RiverSection } from '../types/device.types';
 import { DEFAULT_RIVER_COORDS } from '../utils/riverUtils';
@@ -21,13 +21,6 @@ type ViewMode = 'list' | 'add' | 'edit';
 const RIVER_COORDS: [number, number][] = DEFAULT_RIVER_COORDS;
 
 const DEFAULT_CENTER: [number, number] = [8.369297, 124.876785];
-
-// Section colors for legend
-const SECTION_COLORS: Record<string, string> = {
-  upstream: '#059669',
-  midstream: '#d97706',
-  downstream: '#dc2626',
-};
 
 // Auto-fit map bounds to show all devices
 function MapBounds({ devices }: { devices: Device[] }) {
@@ -64,32 +57,6 @@ export function DeviceManagement() {
     refresh: refreshDevices,
     setDevices,
   } = useDevices();
-
-  const { locations } = useLocations();
-
-  // Group devices by location (sync with Dashboard approach)
-  const locationDevices = useMemo(() => {
-    const map = new Map<string, Device[]>();
-    locations.forEach(loc => map.set(loc.location_id, []));
-    devices.forEach(device => {
-      if (device.location_id) {
-        const list = map.get(device.location_id) || [];
-        list.push(device);
-        map.set(device.location_id, list);
-      }
-    });
-    return map;
-  }, [devices, locations]);
-
-  // Get marker color based on location status
-  const getMarkerColor = (location: typeof locations[0]) => {
-    const locDevices = locationDevices.get(location.location_id) || [];
-    const activeCount = locDevices.filter(d => d.status === 'active').length;
-    if (activeCount === 0 && locDevices.length > 0) {
-      return '#9ca3af'; // Gray for offline
-    }
-    return SECTION_COLORS[location.river_section] || '#3b82f6';
-  };
 
   // Handle device selection
   const handleSelectDevice = useCallback((deviceId: string) => {
