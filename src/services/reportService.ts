@@ -580,6 +580,122 @@ export async function getThresholdStats(
 
   return { normal, warning, critical, total };
 }
+
+/**
+ * Get readings by time period (day, week, month, year) with actual counts from database
+ */
+export async function getReadingsByTimePeriod(
+  timePeriod: 'day' | 'week' | 'month' | 'year',
+  filters: ReportFilterOptions
+): Promise<{ readings: DeviceReading[]; totalCount: number; bySensorType: Record<string, { count: number; avg: number }> }> {
+  // Calculate cutoff date based on time period
+  const cutoffDate = new Date();
+  switch (timePeriod) {
+    case 'day':
+      cutoffDate.setDate(cutoffDate.getDate() - 1);
+      break;
+    case 'week':
+      cutoffDate.setDate(cutoffDate.getDate() - 7);
+      break;
+    case 'month':
+      cutoffDate.setMonth(cutoffDate.getMonth() - 1);
+      break;
+    case 'year':
+      cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
+      break;
+  }
+
+  // Get actual total count first (using count query - no limit)
+  const { count: totalCount, error: countError } = await supabaseAdmin
+    .from('sensor_readings')
+    .select('*', { count: 'exact', head: true })
+    .gte('recorded_at', cutoffDate.toISOString());
+
+  if (countError) {
+    console.error('Error fetching readings count:', countError);
+  }
+
+  // Fetch readings with high limit
+  let query = supabaseAdmin
+    .from('sensor_readings')
+    .select(`
+      reading_id,
+      value,
+      recorded_at,
+      sensors:sensor_id(
+        sensor_type,
+        unit,
+        device_id,
+        devices:device_id(
+          device_name,
+          status,
+          location_id,
+          locations:location_id(river_section)
+        )
+      )
+    `)
+    .gte('recorded_at', cutoffDate.toISOString())
+    .order('recorded_at', { ascending: false })
+    .limit(100000);
+
+  if (filters.device_id) {
+    query = query.eq('sensors.device_id', filters.device_id);
+  }
+  if (filters.sensor) {
+    query = query.eq('sensors.sensor_type', filters.sensor);
+  }
+  if (filters.section) {
+    query = query.eq('sensors.devices.locations.river_section', filters.section);
+  }
+  if (filters.status) {
+    query = query.eq('sensors.devices.status', filters.status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching readings by time period:', error);
+    return { readings: [], totalCount: 0, bySensorType: {} };
+  }
+
+  const readings = (data || []).map((row: any) => ({
+    reading_id: row.reading_id,
+    value: row.value,
+    recorded_at: row.recorded_at,
+    sensor_type: row.sensors?.sensor_type || 'unknown',
+    unit: row.sensors?.unit || '',
+    device_name: row.sensors?.devices?.device_name || 'Unknown Device',
+  }));
+
+  // Group by sensor type for summary
+  const bySensorType: Record<string, { count: number; values: number[] }> = {};
+  readings.forEach((reading: DeviceReading) => {
+    const type = reading.sensor_type;
+    if (!bySensorType[type]) {
+      bySensorType[type] = { count: 0, values: [] };
+    }
+    bySensorType[type].count++;
+    bySensorType[type].values.push(reading.value);
+  });
+
+  // Calculate averages
+  const bySensorTypeWithAvg: Record<string, { count: number; avg: number }> = {};
+  Object.entries(bySensorType).forEach(([type, data]) => {
+    bySensorTypeWithAvg[type] = {
+      count: data.count,
+      avg: data.values.reduce((a, b) => a + b, 0) / data.values.length,
+    };
+  });
+
+  const actualTotal = totalCount || readings.length;
+  console.log(`[Database] Readings by ${timePeriod}:`, actualTotal, 'total | Fetched:', readings.length, 'rows');
+
+  return { readings, totalCount: actualTotal, bySensorType: bySensorTypeWithAvg };
+}
+
+/**
+ * Calculate report summary
+ */
 export function calculateReportSummary(
   sensorStats: SensorStats[],
   alertSummary: AlertSummary[],

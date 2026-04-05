@@ -26,7 +26,6 @@ export function ReportsPage() {
     deviceActivity,
     dailyTrend,
     sectionStats,
-    deviceReadings,
     summary,
     error,
     filterOptions,
@@ -77,10 +76,9 @@ export function ReportsPage() {
       />
 
       <ReadingsSummaryTable 
-        readings={deviceReadings} 
-        totalCount={summary.total_readings} 
         timePeriod={timePeriod}
         onTimePeriodChange={setTimePeriod}
+        filters={filterOptions}
       />
 
       <div style={{ marginTop: '24px' }}>

@@ -1,16 +1,18 @@
 /**
  * Readings Summary Table Component
  * Displays sensor readings aggregated by time period with totals and averages
+ * Fetches actual data from database, not limited props
  */
 
-import type { DeviceReading } from '../types/reports.types';
+import { useState, useEffect } from 'react';
+import type { DeviceReading, ReportFilterOptions } from '../types/reports.types';
+import { getReadingsByTimePeriod } from '../services/reportService';
 import styles from '../assets/styles/ReportTables.module.css';
 
 interface ReadingsSummaryTableProps {
-  readings: DeviceReading[];
-  totalCount: number;
   timePeriod?: 'day' | 'week' | 'month' | 'year';
   onTimePeriodChange?: (period: 'day' | 'week' | 'month' | 'year') => void;
+  filters?: ReportFilterOptions;
 }
 
 function formatWeek(dateStr: string): string {
@@ -33,8 +35,34 @@ function formatYear(dateStr: string): string {
   return new Date(dateStr).getFullYear().toString();
 }
 
-export function ReadingsSummaryTable({ readings, totalCount, timePeriod = 'week', onTimePeriodChange }: ReadingsSummaryTableProps) {
-  // Group readings by time period
+export function ReadingsSummaryTable({ 
+  timePeriod = 'week', 
+  onTimePeriodChange,
+  filters = { days: 7, device_id: null, sensor: null, section: null, status: null }
+}: ReadingsSummaryTableProps) {
+  const [readings, setReadings] = useState<DeviceReading[]>([]);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [bySensorType, setBySensorType] = useState<Record<string, { count: number; avg: number }>>({});
+  const [loading, setLoading] = useState(false);
+
+  // Fetch data when time period changes
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const result = await getReadingsByTimePeriod(timePeriod, filters);
+        setReadings(result.readings);
+        setTotalCount(result.totalCount);
+        setBySensorType(result.bySensorType);
+      } catch (err) {
+        console.error('Error fetching readings by time period:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [timePeriod, filters.device_id, filters.sensor, filters.section, filters.status]);
+  // Group readings by time period for table display
   const groupByTimePeriod = (readings: DeviceReading[]) => {
     const grouped = readings.reduce((acc, reading) => {
       let key: string;
@@ -80,15 +108,6 @@ export function ReadingsSummaryTable({ readings, totalCount, timePeriod = 'week'
     ? readings.reduce((sum, r) => sum + r.value, 0) / readings.length 
     : 0;
 
-  // Group readings by sensor type for summary
-  const bySensorType = readings.reduce((acc, reading) => {
-    const type = reading.sensor_type;
-    if (!acc[type]) acc[type] = { count: 0, values: [] };
-    acc[type].count++;
-    acc[type].values.push(reading.value);
-    return acc;
-  }, {} as Record<string, { count: number; values: number[] }>);
-
   const periodLabel = {
     day: 'Day',
     week: 'Week',
@@ -107,6 +126,7 @@ export function ReadingsSummaryTable({ readings, totalCount, timePeriod = 'week'
           <span style={{ color: '#8b9aae', fontSize: '0.875rem' }}>
             Overall Avg: {overallAverage.toFixed(2)}
           </span>
+          {loading && <span style={{ color: '#8b9aae', fontSize: '0.75rem' }}>Loading...</span>}
         </div>
       </div>
       <div className={styles.cardBody}>
@@ -121,6 +141,7 @@ export function ReadingsSummaryTable({ readings, totalCount, timePeriod = 'week'
             <button
               key={period}
               onClick={() => onTimePeriodChange?.(period)}
+              disabled={loading}
               style={{
                 padding: '8px 16px',
                 borderRadius: '8px',
@@ -129,11 +150,12 @@ export function ReadingsSummaryTable({ readings, totalCount, timePeriod = 'week'
                   ? 'linear-gradient(135deg, #0F2854 0%, #4988C4 100%)' 
                   : 'rgba(10, 22, 40, 0.6)',
                 color: timePeriod === period ? '#ffffff' : '#8b9aae',
-                cursor: 'pointer',
+                cursor: loading ? 'not-allowed' : 'pointer',
                 fontSize: '0.875rem',
                 fontWeight: 500,
                 textTransform: 'capitalize',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                opacity: loading ? 0.6 : 1
               }}
             >
               {period}
@@ -163,7 +185,7 @@ export function ReadingsSummaryTable({ readings, totalCount, timePeriod = 'week'
                 {data.count.toLocaleString()}
               </div>
               <div style={{ fontSize: '0.75rem', color: '#8b9aae' }}>
-                Avg: {(data.values.reduce((a, b) => a + b, 0) / data.values.length).toFixed(2)}
+                Avg: {data.avg.toFixed(2)}
               </div>
             </div>
           ))}
