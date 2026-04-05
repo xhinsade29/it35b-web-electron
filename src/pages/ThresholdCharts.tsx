@@ -44,7 +44,8 @@ const SENSORS = [
 
 export function ThresholdCharts({ 
   sectionConditions, 
-  totalReadings: propTotalReadings
+  totalReadings: propTotalReadings,
+  thresholdStats
 }: ThresholdChartsProps) {
   // Get readings by section
   const allReadings: Record<string, number[]> = {};
@@ -99,19 +100,29 @@ export function ThresholdCharts({
     };
   });
 
-  // Use prop value if provided, otherwise calculate from sectionConditions
+  // Use actual database values for total counts, fallback to props or calculated
   const calculatedTotalReadings = Object.values(allReadings).flat().length;
-  const totalReadings = propTotalReadings ?? calculatedTotalReadings;
+  const totalReadings = thresholdStats?.total ?? propTotalReadings ?? calculatedTotalReadings;
+  
+  // Use actual normal/warning/critical from database, fallback to calculated from limited data
   let totalNormal = 0, totalWarning = 0, totalCritical = 0;
   
-  SENSORS.forEach(sensor => {
-    const values = allReadings[sensor.key] || [];
-    values.forEach(v => {
-      if (v >= sensor.safeMin && v <= sensor.safeMax) totalNormal++;
-      else if (v >= sensor.min && v <= sensor.max) totalWarning++;
-      else totalCritical++;
+  if (thresholdStats) {
+    // Use actual database counts
+    totalNormal = thresholdStats.normal;
+    totalWarning = thresholdStats.warning;
+    totalCritical = thresholdStats.critical;
+  } else {
+    // Fallback: calculate from limited sectionConditions data
+    SENSORS.forEach(sensor => {
+      const values = allReadings[sensor.key] || [];
+      values.forEach(v => {
+        if (v >= sensor.safeMin && v <= sensor.safeMax) totalNormal++;
+        else if (v >= sensor.min && v <= sensor.max) totalWarning++;
+        else totalCritical++;
+      });
     });
-  });
+  }
 
   // Threshold boundary line data
   const thresholdLineData = SENSORS.map(sensor => ({

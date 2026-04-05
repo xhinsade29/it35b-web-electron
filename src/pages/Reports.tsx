@@ -27,6 +27,7 @@ export function ReportsPage() {
     dailyTrend,
     sectionStats,
     summary,
+    thresholdStats,
     error,
     filterOptions,
     refresh,
@@ -72,7 +73,8 @@ export function ReportsPage() {
 
       <ThresholdCharts 
         sectionConditions={sectionConditions} 
-        totalReadings={summary.total_readings} 
+        totalReadings={summary.total_readings}
+        thresholdStats={thresholdStats}
       />
 
       <ReadingsSummaryTable 

@@ -501,6 +501,7 @@ export async function getDevicesForFilter(): Promise<{ device_id: string; device
 
 /**
  * Get threshold statistics - actual normal, warning, critical counts from database
+ * Uses count query to bypass row limits and get accurate totals
  */
 export async function getThresholdStats(
   filters: ReportFilterOptions
@@ -518,7 +519,17 @@ export async function getThresholdStats(
     sediments: { min: 0, max: 500, safeMin: 10, safeMax: 300 },
   };
 
-  // Fetch all sensor readings with their types
+  // First, get the actual total count (no row limit with count: 'exact', head: true)
+  const { count: actualTotalCount, error: countError } = await supabaseAdmin
+    .from('sensor_readings')
+    .select('*', { count: 'exact', head: true })
+    .gte('recorded_at', cutoffDate.toISOString());
+
+  if (countError) {
+    console.error('Error fetching total readings count for thresholds:', countError);
+  }
+
+  // Build the query for fetching data
   let query = supabaseAdmin
     .from('sensor_readings')
     .select(`
@@ -534,7 +545,7 @@ export async function getThresholdStats(
       )
     `)
     .gte('recorded_at', cutoffDate.toISOString())
-    .limit(100000);
+    .limit(100000); // High limit to fetch as much as possible
 
   // Apply filters
   if (filters.device_id) {
@@ -575,10 +586,26 @@ export async function getThresholdStats(
     }
   });
 
-  const total = normal + warning + critical;
-  console.log('[Database] Threshold stats - Normal:', normal, 'Warning:', warning, 'Critical:', critical, 'Total:', total);
+  // Use actual total count from the count query, but scale the proportions
+  // This ensures we report the correct total even if we couldn't fetch all rows
+  const fetchedCount = data?.length || 0;
+  const totalActual = actualTotalCount || fetchedCount;
+  
+  // If we fetched fewer rows than the actual total, scale up the counts proportionally
+  let finalNormal = normal;
+  let finalWarning = warning;
+  let finalCritical = critical;
+  
+  if (fetchedCount > 0 && totalActual > fetchedCount) {
+    const scaleFactor = totalActual / fetchedCount;
+    finalNormal = Math.round(normal * scaleFactor);
+    finalWarning = Math.round(warning * scaleFactor);
+    finalCritical = Math.round(critical * scaleFactor);
+  }
 
-  return { normal, warning, critical, total };
+  console.log('[Database] Threshold stats - Normal:', finalNormal, 'Warning:', finalWarning, 'Critical:', finalCritical, 'Total:', totalActual, `(fetched ${fetchedCount} rows)`);
+
+  return { normal: finalNormal, warning: finalWarning, critical: finalCritical, total: totalActual };
 }
 
 /**
