@@ -343,30 +343,6 @@ export function ThresholdCharts({
               </RadarChart>
             </ResponsiveContainer>
           </div>
-
-            {/* Summary Stats Cards */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '12px',
-            }}>
-              <div style={{ background: 'rgba(5, 150, 105, 0.15)', border: '1px solid rgba(5, 150, 105, 0.3)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '28px', fontWeight: 700, color: '#34d399' }}>{totalNormal}</div>
-                <div style={{ fontSize: '12px', color: '#8b9aae', fontWeight: 500 }}>✓ Normal</div>
-              </div>
-              <div style={{ background: 'rgba(217, 119, 6, 0.15)', border: '1px solid rgba(217, 119, 6, 0.3)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '28px', fontWeight: 700, color: '#fbbf24' }}>{totalWarning}</div>
-                <div style={{ fontSize: '12px', color: '#8b9aae', fontWeight: 500 }}>⚡ Warning</div>
-              </div>
-              <div style={{ background: 'rgba(220, 38, 38, 0.15)', border: '1px solid rgba(220, 38, 38, 0.3)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '28px', fontWeight: 700, color: '#f87171' }}>{totalCritical}</div>
-                <div style={{ fontSize: '12px', color: '#8b9aae', fontWeight: 500 }}>⚠ Critical</div>
-              </div>
-              <div style={{ background: 'rgba(79, 70, 229, 0.15)', border: '1px solid rgba(79, 70, 229, 0.3)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '28px', fontWeight: 700, color: '#818cf8' }}>{totalReadings}</div>
-                <div style={{ fontSize: '12px', color: '#8b9aae', fontWeight: 500 }}>📊 Total</div>
-              </div>
-            </div>
         </div>
 
         {/* Large Threshold Line Chart - Moved below Readings Distribution */}
