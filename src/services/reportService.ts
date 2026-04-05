@@ -89,7 +89,8 @@ export async function getSensorReadingsStats(
         )
       )
     `)
-    .gte('recorded_at', cutoffDate.toISOString());
+    .gte('recorded_at', cutoffDate.toISOString())
+    .limit(100000);
 
   // Apply filters
   if (filters.device_id) {
@@ -304,7 +305,8 @@ export async function getDailyReadingsTrend(
       )
     `)
     .gte('recorded_at', cutoffDate.toISOString())
-    .order('recorded_at', { ascending: true });
+    .order('recorded_at', { ascending: true })
+    .limit(100000);
 
   if (filters.device_id) {
     query = query.eq('sensors.device_id', filters.device_id);
@@ -498,8 +500,86 @@ export async function getDevicesForFilter(): Promise<{ device_id: string; device
 }
 
 /**
- * Calculate report summary
+ * Get threshold statistics - actual normal, warning, critical counts from database
  */
+export async function getThresholdStats(
+  filters: ReportFilterOptions
+): Promise<{ normal: number; warning: number; critical: number; total: number }> {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - filters.days);
+
+  // Define sensor thresholds
+  const sensorThresholds: Record<string, { min: number; max: number; safeMin: number; safeMax: number }> = {
+    temperature: { min: 20, max: 35, safeMin: 24, safeMax: 30 },
+    ph_level: { min: 6.5, max: 8.5, safeMin: 7.0, safeMax: 8.0 },
+    turbidity: { min: 0, max: 50, safeMin: 5, safeMax: 25 },
+    dissolved_oxygen: { min: 5, max: 14, safeMin: 6.5, safeMax: 11 },
+    water_level: { min: 0.5, max: 3.0, safeMin: 1.0, safeMax: 2.5 },
+    sediments: { min: 0, max: 500, safeMin: 10, safeMax: 300 },
+  };
+
+  // Fetch all sensor readings with their types
+  let query = supabaseAdmin
+    .from('sensor_readings')
+    .select(`
+      value,
+      sensors:sensor_id(
+        sensor_type,
+        device_id,
+        devices:device_id(
+          status,
+          location_id,
+          locations:location_id(river_section)
+        )
+      )
+    `)
+    .gte('recorded_at', cutoffDate.toISOString())
+    .limit(100000);
+
+  // Apply filters
+  if (filters.device_id) {
+    query = query.eq('sensors.device_id', filters.device_id);
+  }
+  if (filters.sensor) {
+    query = query.eq('sensors.sensor_type', filters.sensor);
+  }
+  if (filters.section) {
+    query = query.eq('sensors.devices.locations.river_section', filters.section);
+  }
+  if (filters.status) {
+    query = query.eq('sensors.devices.status', filters.status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching threshold stats:', error);
+    return { normal: 0, warning: 0, critical: 0, total: 0 };
+  }
+
+  let normal = 0, warning = 0, critical = 0;
+
+  (data || []).forEach((row: any) => {
+    const sensorType = row.sensors?.sensor_type || 'unknown';
+    const value = row.value;
+    const thresholds = sensorThresholds[sensorType];
+
+    if (!thresholds) return;
+
+    if (value >= thresholds.safeMin && value <= thresholds.safeMax) {
+      normal++;
+    } else if (value >= thresholds.min && value <= thresholds.max) {
+      warning++;
+    } else {
+      critical++;
+    }
+  });
+
+  const total = normal + warning + critical;
+  console.log('[Database] Threshold stats - Normal:', normal, 'Warning:', warning, 'Critical:', critical, 'Total:', total);
+
+  return { normal, warning, critical, total };
+}
 export function calculateReportSummary(
   sensorStats: SensorStats[],
   alertSummary: AlertSummary[],

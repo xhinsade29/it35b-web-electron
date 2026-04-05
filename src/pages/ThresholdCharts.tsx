@@ -30,6 +30,7 @@ interface ThresholdChartsProps {
     sediments?: number | null;
   }>;
   totalReadings?: number;
+  thresholdStats?: { normal: number; warning: number; critical: number; total: number };
 }
 
 const SENSORS = [

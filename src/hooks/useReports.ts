@@ -13,6 +13,7 @@ import {
   getRiverSectionStats,
   getDeviceSensorReadings,
   getDevicesForFilter,
+  getThresholdStats,
   calculateReportSummary,
   exportReportToCSV,
 } from '../services/reportService';
@@ -35,6 +36,7 @@ interface UseReportsReturn {
   sectionStats: SectionStats[];
   deviceReadings: DeviceReading[];
   devices: { device_id: string; device_name: string; status: string }[];
+  thresholdStats: { normal: number; warning: number; critical: number; total: number };
   summary: ReportSummary;
   loading: boolean;
   error: string | null;
@@ -48,6 +50,12 @@ export function useReports(): UseReportsReturn {
   const [sensorStats, setSensorStats] = useState<SensorStats[]>([]);
   const [alertSummary, setAlertSummary] = useState<AlertSummary[]>([]);
   const [actualAlertTotal, setActualAlertTotal] = useState<number>(0);
+  const [thresholdStats, setThresholdStats] = useState<{ normal: number; warning: number; critical: number; total: number }>({
+    normal: 0,
+    warning: 0,
+    critical: 0,
+    total: 0,
+  });
   const [deviceActivity, setDeviceActivity] = useState<DeviceActivity[]>([]);
   const [dailyTrend, setDailyTrend] = useState<DailyTrend[]>([]);
   const [sectionStats, setSectionStats] = useState<SectionStats[]>([]);
@@ -76,6 +84,7 @@ export function useReports(): UseReportsReturn {
         sectionData,
         readingsData,
         devicesData,
+        thresholdData,
       ] = await Promise.all([
         getSensorReadingsStats(filterOptions),
         getAlertSummary(filterOptions.days),
@@ -84,10 +93,13 @@ export function useReports(): UseReportsReturn {
         getRiverSectionStats(filterOptions),
         getDeviceSensorReadings(filterOptions, 10000000),
         getDevicesForFilter(),
+        getThresholdStats(filterOptions),
       ]);
 
       const alertData = alertResult.summary;
       const actualAlerts = alertResult.actualTotal;
+
+      console.log('[Reports] Threshold stats:', thresholdData);
 
       const calculatedTotal = sensorData.reduce((sum, s) => sum + s.total_readings, 0);
       const totalAlerts = alertData.reduce((sum, a) => sum + a.total_alerts, 0);
@@ -98,6 +110,7 @@ export function useReports(): UseReportsReturn {
       setSensorStats(sensorData);
       setAlertSummary(alertData);
       setActualAlertTotal(actualAlerts);
+      setThresholdStats(thresholdData);
       setDeviceActivity(activityData);
       setDailyTrend(trendData);
       setSectionStats(sectionData);
@@ -240,6 +253,7 @@ export function useReports(): UseReportsReturn {
     dailyTrend,
     sectionStats,
     deviceReadings,
+    thresholdStats,
     devices,
     summary,
     loading,
