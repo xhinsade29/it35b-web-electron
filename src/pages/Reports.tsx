@@ -28,17 +28,31 @@ export function ReportsPage() {
     sectionStats,
     summary,
     thresholdStats,
-    error,
     filterOptions,
-    refresh,
   } = useReports();
 
-  if (error && !sensorStats.length) {
+  // Check if we're using mock data (no real database connection)
+  const isMockData = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (isMockData) {
     return (
       <div className={styles.container}>
-        <div className={styles.error}>
-          <p>Error: {error}</p>
-          <button onClick={refresh}>Retry</button>
+        <div className={styles.pageHeader}>
+          <h1>📊 Reports & Analytics</h1>
+          <p>Comprehensive water quality analysis and system performance reports</p>
+        </div>
+        <div style={{ 
+          background: '#fef3c7', 
+          border: '1px solid #f59e0b', 
+          borderRadius: '8px', 
+          padding: '20px',
+          marginBottom: '24px'
+        }}>
+          <h3 style={{ margin: '0 0 12px 0', color: '#92400e' }}>⚠️ Database Not Connected</h3>
+          <p style={{ margin: 0, color: '#92400e' }}>
+            Reports data is not available because the database is not configured. 
+            Please set the <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> environment variables in your Vercel dashboard.
+          </p>
         </div>
       </div>
     );

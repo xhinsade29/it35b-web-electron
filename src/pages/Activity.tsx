@@ -27,7 +27,7 @@ export function ActivityPage() {
     alertStats,
     readingStats,
     devices,
-    loading,
+    // loading, // unused - mock data warning takes precedence
     error,
     filterOptions,
     setFilterOptions,
@@ -47,10 +47,29 @@ export function ActivityPage() {
     setFilterOptions({ hours: 24, device_id: null });
   };
 
-  if (loading && !timeline.length) {
+  // Check if we're using mock data (no real database connection)
+  const isMockData = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (isMockData) {
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>Loading activity data...</div>
+        <div className={styles.pageHeader}>
+          <h1>📜 History & Activity Log</h1>
+          <p>View sensor readings, alerts, device activity, and system logs over time</p>
+        </div>
+        <div style={{ 
+          background: '#fef3c7', 
+          border: '1px solid #f59e0b', 
+          borderRadius: '8px', 
+          padding: '20px',
+          marginBottom: '24px'
+        }}>
+          <h3 style={{ margin: '0 0 12px 0', color: '#92400e' }}>⚠️ Database Not Connected</h3>
+          <p style={{ margin: 0, color: '#92400e' }}>
+            Activity data is not available because the database is not configured. 
+            Please set the <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> environment variables in your Vercel dashboard.
+          </p>
+        </div>
       </div>
     );
   }
