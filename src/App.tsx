@@ -1,13 +1,31 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { Sidebar } from './components/Sidebar';
-import { DashboardPage } from './pages/Dashboard';
-import { ActivityPage } from './pages/Activity';
-import { ReportsPage } from './pages/Reports';
-import { DevicesPage } from './pages/Devices';
-import { UsersPage } from './pages/Users';
 import './App.css';
+
+// Lazy load pages for code splitting
+const DashboardPage = lazy(() => import('./pages/Dashboard'));
+const ActivityPage = lazy(() => import('./pages/Activity'));
+const ReportsPage = lazy(() => import('./pages/Reports'));
+const DevicesPage = lazy(() => import('./pages/Devices'));
+const UsersPage = lazy(() => import('./pages/Users'));
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      color: '#4988C4'
+    }}>
+      <div>Loading...</div>
+    </div>
+  );
+}
 
 // Main app layout with sidebar
 function AppLayout() {
@@ -24,13 +42,15 @@ function AppLayout() {
         onLogout={logout} 
       />
       <main>
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/activity" element={<ActivityPage />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/devices" element={<DevicesPage />} />
-          <Route path="/users" element={<UsersPage />} />
-        </Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/activity" element={<ActivityPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/devices" element={<DevicesPage />} />
+            <Route path="/users" element={<UsersPage />} />
+          </Routes>
+        </Suspense>
       </main>
     </div>
   );
