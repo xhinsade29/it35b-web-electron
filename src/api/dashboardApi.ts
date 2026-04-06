@@ -4,7 +4,9 @@ import type {
   SimulationResponse,
   MonitorState,
   Alert,
-  ChartData
+  ChartData,
+  MapLocation,
+  DeviceInfo
 } from '../types/dashboard.types';
 
 // =====================================================
@@ -132,7 +134,7 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
     });
 
     // Transform devices with location data and coordinates
-    const transformedDevices = (devicesData || []).map((d: { 
+    const transformedDevices: DeviceInfo[] = (devicesData || []).map((d: { 
       device_id: string; 
       device_name: string; 
       location_id?: string;
@@ -146,9 +148,9 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
         device_name: d.device_name,
         location_id: d.location_id,
         location_name: location?.location_name || 'Unknown',
-        river_section: location?.river_section || 'upstream',
-        status: d.status,
-        device_condition: d.device_condition || 'normal',
+        river_section: (location?.river_section || 'upstream') as 'upstream' | 'midstream' | 'downstream',
+        status: d.status as 'active' | 'inactive' | 'maintenance' | 'offline' | 'unassigned',
+        device_condition: (d.device_condition || 'normal') as 'normal' | 'displaced' | 'damaged' | 'malfunctioning',
         lat: location?.latitude,
         lng: location?.longitude,
         last_active: d.last_active,
@@ -187,14 +189,14 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
     const alert_count = alertsData?.length || 0;
 
     // Transform alerts (simplified without nested joins)
-    const transformedAlerts = (alertsData || []).map((a: { 
+    const transformedAlerts: Alert[] = (alertsData || []).map((a: { 
       alert_id: string; 
       alert_type: string; 
       message: string; 
       created_at: string;
     }) => ({
       alert_id: a.alert_id,
-      alert_type: a.alert_type,
+      alert_type: a.alert_type as 'low' | 'high' | 'critical',
       message: a.message,
       created_at: a.created_at,
       device_name: 'Unknown',
@@ -223,14 +225,14 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
 
     // Process the readings data
     const processedReadings = readingsData || [];
-    const chartData = processChartData(processedReadings);
-    const sectionConditions = processSectionConditions(processedReadings);
-    const logs = processActivityLogs(processedReadings);
-    const deviceChartData = processDeviceChartData(processedReadings, transformedDevices);
-    const deviceReadings = processDeviceReadings(processedReadings);
+    const chartData = processChartData(processedReadings as any);
+    const sectionConditions = processSectionConditions(processedReadings as any);
+    const logs = processActivityLogs(processedReadings as any);
+    const deviceChartData = processDeviceChartData(processedReadings as any, transformedDevices);
+    const deviceReadings = processDeviceReadings(processedReadings as any);
 
     // Build map locations with device counts
-    const mapLocations = (locationsData || []).map((loc: { 
+    const mapLocations: MapLocation[] = (locationsData || []).map((loc: { 
       location_id: string; 
       location_name: string; 
       river_section: string;
@@ -241,7 +243,7 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
       return {
         location_id: loc.location_id,
         location_name: loc.location_name,
-        river_section: loc.river_section,
+        river_section: loc.river_section as 'upstream' | 'midstream' | 'downstream',
         latitude: loc.latitude,
         longitude: loc.longitude,
         total_devices: locDevices.length,

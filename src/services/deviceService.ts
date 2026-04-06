@@ -452,14 +452,14 @@ export async function getDeviceHistory(deviceId: string): Promise<DeviceHistoryE
     details: string;
     created_at: string;
     user_id: string | null;
-    users?: { full_name: string } | null;
+    users?: { full_name: string }[] | null;
   }) => ({
     log_id: entry.log_id,
     action: entry.action,
     details: entry.details,
     created_at: entry.created_at,
     user_id: entry.user_id,
-    user_name: entry.users?.full_name || null,
+    user_name: entry.users?.[0]?.full_name || null,
   }));
 }
 

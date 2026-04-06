@@ -166,7 +166,7 @@ export function useAlertPolling(intervalMs: number = 30000) {
         if (!error && data) {
           const transformed: Alert[] = data.map((a: { alert_id: string; alert_type: string; message: string; created_at: string; sensors: { sensor_type: string; devices: { device_name: string; locations: { location_name: string } } } }) => ({
             alert_id: a.alert_id,
-            alert_type: a.alert_type,
+            alert_type: a.alert_type as 'low' | 'high' | 'critical',
             message: a.message,
             created_at: a.created_at,
             sensor_type: a.sensors?.sensor_type || 'unknown',
