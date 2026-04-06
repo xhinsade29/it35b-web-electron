@@ -37,8 +37,8 @@ export async function getUserStats(): Promise<UserStats> {
   }
 
   const users = data || [];
-  const active = users.filter((u: User) => u.is_active).length;
-  const byRole = users.reduce((acc: Record<string, number>, u: User) => {
+  const active = users.filter((u) => u.is_active).length;
+  const byRole = users.reduce<Record<string, number>>((acc, u) => {
     acc[u.role] = (acc[u.role] || 0) + 1;
     return acc;
   }, {});
@@ -48,10 +48,10 @@ export async function getUserStats(): Promise<UserStats> {
     active_users: active,
     inactive_users: users.length - active,
     by_role: {
-      admin: byRole.admin || 0,
-      researcher: byRole.researcher || 0,
-      operator: byRole.operator || 0,
-      viewer: byRole.viewer || 0,
+      admin: byRole['admin'] || 0,
+      researcher: byRole['researcher'] || 0,
+      operator: byRole['operator'] || 0,
+      viewer: byRole['viewer'] || 0,
     },
   };
 }

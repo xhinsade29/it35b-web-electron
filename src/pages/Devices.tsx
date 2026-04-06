@@ -8,3 +8,5 @@ import { DeviceManagement } from './DeviceManagement';
 export function DevicesPage() {
   return <DeviceManagement />;
 }
+
+export default DevicesPage;

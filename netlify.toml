@@ -1,0 +1,22 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  # Supabase Configuration - Set these in Netlify UI environment variables
+  # DO NOT commit actual keys here - use Netlify's environment variable UI
+  NODE_VERSION = "18"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Handle client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
