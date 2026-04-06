@@ -1,5 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { simulateDevicesBatch, simulateDevice, saveMonitorState, ensureAllDeviceSensors } from '../api/dashboardApi';
+import {
+  simulateDevicesBatch,
+  simulateDevice,
+  saveMonitorState,
+  ensureAllDeviceSensors,
+  saveSimulationSummary,
+  loadMonitorState,
+} from '../api/dashboardApi';
 import { useDashboardSync } from './useDashboardSync';
 import type { SimulationResponse } from '../types/dashboard.types';
 
@@ -561,7 +568,6 @@ export function useSimulationEngine(deviceIds: string[]) {
     // Insert simulation summary (non-blocking)
     (async () => {
       try {
-        const { saveSimulationSummary } = await import('../api/dashboardApi');
         await saveSimulationSummary({
           mode: state.mode,
           interval: state.interval,
@@ -714,7 +720,6 @@ export function useSimulationEngine(deviceIds: string[]) {
           }
 
           // Check server state (legacy) - only if no localStorage state
-          const { loadMonitorState } = await import('../api/dashboardApi');
           const result = await loadMonitorState();
           
           if (result.ok && result.state) {
