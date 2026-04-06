@@ -1,0 +1,103 @@
+/* ReportTables.module.css - Dark Theme */
+
+.card {
+  background: linear-gradient(135deg, #0F2854 0%, #0a1f42 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(73, 136, 196, 0.2);
+}
+
+.cardHeader {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardHeader h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.cardBody {
+  padding: 1.25rem;
+}
+
+.tableResponsive {
+  overflow-x: auto;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dataTable th,
+.dataTable td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
+}
+
+.dataTable th {
+  background: rgba(10, 22, 40, 0.8);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #8b9aae;
+}
+
+.dataTable td {
+  color: #e8ecf1;
+}
+
+.dataTable tr:hover {
+  background: rgba(73, 136, 196, 0.1);
+}
+
+.badge {
+  display: inline-flex;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.badgeSuccess {
+  background: rgba(5, 150, 105, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(5, 150, 105, 0.3);
+}
+
+.badgeWarning {
+  background: rgba(217, 119, 6, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+.badgeDanger {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.badgeInfo {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem;
+  color: #8b9aae;
+}
+
+.emptyStateIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}

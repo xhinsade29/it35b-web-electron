@@ -1,0 +1,44 @@
+/* ActivityStats.module.css */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: rgba(15, 40, 84, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  border: 1px solid rgba(73, 136, 196, 0.3);
+  border-left: 3px solid #1a56db;
+}
+
+.statCardSuccess {
+  border-left-color: #059669;
+}
+
+.statCardWarning {
+  border-left-color: #d97706;
+}
+
+.statCardDanger {
+  border-left-color: #dc2626;
+}
+
+.statCard h3 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.statCard p {
+  font-size: 0.75rem;
+  color: #8b9aae;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

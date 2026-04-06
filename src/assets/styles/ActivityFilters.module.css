@@ -1,0 +1,72 @@
+/* ActivityFilters.module.css */
+
+.filters {
+  background: rgba(15, 40, 84, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  border: 1px solid rgba(73, 136, 196, 0.3);
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filterGroup label {
+  font-size: 0.875rem;
+  color: #8b9aae;
+  font-weight: 500;
+}
+
+.filterGroup select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(73, 136, 196, 0.3);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: rgba(10, 22, 40, 0.4);
+  backdrop-filter: blur(8px);
+  color: #e8ecf1;
+  cursor: pointer;
+}
+
+.btnSecondary {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: rgba(10, 22, 40, 0.4);
+  backdrop-filter: blur(8px);
+  color: #e8ecf1;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(73, 136, 196, 0.3);
+}
+
+.btnPrimary {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: rgba(73, 136, 196, 0.4);
+  backdrop-filter: blur(8px);
+  color: white;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}

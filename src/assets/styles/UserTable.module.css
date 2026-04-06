@@ -1,0 +1,166 @@
+/* UserTable.module.css - Dark Theme */
+
+.tableContainer {
+  background: linear-gradient(135deg, #0F2854 0%, #0a1f42 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  border: 1px solid rgba(73, 136, 196, 0.2);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
+}
+
+.table th {
+  background: rgba(10, 22, 40, 0.8);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #8b9aae;
+}
+
+.table td {
+  color: #e8ecf1;
+}
+
+.table tr:hover {
+  background: rgba(73, 136, 196, 0.1);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.userName {
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.userMeta {
+  font-size: 0.75rem;
+  color: #8b9aae;
+}
+
+.badge {
+  display: inline-flex;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.badgeDanger {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.badgeInfo {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badgeWarning {
+  background: rgba(217, 119, 6, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+.badgeSecondary {
+  background: rgba(107, 114, 128, 0.2);
+  color: #9ca3af;
+  border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.toggle input {
+  display: none;
+}
+
+.toggleSlider {
+  width: 40px;
+  height: 20px;
+  background: rgba(73, 136, 196, 0.3);
+  border-radius: 10px;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.toggle input:checked + .toggleSlider {
+  background: #059669;
+}
+
+.toggleSlider::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+}
+
+.toggle input:checked + .toggleSlider::after {
+  transform: translateX(20px);
+}
+
+.toggleLabel {
+  font-size: 0.875rem;
+  color: #e8ecf1;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn {
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btnEdit {
+  background: rgba(73, 136, 196, 0.2);
+  color: #e8ecf1;
+}
+
+.btnDelete {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem;
+  color: #8b9aae;
+  background: rgba(10, 22, 40, 0.6);
+  border-radius: 8px;
+}
+
+.emptyStateIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}

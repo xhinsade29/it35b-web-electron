@@ -1,0 +1,15 @@
+Report Period,Last 7 Days
+Generated At,4/2/2026, 8:41:23 PM
+
+Summary Statistics
+Total Readings,1000
+Active Devices,4/5
+Total Alerts,1000
+
+Device Activity
+Device Name,Status,Total Readings,Active Days,Last Reading
+QW-02,unassigned,0,0,Never
+QW-01,active,234,1,4/2/2026, 7:31:20 PM
+WQ-01,active,1000,2,4/2/2026, 7:31:20 PM
+WQ-Downstream-End,active,1000,2,4/2/2026, 7:31:20 PM
+WQ-02,active,1000,2,4/2/2026, 7:31:20 PM

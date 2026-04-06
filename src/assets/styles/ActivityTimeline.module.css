@@ -1,0 +1,176 @@
+/* ActivityTimeline.module.css */
+
+.timeline {
+  background: rgba(15, 40, 84, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  overflow: hidden;
+  border: 1px solid rgba(73, 136, 196, 0.3);
+}
+
+.timelineHeader {
+  padding: 1.25rem;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timelineHeader h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.eventCount {
+  font-size: 0.875rem;
+  color: #8b9aae;
+}
+
+.timelineBody {
+  padding: 1.25rem;
+}
+
+.timelineItem {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
+}
+
+.timelineItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.timelineIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.25rem;
+}
+
+.readingIcon {
+  background: #2f4052;
+}
+
+.alertIconLow {
+  background: #4988C4;
+}
+
+.alertIconHigh {
+  background: #FFC107;
+}
+
+.alertIconCritical {
+  background: #FF3737;
+}
+
+.timelineContent {
+  flex: 1;
+}
+
+.timelineTitle {
+  font-weight: 500;
+  color: #e8ecf1;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.timelineDesc {
+  font-size: 0.875rem;
+  color: #8b9aae;
+  margin-bottom: 0.25rem;
+}
+
+.timelineMeta {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.timelineBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badgeCritical {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.badgeHigh {
+  background: #fed7aa;
+  color: #9a3412;
+}
+
+.badgeLow {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badgeInfo {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem;
+  color: #9ca3af;
+}
+
+.emptyStateIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.changesContainer {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.changeItem {
+  margin: 0.25rem 0;
+  padding: 0.2rem 0;
+}
+
+.changeField {
+  color: #4b5563;
+}
+
+.changeOld {
+  text-decoration: line-through;
+  color: #9ca3af;
+  margin-left: 0.25rem;
+}
+
+.changeArrow {
+  color: #6b7280;
+  margin: 0 0.25rem;
+}
+
+.changeNew {
+  color: #1a56db;
+  font-weight: 500;
+}
+
+.changeRaw {
+  font-size: 0.75rem;
+  color: #6b7280;
+}

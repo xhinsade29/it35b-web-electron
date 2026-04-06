@@ -1,0 +1,104 @@
+/* ReportCharts.module.css - Dark Theme */
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  background: linear-gradient(135deg, #0F2854 0%, #0a1f42 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  border: 1px solid rgba(73, 136, 196, 0.2);
+}
+
+.cardHeader {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(73, 136, 196, 0.2);
+}
+
+.cardHeader h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.cardBody {
+  padding: 1.25rem;
+}
+
+.chartDescription {
+  font-size: 0.875rem;
+  color: #8b9aae;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(10, 22, 40, 0.6);
+  border-radius: 6px;
+  border-left: 3px solid #4988C4;
+}
+
+.chartContainer {
+  position: relative;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lineChart {
+  width: 100%;
+  height: 100%;
+}
+
+.doughnutChart {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+}
+
+.doughnutSvg {
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.legendColor {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legendLabel {
+  color: #e8ecf1;
+  text-transform: capitalize;
+}
+
+.legendValue {
+  color: #8b9aae;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+.emptyState {
+  text-align: center;
+  color: #8b9aae;
+  padding: 2rem;
+}
