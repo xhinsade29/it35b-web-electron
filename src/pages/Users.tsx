@@ -8,9 +8,11 @@ import { UserStats } from '../components/UserStats';
 import { UserFilters } from '../components/UserFilters';
 import { UserTable } from '../components/UserTable';
 import { UserForm } from '../components/UserForm';
+import { useToast } from '../context/ToastContext';
 import styles from '../assets/styles/Users.module.css';
 
 export function UsersPage() {
+  const { showToast } = useToast();
   const {
     filteredUsers,
     stats,
@@ -23,14 +25,47 @@ export function UsersPage() {
     formData,
     setFormData,
     formErrors,
-    handleSave,
-    handleDelete,
-    handleToggleStatus,
+    handleSave: originalHandleSave,
+    handleDelete: originalHandleDelete,
+    handleToggleStatus: originalHandleToggleStatus,
     openAddModal,
     openEditModal,
     closeModal,
     refresh,
   } = useUsers();
+
+  // Wrapped handlers with toast notifications
+  const handleSave = async () => {
+    try {
+      await originalHandleSave();
+      showToast(editingUser ? 'User updated successfully' : 'User created successfully', 'success');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save user';
+      showToast(message, 'error');
+    }
+  };
+
+  const handleDelete = async (userId: string) => {
+    const user = filteredUsers.find(u => u.user_id === userId);
+    try {
+      await originalHandleDelete(userId);
+      showToast(`User "${user?.username || ''}" deleted successfully`, 'success');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete user';
+      showToast(message, 'error');
+    }
+  };
+
+  const handleToggleStatus = async (user: import('../types/user.types').User) => {
+    try {
+      await originalHandleToggleStatus(user);
+      const newStatus = !user.is_active ? 'activated' : 'deactivated';
+      showToast(`User "${user.username}" ${newStatus}`, 'success');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to toggle status';
+      showToast(message, 'error');
+    }
+  };
 
   if (loading && !filteredUsers.length) {
     return (

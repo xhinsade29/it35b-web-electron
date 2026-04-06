@@ -13,6 +13,7 @@ import { useDevices } from '../hooks/useDevices';
 import { createDevice, updateDevice, deleteDevice, getDeviceStatusColor } from '../services/deviceService';
 import type { Device, DeviceFormData, DeviceStatus, DeviceCondition, RiverSection } from '../types/device.types';
 import { DEFAULT_RIVER_COORDS } from '../utils/riverUtils';
+import { useToast } from '../context/ToastContext';
 import styles from '../assets/styles/DeviceManagement.module.css';
 
 type ViewMode = 'list' | 'add' | 'edit';
@@ -43,6 +44,7 @@ function MapBounds({ devices }: { devices: Device[] }) {
 }
 
 export function DeviceManagement() {
+  const { showToast } = useToast();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,15 +84,17 @@ export function DeviceManagement() {
   ) => {
     try {
       await deleteDevice(device.device_id, onProgress);
+      showToast(`Device "${device.device_name}" deleted successfully`, 'success');
       refreshDevices();
       if (selectedDeviceId === device.device_id) {
         setSelectedDeviceId(null);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete device');
+      const message = err instanceof Error ? err.message : 'Failed to delete device';
+      showToast(message, 'error');
       throw err;
     }
-  }, [refreshDevices, selectedDeviceId]);
+  }, [refreshDevices, selectedDeviceId, showToast]);
 
   // Handle save device - call service functions directly
   const handleSave = useCallback(async (formData: DeviceFormData, originalDevice?: Device) => {
@@ -100,8 +104,10 @@ export function DeviceManagement() {
 
       if (viewMode === 'add') {
         updatedDevice = await createDevice(formData);
+        showToast(`Device "${formData.device_name}" created successfully`, 'success');
       } else if (viewMode === 'edit' && selectedDeviceId && originalDevice) {
         updatedDevice = await updateDevice(selectedDeviceId, formData, originalDevice);
+        showToast(`Device "${formData.device_name}" updated successfully`, 'success');
       }
 
       if (updatedDevice) {
@@ -119,11 +125,12 @@ export function DeviceManagement() {
         refreshDevices();
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save device');
+      const message = err instanceof Error ? err.message : 'Failed to save device';
+      showToast(message, 'error');
     } finally {
       setIsSubmitting(false);
     }
-  }, [viewMode, selectedDeviceId, refreshDevices]);
+  }, [viewMode, selectedDeviceId, refreshDevices, showToast]);
 
   // Handle cancel
   const handleCancel = () => {

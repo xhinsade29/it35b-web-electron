@@ -12,6 +12,7 @@ import {
   getDevicesForFilter,
   fetchActivitySync,
 } from '../services/activityService';
+import { useToast } from '../context/ToastContext';
 import type {
   TimelineItem,
   AlertStats,
@@ -38,6 +39,7 @@ interface UseActivityReturn {
 }
 
 export function useActivity(): UseActivityReturn {
+  const { showToast } = useToast();
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [maintenanceLogs, setMaintenanceLogs] = useState<MaintenanceLog[]>([]);
   const [alertStats, setAlertStats] = useState<AlertStats>({
@@ -83,7 +85,9 @@ export function useActivity(): UseActivityReturn {
       setDevices(devicesData);
       setLastSync(new Date());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch activity data');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to fetch activity data';
+      setError(errorMsg);
+      showToast(`Failed to load activity data: ${errorMsg}`, 'error', 5000);
       console.error('Activity fetch error:', err);
     } finally {
       setLoading(false);
@@ -91,8 +95,10 @@ export function useActivity(): UseActivityReturn {
   }, [filterOptions.hours]);
 
   const refresh = useCallback(async () => {
+    showToast('Refreshing activity data...', 'info', 2000);
     await fetchAllData();
-  }, [fetchAllData]);
+    showToast('Activity data refreshed', 'success', 3000);
+  }, [fetchAllData, showToast]);
 
   const syncNow = useCallback(async () => {
     if (syncBusyRef.current) return;
@@ -105,20 +111,16 @@ export function useActivity(): UseActivityReturn {
         setAlertStats(syncData.alert_stats);
         setReadingStats(syncData.reading_stats);
         setLastSync(new Date());
+        showToast('Activity data synchronized', 'success', 3000);
       }
     } catch (err) {
       console.error('Sync error:', err);
+      showToast('Failed to sync activity data', 'error', 5000);
     } finally {
       syncBusyRef.current = false;
       setIsSyncing(false);
     }
   }, [filterOptions.hours]);
-
-  const startSync = useCallback((intervalMs: number = 10000) => {
-    stopSync();
-    syncNow();
-    syncTimerRef.current = setInterval(syncNow, intervalMs);
-  }, [syncNow]);
 
   const stopSync = useCallback(() => {
     if (syncTimerRef.current) {
@@ -126,6 +128,13 @@ export function useActivity(): UseActivityReturn {
       syncTimerRef.current = null;
     }
   }, []);
+
+  const startSync = useCallback((intervalMs: number = 10000) => {
+    showToast(`Auto-sync started (${intervalMs / 1000}s interval)`, 'info', 3000);
+    stopSync();
+    syncNow();
+    syncTimerRef.current = setInterval(syncNow, intervalMs);
+  }, [syncNow, stopSync, showToast]);
 
   // Initial fetch
   useEffect(() => {

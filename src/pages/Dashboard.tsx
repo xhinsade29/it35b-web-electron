@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useToast } from '../context/ToastContext';
 import styles from '../assets/styles/Dashboard.module.css';
 import { useDashboardSync } from '../hooks/useDashboardSync';
 import { useSimulationEngine } from '../hooks/useSimulation';
@@ -14,6 +15,7 @@ import { LeafletMap } from '../components/LeafletMap';
 import { SystemActivityLogs } from '../components/SystemActivityLogs';
 
 export function DashboardPage() {
+  const { showToast } = useToast();
   const [{ data, loading, error, lastSync }] = useDashboardSync(10000);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   
@@ -33,10 +35,27 @@ export function DashboardPage() {
     stop
   } = useSimulationEngine(deviceIds);
   
-  // handleStart declared AFTER start is available
+  // Track previous alert count for toast notifications
+  const prevAlertCountRef = useRef(simAlertCount);
+  
+  useEffect(() => {
+    if (simAlertCount > prevAlertCountRef.current && isRunning) {
+      showToast(`New alert detected! Total alerts: ${simAlertCount}`, 'warning');
+    }
+    prevAlertCountRef.current = simAlertCount;
+  }, [simAlertCount, isRunning, showToast]);
+  
+  // handleStart with toast
   const handleStart = useCallback(() => {
     start('normal', simInterval);
-  }, [start, simInterval]);
+    showToast('Simulation started successfully', 'success');
+  }, [start, simInterval, showToast]);
+
+  // handleStop with toast
+  const handleStop = useCallback(() => {
+    stop();
+    showToast('Simulation stopped', 'info');
+  }, [stop, showToast]);
 
   // Handle loading state
   if (loading && !data) {
@@ -234,7 +253,7 @@ export function DashboardPage() {
                 <button
                   className={styles.btnOutline}
                   type="button"
-                  onClick={() => { console.log('Stop clicked, isRunning:', isRunning); stop(); }}
+                  onClick={handleStop}
                   disabled={!isRunning}
                   style={{
                     height: '32px',
