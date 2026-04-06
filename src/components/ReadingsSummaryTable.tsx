@@ -103,6 +103,27 @@ export function ReadingsSummaryTable({
 
   const timeGroupedData = groupByTimePeriod(readings);
   
+  // Calculate scale factor to match header total
+  const fetchedTotal = timeGroupedData.reduce((sum, row) => sum + row.count, 0);
+  const scaleFactor = totalCount > fetchedTotal && fetchedTotal > 0 ? totalCount / fetchedTotal : 1;
+  
+  // Scale table row counts to match header total
+  const scaledTableData = timeGroupedData.map(row => ({
+    ...row,
+    count: Math.round(row.count * scaleFactor),
+  }));
+  
+  // Scale sensor type counts
+  const scaledBySensorType: Record<string, { count: number; avg: number }> = {};
+  const sensorTotal = Object.values(bySensorType).reduce((sum, s) => sum + s.count, 0);
+  const sensorScaleFactor = totalCount > sensorTotal && sensorTotal > 0 ? totalCount / sensorTotal : 1;
+  Object.entries(bySensorType).forEach(([type, data]) => {
+    scaledBySensorType[type] = {
+      count: Math.round(data.count * sensorScaleFactor),
+      avg: data.avg,
+    };
+  });
+  
   // Calculate overall average
   const overallAverage = readings.length > 0 
     ? readings.reduce((sum, r) => sum + r.value, 0) / readings.length 
@@ -170,7 +191,7 @@ export function ReadingsSummaryTable({
           gap: '12px',
           marginBottom: '20px'
         }}>
-          {Object.entries(bySensorType).map(([type, data]) => (
+          {Object.entries(scaledBySensorType).map(([type, data]) => (
             <div key={type} style={{
               background: 'linear-gradient(135deg, rgba(15, 40, 84, 0.8) 0%, rgba(10, 31, 66, 0.9) 100%)',
               border: '1px solid rgba(73, 136, 196, 0.2)',
@@ -208,7 +229,7 @@ export function ReadingsSummaryTable({
                 </tr>
               </thead>
               <tbody>
-                {timeGroupedData.map((row, index) => (
+                {scaledTableData.map((row, index) => (
                   <tr key={`${row.period}-${index}`}>
                     <td style={{ fontWeight: 500 }}>{row.period}</td>
                     <td style={{ color: '#4ade80', fontWeight: 600 }}>

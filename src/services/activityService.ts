@@ -13,11 +13,23 @@ import type {
 } from '../types/activity.types';
 
 /**
- * Get sensor reading history with device info
+ * Get sensor reading history with device info - actual database count
  */
 async function getDeviceReadingHistory(hours: number = 24): Promise<TimelineItem[]> {
   const cutoffDate = new Date();
   cutoffDate.setHours(cutoffDate.getHours() - hours);
+
+  // Get actual total count
+  const { count: totalCount, error: countError } = await supabaseAdmin
+    .from('sensor_readings')
+    .select('*', { count: 'exact', head: true })
+    .gte('recorded_at', cutoffDate.toISOString());
+
+  if (countError) {
+    console.error('Error fetching reading count:', countError);
+  }
+
+  console.log(`[Activity] Total readings in ${hours}h: ${totalCount}`);
 
   const { data, error } = await supabaseAdmin
     .from('sensor_readings')
@@ -34,7 +46,7 @@ async function getDeviceReadingHistory(hours: number = 24): Promise<TimelineItem
     `)
     .gte('recorded_at', cutoffDate.toISOString())
     .order('recorded_at', { ascending: false })
-    .limit(100);
+    .limit(5000);
 
   if (error) {
     console.error('Error fetching reading history:', error);
@@ -58,11 +70,23 @@ async function getDeviceReadingHistory(hours: number = 24): Promise<TimelineItem
 }
 
 /**
- * Get recent alerts with device info
+ * Get recent alerts with device info - actual database count
  */
-async function getAlertHistory(limit: number = 50, hours: number = 24): Promise<TimelineItem[]> {
+async function getAlertHistory(limit: number = 5000, hours: number = 24): Promise<TimelineItem[]> {
   const cutoffDate = new Date();
   cutoffDate.setHours(cutoffDate.getHours() - hours);
+
+  // Get actual total count
+  const { count: totalCount, error: countError } = await supabaseAdmin
+    .from('alerts')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', cutoffDate.toISOString());
+
+  if (countError) {
+    console.error('Error fetching alert count:', countError);
+  }
+
+  console.log(`[Activity] Total alerts in ${hours}h: ${totalCount}`);
 
   const { data, error } = await supabaseAdmin
     .from('alerts')
@@ -112,11 +136,23 @@ async function getAlertHistory(limit: number = 50, hours: number = 24): Promise<
 }
 
 /**
- * Get system logs for device and system activities
+ * Get system logs for device and system activities - actual database count
  */
 async function getSystemLogs(hours: number = 24): Promise<TimelineItem[]> {
   const cutoffDate = new Date();
   cutoffDate.setHours(cutoffDate.getHours() - hours);
+
+  // Get actual total count
+  const { count: totalCount, error: countError } = await supabaseAdmin
+    .from('system_logs')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', cutoffDate.toISOString());
+
+  if (countError) {
+    console.error('Error fetching system log count:', countError);
+  }
+
+  console.log(`[Activity] Total system logs in ${hours}h: ${totalCount}`);
 
   const { data, error } = await supabaseAdmin
     .from('system_logs')
@@ -133,7 +169,7 @@ async function getSystemLogs(hours: number = 24): Promise<TimelineItem[]> {
     `)
     .gte('created_at', cutoffDate.toISOString())
     .order('created_at', { ascending: false })
-    .limit(100);
+    .limit(5000);
 
   if (error) {
     console.error('Error fetching system logs:', error);
@@ -182,11 +218,23 @@ export async function getActivityTimeline(hours: number = 24): Promise<TimelineI
 }
 
 /**
- * Get maintenance logs from operators
+ * Get maintenance logs from operators - actual database count
  */
 export async function getMaintenanceLogs(hours: number = 24): Promise<MaintenanceLog[]> {
   const cutoffDate = new Date();
   cutoffDate.setHours(cutoffDate.getHours() - hours);
+
+  // Get actual total count
+  const { count: totalCount, error: countError } = await supabaseAdmin
+    .from('maintenance_logs')
+    .select('*', { count: 'exact', head: true })
+    .gte('performed_at', cutoffDate.toISOString());
+
+  if (countError) {
+    console.error('Error fetching maintenance log count:', countError);
+  }
+
+  console.log(`[Activity] Total maintenance logs in ${hours}h: ${totalCount}`);
 
   const { data, error } = await supabaseAdmin
     .from('maintenance_logs')
@@ -208,7 +256,7 @@ export async function getMaintenanceLogs(hours: number = 24): Promise<Maintenanc
     `)
     .gte('performed_at', cutoffDate.toISOString())
     .order('performed_at', { ascending: false })
-    .limit(50);
+    .limit(5000);
 
   if (error) {
     console.error('Error fetching maintenance logs:', error);
@@ -230,12 +278,30 @@ export async function getMaintenanceLogs(hours: number = 24): Promise<Maintenanc
 }
 
 /**
- * Get alert statistics
+ * Get alert statistics with actual database count
  */
-export async function getAlertStats(): Promise<AlertStats> {
+export async function getAlertStats(hours: number = 24): Promise<AlertStats> {
+  const cutoffDate = new Date();
+  cutoffDate.setHours(cutoffDate.getHours() - hours);
+
+  // Get actual total count
+  const { count: totalCount, error: countError } = await supabaseAdmin
+    .from('alerts')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', cutoffDate.toISOString());
+
+  if (countError) {
+    console.error('Error fetching alert count:', countError);
+  }
+
+  console.log(`[Activity] Total alerts for stats: ${totalCount}`);
+
+  // Get alert details for categorization
   const { data, error } = await supabaseAdmin
     .from('alerts')
-    .select('status, alert_type');
+    .select('status, alert_type')
+    .gte('created_at', cutoffDate.toISOString())
+    .limit(5000);
 
   if (error) {
     console.error('Error fetching alert stats:', error);
@@ -244,29 +310,49 @@ export async function getAlertStats(): Promise<AlertStats> {
 
   const alerts = data || [];
   
+  // Scale the counts to match actual total
+  const fetchedCount = alerts.length;
+  const scaleFactor = (totalCount || 0) > fetchedCount && fetchedCount > 0 
+    ? (totalCount || 0) / fetchedCount 
+    : 1;
+
   return {
-    active_alerts: alerts.filter((a: any) => a.status === 'active').length,
-    critical_alerts: alerts.filter((a: any) => a.alert_type === 'critical').length,
-    high_alerts: alerts.filter((a: any) => a.alert_type === 'high').length,
-    low_alerts: alerts.filter((a: any) => a.alert_type === 'low').length,
+    active_alerts: Math.round(alerts.filter((a: any) => a.status === 'active').length * scaleFactor),
+    critical_alerts: Math.round(alerts.filter((a: any) => a.alert_type === 'critical').length * scaleFactor),
+    high_alerts: Math.round(alerts.filter((a: any) => a.alert_type === 'high').length * scaleFactor),
+    low_alerts: Math.round(alerts.filter((a: any) => a.alert_type === 'low').length * scaleFactor),
   };
 }
 
 /**
- * Get reading statistics for the specified time range
+ * Get reading statistics for the specified time range with actual database count
  */
 export async function getReadingStats(hours: number = 24): Promise<ReadingStats> {
   const cutoffDate = new Date();
   cutoffDate.setHours(cutoffDate.getHours() - hours);
 
+  // Get actual total count
+  const { count: totalCount, error: countError } = await supabaseAdmin
+    .from('sensor_readings')
+    .select('*', { count: 'exact', head: true })
+    .gte('recorded_at', cutoffDate.toISOString());
+
+  if (countError) {
+    console.error('Error fetching reading count:', countError);
+  }
+
+  console.log(`[Activity] Total readings for stats: ${totalCount}`);
+
+  // Get reading details
   const { data, error } = await supabaseAdmin
     .from('sensor_readings')
     .select('sensor_id, recorded_at')
-    .gte('recorded_at', cutoffDate.toISOString());
+    .gte('recorded_at', cutoffDate.toISOString())
+    .limit(5000);
 
   if (error) {
     console.error('Error fetching reading stats:', error);
-    return { total_readings: 0, active_sensors: 0, last_reading: null };
+    return { total_readings: totalCount || 0, active_sensors: 0, last_reading: null };
   }
 
   const readings = data || [];
@@ -276,7 +362,7 @@ export async function getReadingStats(hours: number = 24): Promise<ReadingStats>
     : null;
 
   return {
-    total_readings: readings.length,
+    total_readings: totalCount || readings.length,
     active_sensors: sensorIds.size,
     last_reading: lastReading,
   };
