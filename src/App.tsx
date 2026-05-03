@@ -4,7 +4,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { Sidebar } from './components/Sidebar';
 import Login from './pages/Login';
-import { isMockClient } from './lib/supabase';
 import './App.css';
 
 // Lazy load pages for code splitting
@@ -32,7 +31,6 @@ function PageLoader() {
 // Main app layout with sidebar
 function AppLayout() {
   const { user, login, logout } = useAuth();
-  const mockMode = isMockClient();
 
   // Show login page if not authenticated
   if (!user) {
@@ -41,18 +39,6 @@ function AppLayout() {
 
   return (
     <div className="app">
-      {mockMode && (
-        <div style={{
-          background: '#f59e0b',
-          color: '#000',
-          padding: '8px 16px',
-          textAlign: 'center',
-          fontSize: '14px',
-          fontWeight: 500
-        }}>
-          ⚠️ Running in mock mode - Database not connected. Check your .env file for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-        </div>
-      )}
       <Sidebar
         user={{
           user_id: user.user_id,

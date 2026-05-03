@@ -499,7 +499,7 @@ export function useSimulationEngine(deviceIds: string[]) {
         }, 2000);
       }
     }
-  }, [state.mode, state.interval, getNextValue, addLog, dashboardActions]);
+  }, [addLog, state.mode, state.interval, getNextValue, dashboardActions, persistState]);
 
   // Simple interval-based simulation with proper cleanup
   const start = useCallback(async (mode?: SimulationMode, interval?: number) => {
