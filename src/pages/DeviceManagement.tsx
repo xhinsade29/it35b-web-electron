@@ -14,6 +14,7 @@ import { createDevice, updateDevice, deleteDevice, getDeviceStatusColor } from '
 import type { Device, DeviceFormData, DeviceStatus, DeviceCondition, RiverSection } from '../types/device.types';
 import { DEFAULT_RIVER_COORDS } from '../utils/riverUtils';
 import { useToast } from '../context/ToastContext';
+import { Skeleton, SkeletonStats, SkeletonTable, SkeletonText } from '../components/Skeleton';
 import styles from '../assets/styles/DeviceManagement.module.css';
 
 type ViewMode = 'list' | 'add' | 'edit';
@@ -204,8 +205,27 @@ export function DeviceManagement() {
         </div>
       )}
 
+      {/* Loading State */}
+      {loading && !devices.length && (
+        <div className={styles.content}>
+          <SkeletonStats count={8} />
+          <div className={styles.mainContent}>
+            <div className={styles.mapSectionWithDetails}>
+              <Skeleton height={500} borderRadius={12} />
+            </div>
+            <div className={styles.deviceInfoPanel}>
+              <Skeleton height={60} borderRadius={8} />
+              <div style={{ padding: '1.5rem' }}>
+                <SkeletonText lines={4} height={16} gap={12} />
+              </div>
+            </div>
+          </div>
+          <SkeletonTable rows={5} columns={6} />
+        </div>
+      )}
+
       {/* Content */}
-      <div className={styles.content}>
+      {(!loading || devices.length > 0) && <div className={styles.content}>
         {viewMode === 'list' ? (
           <>
             {/* Device Summary */}
@@ -270,7 +290,6 @@ export function DeviceManagement() {
                   keyboard={false}
                 >
                   <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                   />
                   <Polyline
@@ -378,7 +397,7 @@ export function DeviceManagement() {
             />
           </div>
         )}
-      </div>
+      </div>}
     </div>
   );
 }

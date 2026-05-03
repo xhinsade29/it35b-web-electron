@@ -17,12 +17,6 @@ const supabaseUrl = getEnvVar('VITE_SUPABASE_URL')
 const supabaseKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || getEnvVar('VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY')
 const supabaseServiceKey = getEnvVar('VITE_SUPABASE_SERVICE_ROLE_KEY')
 
-// Debug logging for deployment troubleshooting
-if (typeof window !== 'undefined') {
-  console.log('[Supabase] URL configured:', supabaseUrl ? 'Yes' : 'No')
-  console.log('[Supabase] Key configured:', supabaseKey ? 'Yes (length: ' + supabaseKey.length + ')' : 'No')
-}
-
 // Validate URL format
 const isValidUrl = (url: string) => {
   try {
@@ -40,7 +34,6 @@ export const getSupabaseClient = (): SupabaseClient => {
   if (supabaseInstance) return supabaseInstance
   
   if (isValidUrl(supabaseUrl) && supabaseKey) {
-    console.log('[Supabase] Creating real client with URL:', supabaseUrl.substring(0, 30) + '...')
     supabaseInstance = createClient(supabaseUrl, supabaseKey, {
       auth: {
         autoRefreshToken: true,
@@ -56,7 +49,7 @@ export const getSupabaseClient = (): SupabaseClient => {
     return supabaseInstance
   }
   
-  console.warn('[Supabase] Credentials not configured. Using mock client.')
+  // Credentials not configured - using mock client
   supabaseInstance = createMockClient()
   return supabaseInstance
 }
@@ -76,15 +69,12 @@ export const verifyConnection = async (): Promise<{ ok: boolean; error?: string 
     const { error } = await client.from('locations').select('count', { count: 'exact', head: true })
     
     if (error) {
-      console.error('[Supabase] Connection verification failed:', error)
       return { ok: false, error: error.message }
     }
     
-    console.log('[Supabase] Connection verified successfully')
     return { ok: true }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    console.error('[Supabase] Connection verification error:', message)
     return { ok: false, error: message }
   }
 }
@@ -107,7 +97,7 @@ export const supabaseAdmin = (() => {
 
 // Mock client for development without Supabase credentials
 function createMockClient(): SupabaseClient {
-  console.warn('[Supabase] Using mock client - no database connection')
+  // Using mock client - no database connection
   
   return {
     from: () => ({
@@ -127,8 +117,22 @@ function createMockClient(): SupabaseClient {
       upsert: () => Promise.resolve({ data: null, error: null }),
       delete: () => Promise.resolve({ data: null, error: null }),
     }),
-    rpc: (fn: string, params?: Record<string, unknown>) => {
-      console.log(`[Mock] RPC call: ${fn}`, params)
+    rpc: (fn: string) => {
+      // Return mock data for authenticate_user function
+      if (fn === 'authenticate_user') {
+        return Promise.resolve({
+          data: [{
+            user_id: 'mock-user-id',
+            username: 'admin',
+            email: 'admin@example.com',
+            full_name: 'Admin User',
+            role: 'admin',
+            password_hash: '$2a$10$mockhashfordevelopment',
+            is_active: true
+          }],
+          error: null
+        })
+      }
       // Return mock data for dashboard functions
       if (fn === 'dashboard_fetch') {
         return Promise.resolve({

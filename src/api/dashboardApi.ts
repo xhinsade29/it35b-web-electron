@@ -157,14 +157,26 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
       };
     });
 
-    // Fetch active alerts
-    const { data: alertsData, error: alertsError } = await supabase
+    // Fetch ALL alerts (debug: check status values)
+    const { data: allAlerts, error: allAlertsError } = await supabase
       .from('alerts')
       .select('*')
-      .eq('status', 'active')
       .order('created_at', { ascending: false })
-      .limit(10);
-    
+      .limit(20);
+
+    console.log('[FETCH] ALL Alerts:', { allAlerts, allAlertsError, count: allAlerts?.length });
+    if (allAlerts && allAlerts.length > 0) {
+      console.log('[FETCH] Alert statuses:', allAlerts.map(a => ({ id: a.alert_id, status: a.status, type: a.alert_type, msg: a.message?.substring(0, 30) })));
+    }
+
+    // Show ALL alerts for debugging (temporarily remove status filter)
+    const alertsData = allAlerts || [];
+    console.log('[FETCH] Total alerts (no filter):', alertsData.length);
+    if (alertsData.length > 0) {
+      console.log('[FETCH] Alert details:', alertsData.map(a => ({ id: a.alert_id, status: a.status, message: a.message?.substring(0, 40) })));
+    }
+    const alertsError = allAlertsError;
+
     if (alertsError) {
       console.error('Alerts fetch error:', alertsError);
     }
@@ -186,7 +198,10 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
       maint: deviceCounts?.filter((d: { status: string }) => d.status === 'maintenance').length || 0,
     };
 
-    const alert_count = alertsData?.length || 0;
+    // Count all alerts for debugging
+    const activeAlerts = allAlerts?.filter(a => a.status === 'active') || [];
+    const alert_count = activeAlerts.length;
+    console.log('[FETCH] Active alert count:', alert_count, 'Total alerts:', allAlerts?.length || 0);
 
     // Transform alerts (simplified without nested joins)
     const transformedAlerts: Alert[] = (alertsData || []).map((a: { 
@@ -225,11 +240,11 @@ export async function fetchDashboard(): Promise<DashboardSyncData> {
 
     // Process the readings data
     const processedReadings = readingsData || [];
-    const chartData = processChartData(processedReadings as any);
-    const sectionConditions = processSectionConditions(processedReadings as any);
-    const logs = processActivityLogs(processedReadings as any);
-    const deviceChartData = processDeviceChartData(processedReadings as any, transformedDevices);
-    const deviceReadings = processDeviceReadings(processedReadings as any);
+    const chartData = processChartData(processedReadings as unknown as SensorReading[]);
+    const sectionConditions = processSectionConditions(processedReadings as unknown as SensorReading[]);
+    const logs = processActivityLogs(processedReadings as unknown as SensorReading[]);
+    const deviceChartData = processDeviceChartData(processedReadings as unknown as SensorReading[], transformedDevices);
+    const deviceReadings = processDeviceReadings(processedReadings as unknown as SensorReading[]);
 
     // Build map locations with device counts
     const mapLocations: MapLocation[] = (locationsData || []).map((loc: { 

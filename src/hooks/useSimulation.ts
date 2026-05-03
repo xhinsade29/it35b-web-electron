@@ -7,6 +7,7 @@ import {
   saveSimulationSummary,
   loadMonitorState,
 } from '../api/dashboardApi';
+import { supabase } from '../lib/supabase';
 import { useDashboardSync } from './useDashboardSync';
 import type { SimulationResponse } from '../types/dashboard.types';
 
@@ -340,9 +341,10 @@ export function useSimulationEngine(deviceIds: string[]) {
         
         lastSuccess = result;
         
-        // Log alerts
+        // Log alerts and save to database
         if (result.alerts_created && result.alerts_created.length > 0) {
-          result.alerts_created.forEach(alert => {
+          console.log('[SIMULATION] Alerts created for', result.device_name, ':', result.alerts_created);
+          result.alerts_created.forEach(async (alert) => {
             const alertMessage = `${alert.sensor_type}: ${alert.value} (threshold: ${alert.threshold})`;
             addLog({
               deviceId,
@@ -351,13 +353,69 @@ export function useSimulationEngine(deviceIds: string[]) {
               message: `⚠ ALERT [${alert.type.toUpperCase()}] ${alertMessage}`,
               type: 'alert'
             });
+
+            // Insert alert into database - need to find actual sensor_id and reading_id (UUID)
+            try {
+              // First, get the sensor_id for this device and sensor_type
+              const { data: sensorData, error: sensorError } = await supabase
+                .from('sensors')
+                .select('sensor_id')
+                .eq('device_id', deviceId)
+                .eq('sensor_type', alert.sensor_type)
+                .single();
+
+              if (sensorError || !sensorData) {
+                console.error('[SIMULATION] Could not find sensor for device', deviceId, 'type', alert.sensor_type, sensorError);
+                return;
+              }
+
+              // Get the most recent reading for this sensor (the one we just created)
+              const { data: readingData, error: readingError } = await supabase
+                .from('sensor_readings')
+                .select('reading_id')
+                .eq('sensor_id', sensorData.sensor_id)
+                .order('recorded_at', { ascending: false })
+                .limit(1)
+                .single();
+
+              if (readingError || !readingData) {
+                console.error('[SIMULATION] Could not find reading for sensor', sensorData.sensor_id, readingError);
+                return;
+              }
+
+              const { error } = await supabase
+                .from('alerts')
+                .insert({
+                  sensor_id: sensorData.sensor_id,
+                  reading_id: readingData.reading_id,
+                  alert_type: alert.type || 'high',
+                  message: `${result.device_name}: ${alert.sensor_type} is ${alert.value} (threshold: ${alert.threshold})`,
+                  status: 'active',
+                  created_at: new Date().toISOString()
+                });
+              if (error) {
+                console.error('[SIMULATION] Failed to insert alert:', error);
+              } else {
+                console.log('[SIMULATION] Alert inserted successfully for sensor', sensorData.sensor_id, 'reading', readingData.reading_id);
+              }
+            } catch (err) {
+              console.error('[SIMULATION] Error inserting alert:', err);
+            }
           });
           alertCount += result.alerts_created.length;
+        } else {
+          console.log('[SIMULATION] No alerts created for', result.device_name);
         }
         
-        // Log success
-        const { device_id: _deviceId, ...sensorReadings } = readings;
-        const deviceReadings = sensorReadings as Record<string, number>;
+        // Log success - extract readings without device_id
+        const deviceReadings = {
+          temperature: readings.temperature,
+          ph_level: readings.ph_level,
+          turbidity: readings.turbidity,
+          dissolved_oxygen: readings.dissolved_oxygen,
+          water_level: readings.water_level,
+          sediments: readings.sediments
+        };
         addLog({
           deviceId,
           deviceName: result.device_name,
@@ -368,7 +426,7 @@ export function useSimulationEngine(deviceIds: string[]) {
         });
       });
       
-      // Update alert count
+      // Update alert count and refresh dashboard to show new alerts
       if (alertCount > 0) {
         setState(prev => {
           const newState = {
@@ -378,6 +436,9 @@ export function useSimulationEngine(deviceIds: string[]) {
           persistState(newState, deviceIdsRef.current);
           return newState;
         });
+        // Force dashboard refresh to show new alerts
+        console.log('[SIMULATION] Refreshing dashboard to show', alertCount, 'new alerts');
+        dashboardActions.refresh().catch(() => {});
       }
       
       // Update last device info
@@ -761,8 +822,7 @@ export function useSimulationEngine(deviceIds: string[]) {
     logs: state.logs,
     lastDeviceId: state.lastDeviceId,
     lastDeviceName: state.lastDeviceName,
-    deviceModes: deviceModesRef.current,
-    
+    // deviceModes removed - was causing ref access lint error
     // Actions
     start,
     stop,

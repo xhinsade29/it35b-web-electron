@@ -68,7 +68,6 @@ export function LeafletMap({ devices, onDeviceClick }: LeafletMapProps) {
             keyboard={false}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
             
@@ -85,24 +84,7 @@ export function LeafletMap({ devices, onDeviceClick }: LeafletMapProps) {
               positions={RIVER_PATH}
               pathOptions={{ color: '#60a5fa', weight: 4, opacity: 0.85 }}
             />
-            
-            {/* Start and End markers */}
-            <CircleMarker
-              center={[8.345958, 124.898607]}
-              radius={8}
-              pathOptions={{ fillColor: '#16a34a', color: '#fff', weight: 2, fillOpacity: 1 }}
-            >
-              <Popup><b>Source:</b> Mangima River Origin</Popup>
-            </CircleMarker>
-            
-            <CircleMarker
-              center={[8.413179, 124.909497]}
-              radius={8}
-              pathOptions={{ fillColor: '#ea580c', color: '#fff', weight: 2, fillOpacity: 1 }}
-            >
-              <Popup><b>Mouth:</b> River Outlet</Popup>
-            </CircleMarker>
-            
+
             {/* Device markers */}
             {devices.map((device) => {
               if (!device.lat || !device.lng) return null;

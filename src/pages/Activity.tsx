@@ -9,6 +9,7 @@ import { MaintenanceLogs } from '../components/MaintenanceLogs';
 import { ActivityStats } from '../components/ActivityStats';
 import { ActivityFilters } from '../components/ActivityFilters';
 import { useActivity } from '../hooks/useActivity';
+import { SkeletonStats, SkeletonTable, SkeletonText } from '../components/Skeleton';
 import styles from '../assets/styles/Activity.module.css';
 
 type TabId = 'overview' | 'timeline' | 'maintenance';
@@ -50,6 +51,23 @@ export function ActivityPage() {
   // Check if we're using mock data (no real database connection)
   const isMockData = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+  // Show skeleton while loading
+  if (!timeline.length && !error) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.pageHeader}>
+          <h1>📜 History & Activity Log</h1>
+          <p>View sensor readings, alerts, device activity, and system logs over time</p>
+        </div>
+        <SkeletonStats count={3} />
+        <div style={{ marginBottom: '24px' }}>
+          <SkeletonText lines={1} width={200} height={40} />
+        </div>
+        <SkeletonTable rows={6} columns={4} />
+      </div>
+    );
+  }
+
   if (isMockData) {
     return (
       <div className={styles.container}>
@@ -57,16 +75,16 @@ export function ActivityPage() {
           <h1>📜 History & Activity Log</h1>
           <p>View sensor readings, alerts, device activity, and system logs over time</p>
         </div>
-        <div style={{ 
-          background: '#fef3c7', 
-          border: '1px solid #f59e0b', 
-          borderRadius: '8px', 
+        <div style={{
+          background: '#fef3c7',
+          border: '1px solid #f59e0b',
+          borderRadius: '8px',
           padding: '20px',
           marginBottom: '24px'
         }}>
           <h3 style={{ margin: '0 0 12px 0', color: '#92400e' }}>⚠️ Database Not Connected</h3>
           <p style={{ margin: 0, color: '#92400e' }}>
-            Activity data is not available because the database is not configured. 
+            Activity data is not available because the database is not configured.
             Please set the <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> environment variables in your Vercel dashboard.
           </p>
         </div>

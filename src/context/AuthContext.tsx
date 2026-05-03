@@ -28,22 +28,40 @@ const AuthContext = createContext<AuthContextType>({
 
 // Auth provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // For now, mock a logged in user - replace with actual Supabase auth later
-  const [user, setUser] = useState<AuthUser | null>({
-    user_id: 'mock-user-id',
-    username: 'admin',
-    email: 'admin@aqua-vision.com',
-    full_name: 'System Administrator',
-    role: 'admin',
-    is_active: true,
+  // Storage key for localStorage (inside component for fast refresh)
+  const AUTH_STORAGE_KEY = 'aqua-vision-auth-user';
+
+  // Load user from localStorage on initial render
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    try {
+      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+      if (stored) {
+        return JSON.parse(stored) as AuthUser;
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    return null;
   });
 
   const login = useCallback((newUser: AuthUser) => {
     setUser(newUser);
+    // Save to localStorage
+    try {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser));
+    } catch {
+      // Ignore storage errors
+    }
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
+    // Clear localStorage
+    try {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch {
+      // Ignore storage errors
+    }
     // In production, also call Supabase signOut
   }, []);
 
