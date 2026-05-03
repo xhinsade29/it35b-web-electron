@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  fetchDashboard, 
-  saveMonitorState, 
+import {
+  fetchDashboard,
+  saveMonitorState,
   loadMonitorState,
   subscribeToSensorReadings,
-  subscribeToAlerts 
+  subscribeToAlerts
 } from '../api/dashboardApi';
 import type { DashboardSyncData, MonitorState } from '../types/dashboard.types';
 
@@ -115,7 +115,7 @@ export function useDashboardSync(initialInterval: number = 10000): [DashboardSta
   // Initial fetch on mount
   useEffect(() => {
     syncNow();
-    
+
     // Cleanup on unmount
     return () => {
       stopSync();

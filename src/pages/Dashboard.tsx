@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '../context/ToastContext';
+import { SkeletonPage } from '../components/Skeleton';
 import styles from '../assets/styles/Dashboard.module.css';
 import { useDashboardSync } from '../hooks/useDashboardSync';
 import { useSimulationEngine } from '../hooks/useSimulation';
@@ -18,6 +19,17 @@ export function DashboardPage() {
   const { showToast } = useToast();
   const [{ data, loading, error, lastSync }] = useDashboardSync(10000);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+
+  // Debug alerts data
+  useEffect(() => {
+    if (data) {
+      console.log('[Dashboard] Alerts data:', {
+        alert_count: data.alert_count,
+        alerts: data.alerts,
+        alertsLength: data.alerts?.length
+      });
+    }
+  }, [data]);
   
   // Get device IDs for simulation - ensure devices is always an array
   const deviceIds = Array.isArray(data?.devices) ? data.devices.map(d => d.device_id) : [];
@@ -59,16 +71,7 @@ export function DashboardPage() {
 
   // Handle loading state
   if (loading && !data) {
-    return (
-      <div className={styles.dashboard}>
-        <div className={styles.wrap}>
-          <div className={styles.empty}>
-            <div className={styles.emptyIcon}>⏳</div>
-            <p>Loading dashboard data...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <SkeletonPage />;
   }
 
   // Handle error state

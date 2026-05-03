@@ -4,7 +4,8 @@
  * Migrated from PHP device.php
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '../lib/supabase';
 import {
   getAllDevices,
   getDeviceById,
@@ -47,7 +48,7 @@ interface UseDevicesReturn {
   setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
 }
 
-export function useDevices(): UseDevicesReturn {
+export function useDevices(autoSyncInterval: number = 30000): UseDevicesReturn {
   const [devices, setDevices] = useState<Device[]>([]);
   const [filteredDevices, setFilteredDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +59,7 @@ export function useDevices(): UseDevicesReturn {
     section: 'all',
     search: '',
   });
+  const syncTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchDevices = useCallback(async () => {
     setLoading(true);
@@ -89,9 +91,53 @@ export function useDevices(): UseDevicesReturn {
     setFilteredDevices(filterDevices(devices, filterOptions));
   }, [devices, filterOptions]);
 
-  // Initial fetch
+  // Auto-sync with polling
+  const startAutoSync = useCallback(() => {
+    if (syncTimerRef.current) {
+      clearInterval(syncTimerRef.current);
+    }
+    syncTimerRef.current = setInterval(fetchDevices, autoSyncInterval);
+  }, [fetchDevices, autoSyncInterval]);
+
+  const stopAutoSync = useCallback(() => {
+    if (syncTimerRef.current) {
+      clearInterval(syncTimerRef.current);
+      syncTimerRef.current = null;
+    }
+  }, []);
+
+  // Initial fetch and setup auto-sync
   useEffect(() => {
     fetchDevices();
+    startAutoSync();
+
+    return () => {
+      stopAutoSync();
+    };
+  }, [fetchDevices, startAutoSync, stopAutoSync]);
+
+  // Real-time subscription for device changes
+  useEffect(() => {
+    const subscription = supabase
+      .channel('devices-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'devices',
+        },
+        (payload) => {
+          console.log('[useDevices] Real-time change detected:', payload.eventType);
+          // Refetch devices when any change occurs
+          fetchDevices();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [fetchDevices]);
 
   return {

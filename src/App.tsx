@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { Sidebar } from './components/Sidebar';
+import Login from './pages/Login';
+import { isMockClient } from './lib/supabase';
 import './App.css';
 
 // Lazy load pages for code splitting
@@ -29,17 +31,35 @@ function PageLoader() {
 
 // Main app layout with sidebar
 function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user, login, logout } = useAuth();
+  const mockMode = isMockClient();
+
+  // Show login page if not authenticated
+  if (!user) {
+    return <Login onLogin={login} />;
+  }
 
   return (
     <div className="app">
-      <Sidebar 
-        user={user ? {
+      {mockMode && (
+        <div style={{
+          background: '#f59e0b',
+          color: '#000',
+          padding: '8px 16px',
+          textAlign: 'center',
+          fontSize: '14px',
+          fontWeight: 500
+        }}>
+          ⚠️ Running in mock mode - Database not connected. Check your .env file for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+        </div>
+      )}
+      <Sidebar
+        user={{
           user_id: user.user_id,
           full_name: user.full_name,
           role: user.role,
-        } : undefined} 
-        onLogout={logout} 
+        }}
+        onLogout={logout}
       />
       <main>
         <Suspense fallback={<PageLoader />}>

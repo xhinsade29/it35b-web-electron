@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import type { 
   User, Location, Device, Sensor, SensorReading, Alert, 
@@ -93,10 +93,11 @@ export function useLocationsBySection(section: RiverSection) {
 }
 
 // ========== DEVICES ==========
-export function useDevices() {
+export function useDevices(autoSyncInterval: number = 30000) {
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const syncTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchDevices = useCallback(async () => {
     try {
@@ -115,11 +116,55 @@ export function useDevices() {
     }
   }, [])
 
+  // Auto-sync with polling
+  const startAutoSync = useCallback(() => {
+    if (syncTimerRef.current) {
+      clearInterval(syncTimerRef.current)
+    }
+    syncTimerRef.current = setInterval(fetchDevices, autoSyncInterval)
+  }, [fetchDevices, autoSyncInterval])
+
+  const stopAutoSync = useCallback(() => {
+    if (syncTimerRef.current) {
+      clearInterval(syncTimerRef.current)
+      syncTimerRef.current = null
+    }
+  }, [])
+
+  // Initial fetch and auto-sync setup
   useEffect(() => {
     fetchDevices()
+    startAutoSync()
+
+    return () => {
+      stopAutoSync()
+    }
+  }, [fetchDevices, startAutoSync, stopAutoSync])
+
+  // Real-time subscription for device changes
+  useEffect(() => {
+    const subscription = supabase
+      .channel('devices-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'devices',
+        },
+        () => {
+          // Refetch devices when any change occurs
+          fetchDevices()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [fetchDevices])
 
-  return { devices, loading, error, refetch: fetchDevices }
+  return { devices, loading, error, refetch: fetchDevices, startAutoSync, stopAutoSync }
 }
 
 export function useDevicesByStatus(status: DeviceStatus) {

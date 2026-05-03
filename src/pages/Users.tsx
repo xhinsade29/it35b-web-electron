@@ -9,6 +9,7 @@ import { UserFilters } from '../components/UserFilters';
 import { UserTable } from '../components/UserTable';
 import { UserForm } from '../components/UserForm';
 import { useToast } from '../context/ToastContext';
+import { SkeletonStats, SkeletonTable, SkeletonText } from '../components/Skeleton';
 import styles from '../assets/styles/Users.module.css';
 
 export function UsersPage() {
@@ -70,7 +71,15 @@ export function UsersPage() {
   if (loading && !filteredUsers.length) {
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>Loading users...</div>
+        <div className={styles.pageHeader}>
+          <h1>👥 User Management</h1>
+          <p>Manage system users, roles and permissions</p>
+        </div>
+        <SkeletonStats count={4} />
+        <div style={{ marginBottom: '24px' }}>
+          <SkeletonText lines={1} width={200} height={40} />
+        </div>
+        <SkeletonTable rows={5} columns={5} />
       </div>
     );
   }
